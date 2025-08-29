@@ -6,14 +6,19 @@ import settings
 
 class Sprite(pygame.sprite.Sprite):
 	#class for all sprites
-    def __init__(self, image, x=0, y=0, v=0, direction=[0,0], constraints = None, reflection = False):
+    def __init__(self, image, x=0, y=0, v=0, direction=[0,0], constraints = None, boundary_behaviour = "clamp"):
+        #possible boundary behaviours:
+        #   clamp: sprite stops at the boundary (e.g. the ship)
+        #   reflect: sprite gets reflected from the boundary
+        #   vanish: sprite gets deleted when leaving the boundary (e.g. bullets)
+        #   wrap: sprite reappears on the other side when leaving the boundary
         super().__init__()
         self.x = x
         self.y = y
         self.v = v
         self.direction = direction
         self.constraints = constraints
-        self.reflection = reflection
+        self.boundary_behaviour = boundary_behaviour
         self._norm = norm(direction)
         self.set_image(image)        
 
@@ -40,12 +45,12 @@ class Sprite(pygame.sprite.Sprite):
         self.change_direction(self.direction[0]*cos(phi)+self.direction[1]*sin(phi),-self.direction[0]*sin(phi)+self.direction[1]*cos(phi))
 
     def change_position(self, x, y):
-        if self.constraints is None:
+        if self.constraints is None or self.boundary_behaviour == "vanish":
             self.x,self.y = x,y
-        else:
+        elif self.boundary_behaviour in ["clamp","reflect"]:
             x_clamp = min(max(x,self.constraints.x),self.constraints.right-self.w)
             y_clamp = min(max(y,self.constraints.y),self.constraints.bottom-self.h) 
-            if self.reflection:
+            if self.boundary_behaviour == "reflect":
                 if x != x_clamp:
                     self.x = 2*x_clamp-x
                     self.direction[0] *= -1
@@ -58,7 +63,20 @@ class Sprite(pygame.sprite.Sprite):
                     self.y = y_clamp
             else:
                 self.x,self.y = x_clamp,y_clamp
+        elif self.boundary_behaviour == "wrap":
+            x_clamp = min(max(x,self.constraints.x-self.w),self.constraints.right)
+            y_clamp = min(max(y,self.constraints.y-self.h),self.constraints.bottom) 
+            if x != x_clamp:
+                self.x = self.constraints.right+self.constraints.x-self.w-x
+            else:
+                self.x = x_clamp
+            if y != y_clamp:
+                self.y = self.constraints.bottom+self.constraints.y-self.h-y
+            else:
+                self.y = y_clamp
         self.rect.x,self.rect.y = int(self.x),int(self.y)
+        if self.boundary_behaviour == "vanish" and not self.rect.colliderect(self.constraints):
+                self.kill()
 
     def update(self,dt):
         if self._norm != 0 and self.v != 0:
