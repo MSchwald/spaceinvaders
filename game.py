@@ -127,8 +127,6 @@ class Game:
         """update position of all sprites according to the passed time"""
         for bullet in self.ship.bullets:
             bullet.update(dt)
-            if bullet.rect.bottom <= 0:
-                bullet.remove(self.ship.bullets)
 
         self.ship.update(dt)
 
