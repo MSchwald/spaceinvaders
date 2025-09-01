@@ -37,18 +37,3 @@ class Image:
         if path not in cls.cache:
             cls.cache[path] = Image(path, colorkey, scaling_width)
         return cls.cache[path]
-
-"""ship = {1: Image('images/ship/a-03.png'),
-        2: Image('images/ship/a-02.png'), 3: Image('images/ship/a-01.png')}
-bullet = {1: Image('images/bullet/1.png'),
-          2: Image('images/bullet/2.png'), 3: Image('images/bullet/3.png')}
-alien = {"big_asteroid": Image('images/asteroid/1.png'), "small_asteroid": Image('images/asteroid/2.png'),
-         "purple": Image('images/alien/1.png',colorkey=(255,255,255)), "ufo": Image('images/alien/2.png'), 3: Image('images/alien/1.png')}
-alien["big_asteroid"].rescale(100)
-alien["small_asteroid"].rescale(50)
-alien["purple"].rescale()
-alien["ufo"].rescale()
-ship[1].rescale(100)
-ship[2].rescale(100)
-ship[3].rescale(120)
-"""

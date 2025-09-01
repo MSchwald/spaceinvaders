@@ -10,7 +10,7 @@ class Ship(Sprite):
     """A class to manage the ship."""
 
     def __init__(self, x=0, y=0, ship_lives=settings.ship_lives, ship_level=settings.ship_starting_level):
-        super().__init__(Image.load(f"images/ship/a-{ship_level}.PNG"), x=0, y=0, constraints=pygame.Rect(
+        super().__init__(Image.load(f"images/ship/a-{ship_level}.PNG", scaling_width=settings.ship_width[ship_level]), x=0, y=0, constraints=pygame.Rect(
             settings.ship_constraints), boundary_behaviour="clamp")
         # initializes an empty group of sprites for the bullets shot by the ship
         self.bullets = pygame.sprite.Group()
@@ -55,7 +55,6 @@ class Ship(Sprite):
             self.fire_points = [(12/133*self.w, 71/178*self.h), (23/133*self.w, 49/178*self.h),
                                 (self.w/2, 0), (109/133*self.w, 49/178*self.h), (120/133*self.w, 71/178*self.h)]
             self.bullet_sizes = [1, 2, 3, 2, 1]
-        self.bullet_width = [Image.load(f"images/bullet/{i}.png").w for i in self.bullet_sizes]
 
     def gain_level(self):
         if self.level < 3:
@@ -85,7 +84,7 @@ class Ship(Sprite):
         # Fires bullets
         for i in range(len(self.fire_points)):
             self.bullets.add(Bullet(
-                self.x+self.fire_points[i][0]-self.bullet_width[i]/2, self.y+self.fire_points[i][1], speed, self.bullet_sizes[i]))
+                self.x+self.fire_points[i][0]-settings.bullet_width[self.bullet_sizes[i]]/2, self.y+self.fire_points[i][1], speed, self.bullet_sizes[i]))
 
     def control(self, keys):
         self.change_direction(keys[K_d]-keys[K_a], keys[K_s]-keys[K_w])
