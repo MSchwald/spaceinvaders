@@ -5,7 +5,6 @@ class Image:
     def __init__(self, path):
         raw_image = pygame.image.load(path)
         bounding_rect = raw_image.get_bounding_rect()
-        print(bounding_rect)
         self.surface = pygame.Surface(bounding_rect.size)
         self.surface.blit(raw_image,(0,0),bounding_rect)
         self.rect = self.surface.get_rect()
@@ -37,4 +36,3 @@ alien["ufo"].rescale()
 ship[1].rescale(100)
 ship[2].rescale(100)
 ship[3].rescale(120)
-print([(image.w, image.h) for image in ship.values()])

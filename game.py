@@ -73,7 +73,7 @@ class Game:
     def update(self, dt):
         self.update_sprites(dt)
         self.collision_checks()
-        self.check_if_level_solved()
+        self.check_level_status()
 
     def render(self):
         self.update_screen()
@@ -159,20 +159,18 @@ class Game:
             self.ship, self.level.aliens, True)
         for alien in collisions:
             self.ship.get_damage(alien.energy)
-            if self.ship.lives <= 0:
-                self.mode = "menu"
-                self.active_menu = self.game_over_menu
             self.ship.score += alien.points
 
-    def check_if_level_solved(self):
-        """Check if the current level is solved"""
-        if not self.level.aliens:
-            if self.level.number < max_level:
-                self.mode = "menu"
+    def check_level_status(self):
+        """Check if the current level is solved or the player is game over"""
+        if not self.level.status(self.ship) == "running":
+            self.mode = "menu"
+            if self.level.status(self.ship) == "solved":
                 self.active_menu = self.level_solved_menu
-            else:
-                self.mode = "menu"
+            elif self.level.status(self.ship) == "game won":
                 self.active_menu = self.game_won_menu
+            elif self.level.status(self.ship) == "game over":
+                self.active_menu = self.game_over_menu
 
     def update_screen(self):
         """Updates screen with all sprites and stats"""

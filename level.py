@@ -16,6 +16,17 @@ class Level:
         self.number = number
         self.aliens = pygame.sprite.Group()
 
+    def status(self, ship):
+        if ship.lives <= 0:
+            return "game over"
+        elif not self.aliens:
+            if self.number < max_level:
+                return "solved"
+            else:
+                return "game won"
+        else:
+            return "running"
+
     def start(self, ship):
         ship.reset_position()
         # Resets the Group of aliens
