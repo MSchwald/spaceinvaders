@@ -32,7 +32,7 @@ class Level:
         # Resets the Group of aliens
         self.aliens.empty()
         for (x, y, type, direction) in lst[self.number]:
-            self.aliens.add(Alien(x*settings.grid_width, y*settings.grid_width, type, direction=direction))
+            self.aliens.add(Alien(grid=[x,y], type=type, direction=direction))
 
     def next(self, ship):
         if self.number < max_level:

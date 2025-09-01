@@ -1,4 +1,4 @@
-import pygame
+import pygame, settings
 from numpy.linalg import norm
 from math import sin, cos, pi
 from random import random
@@ -6,7 +6,7 @@ from random import random
 
 class Sprite(pygame.sprite.Sprite):
     # class for all sprites
-    def __init__(self, image, x=0, y=0, v=0, direction=[0, 0], constraints=None, boundary_behaviour="clamp"):
+    def __init__(self, image, grid=None, x=0, y=0, v=0, direction=[0, 0], constraints=None, boundary_behaviour="clamp"):
         # possible boundary behaviours:
         #   clamp: sprite stops at the boundary (e.g. the ship)
         #   reflect: sprite gets reflected from the boundary
@@ -15,6 +15,11 @@ class Sprite(pygame.sprite.Sprite):
         super().__init__()
         self.x = x
         self.y = y
+        self.set_image(image)
+        if grid:
+            self.rect.center = ((grid[0]+1/2)*settings.grid_width,(grid[1]+1/2)*settings.grid_width)
+            self.x = self.rect.x
+            self.y = self.rect.y
         self.v = v
         if direction == "random":
             angle = 2*pi*random()
@@ -24,7 +29,7 @@ class Sprite(pygame.sprite.Sprite):
         self.constraints = constraints
         self.boundary_behaviour = boundary_behaviour
         self._norm = norm(self.direction)
-        self.set_image(image)
+        
 
     def set_image(self, image):
         self.surface = image.surface
