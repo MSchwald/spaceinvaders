@@ -92,7 +92,9 @@ class Ship(Sprite):
                 self.x+self.fire_points[i][0]-settings.bullet_width[self.bullet_sizes[i]]/2, self.y+self.fire_points[i][1], speed, self.bullet_sizes[i]))
 
     def control(self, keys):
-        if self.status == "inverse_controlls":
+        if self.status == "shield":
+            self.change_direction(0,0)
+        elif self.status == "inverse_controlls":
             self.change_direction(-keys[K_d]+keys[K_a], -keys[K_s]+keys[K_w])
         else:
             self.change_direction(keys[K_d]-keys[K_a], keys[K_s]-keys[K_w])
@@ -112,7 +114,7 @@ class Ship(Sprite):
                 self.status = "normal"
             else:
                 self.status = "inverse_controlls"
-                self.effect_timer = 1000*settings.controlls_duration
+                self.controlls_timer = 1000*settings.invert_controlls_duration
             self.update_image()
         elif type == "life_minus":
             self.lose_life()
@@ -129,7 +131,7 @@ class Ship(Sprite):
                 self.score_buff_timer = 1000*settings.score_buff_duration
             self.score_factor *= settings.item_score_buff
         elif type == "shield":
-            self.shields += 1
+            self.shield_timer += 1000*settings.shield_duration
         elif type == "ship_buff":
             self.gain_level()
         elif type == "size_minus":
@@ -156,17 +158,33 @@ class Ship(Sprite):
             if self.speed_factor != 1:
                 self.speed_change_timer = 1000*settings.speed_change_duration
 
+    def activate_shield(self):
+        self.last_status = self.status
+        self.status = "shield"
+        self.update_image()
+
+    def deactivate_shield(self):
+        if self.status == "shield":
+            self.status = self.last_status
+            self.update_image()
+
     def reset_items(self):
         self.bullets_buff = 0
         self.speed_factor = 1
         self.magnet = False
         self.missiles = 0
         self.score_factor = 1
-        self.shields = 0
+        self.shield_timer = 1000*settings.shield_starting_timer
         self.size_factor = 1
         self.status = "normal"
+        self.last_status = "normal"
 
     def update(self, dt):
+        if self.status == "shield":
+            self.shield_timer = max(self.shield_timer - dt, 0)
+            if self.shield_timer == 0:
+                self.status = self.last_status
+                self.update_image()
         if self.score_factor != 1:
             self.score_buff_timer -= dt
             if self.score_buff_timer <= 0:
@@ -183,7 +201,7 @@ class Ship(Sprite):
                 self.update_image()
         if self.status == "inverse_controlls":
             self.controlls_timer -= dt
-            if self.effect_timer <= 0:
+            if self.controlls_timer <= 0:
                 self.status = "normal"
                 self.update_image()
         super().update(dt)

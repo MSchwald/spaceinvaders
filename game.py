@@ -103,13 +103,17 @@ class Game:
                     # SPACE shoots bullets
                     elif event.key == K_SPACE and len(self.ship.bullets) < settings.max_bullets*(2*self.ship.level-1):
                         self.ship.shoot_bullets()
-                    # Keys to test the different ship-levels
+                    # Keys to test the different ship-levels, only for beta-version
                     elif event.key == K_1:
                         self.ship.set_level(1)
                     elif event.key == K_2:
                         self.ship.set_level(2)
                     elif event.key == K_3:
                         self.ship.set_level(3)
+                    elif event.key == K_LSHIFT:
+                        self.ship.activate_shield()
+                if event.type == KEYUP and event.key == K_LSHIFT:
+                    self.ship.deactivate_shield()
             # Navigating the menu
             if self.mode == "menu":
                 if event.type == KEYDOWN:
@@ -163,15 +167,21 @@ class Game:
         # Check if aliens hit the ship
         for alien in self.level.aliens:
             if pygame.sprite.collide_mask(self.ship, alien):
-                self.ship.get_damage(alien.energy)
-                self.ship.score += self.ship.score_factor*alien.points
-                alien.kill()
+                if self.ship.status == "shield":
+                    alien.change_direction(-alien.direction[0],-alien.direction[1])
+                else:
+                    self.ship.get_damage(alien.energy)
+                    self.ship.score += self.ship.score_factor*alien.points
+                    alien.kill()
 
         # Check if ship collects an item
         for item in self.level.items:
             if pygame.sprite.collide_mask(self.ship, item):
-                self.ship.collect_item(item.type)
-                item.kill()
+                if self.ship.status == "shield":
+                    item.change_direction(-item.direction[0],-item.direction[1])
+                else:
+                    self.ship.collect_item(item.type)
+                    item.kill()
 
     def check_level_status(self):
         """Check if the current level is solved or the player is game over"""
@@ -189,7 +199,7 @@ class Game:
         self.screen.fill(settings.bg_color)
         # blit the game stats onto the screen
         game_stats = self.font.stats.render(
-            f"Score: {self.ship.score}, Level: {self.level.number}, Lives: {self.ship.lives}, Energy: {self.ship.energy}, Shields: {self.ship.shields}, Missiles: {self.ship.missiles}", False, (255, 255, 255))
+            f"Score: {self.ship.score}, Level: {self.level.number}, Lives: {self.ship.lives}, Energy: {self.ship.energy}, Shield: {self.ship.shield_timer/1000}, Missiles: {self.ship.missiles}", False, (255, 255, 255))
         self.screen.blit(game_stats, (10, 10))
 
         # blit updated sprites
