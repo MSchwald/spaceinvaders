@@ -144,7 +144,7 @@ class Game:
         """Checks for collisions of sprites, inflicts damage, adds points, generate items"""
         # Check if bullets hit aliens
         collisions = pygame.sprite.groupcollide(
-            self.ship.bullets, self.level.aliens, True, False)
+            self.ship.bullets, self.level.aliens, True, False, collided=pygame.sprite.collide_mask)
         for bullet in collisions.keys():
             for alien in collisions[bullet]:
                 alien.get_damage(bullet.damage)
@@ -161,17 +161,17 @@ class Game:
                     alien.remove(self.level.aliens)
 
         # Check if aliens hit the ship
-        collisions = pygame.sprite.spritecollide(
-            self.ship, self.level.aliens, True)
-        for alien in collisions:
-            self.ship.get_damage(alien.energy)
-            self.ship.score += alien.points
+        for alien in self.level.aliens:
+            if pygame.sprite.collide_mask(self.ship, alien):
+                self.ship.get_damage(alien.energy)
+                self.ship.score += alien.points
+                alien.kill()
 
         # Check if ship collects an item
-        collisions = pygame.sprite.spritecollide(
-            self.ship, self.level.items, True)
-        for item in collisions:
-            self.ship.collect_item(item.type)
+        for item in self.level.items:
+            if pygame.sprite.collide_mask(self.ship, item):
+                self.ship.collect_item(item.type)
+                item.kill()
 
     def check_level_status(self):
         """Check if the current level is solved or the player is game over"""

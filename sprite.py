@@ -40,6 +40,7 @@ class Sprite(pygame.sprite.Sprite):
         self.w = image.w
         self.h = image.h
         self.rect = pygame.Rect(int(self.x), int(self.y), self.w, self.h)
+        self.mask = image.mask
 
     def change_image(self, image):
         # changes the image preserving the center of the sprite

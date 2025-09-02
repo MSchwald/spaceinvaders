@@ -12,7 +12,7 @@ starting_score = 0
 ship_starting_level = 1
 level_speed = {1: 0.5, 2: 0.6, 3: 0.7}
 level_energy = {1: 10, 2: 20, 3: 30}
-ship_lives = 2
+ship_lives = 3
 ship_width = {1:grid_width, 2:grid_width, 3:1.2*grid_width}
 
 # Bullet settings
