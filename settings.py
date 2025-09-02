@@ -14,6 +14,9 @@ level_speed = {1: 0.5, 2: 0.6, 3: 0.7}
 level_energy = {1: 10, 2: 20, 3: 30}
 ship_lives = 3
 ship_width = {1:grid_width, 2:grid_width, 3:1.2*grid_width}
+shield_starting_timer = 3
+max_shield_duration = 10
+
 
 # Bullet settings
 bullet_width = {1:7/100*grid_width, 2:9/100*grid_width, 3:11/100*grid_width}
@@ -40,6 +43,9 @@ item_constraints = [0, 0, screen_width, screen_height]
 # Bullet settings
 bullet_speed = 1
 max_bullets = 3
+starting_missiles = 1
+missile_explosion_size = 1.5*grid_width
+missile_duration = 0.5
 
 # Item settings
 item_types = ["size_plus","size_minus", "score_buff", "bullets_buff", "hp_plus", "invert_controlls", "life_plus","life_minus", "magnet", "missile", "shield", "ship_buff", "speed_buff", "speed_nerf"]
@@ -49,7 +55,6 @@ size_change_duration = 10
 speed_change_duration = 5
 score_buff_duration = 10
 shield_duration = 3
-shield_starting_timer = 3
 item_probability = 1#0.5
 item_speed = 0.3
 hp_plus = 5

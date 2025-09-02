@@ -114,6 +114,9 @@ class Game:
                         self.ship.activate_shield()
                 if event.type == KEYUP and event.key == K_LSHIFT:
                     self.ship.deactivate_shield()
+                if event.type == MOUSEBUTTONDOWN and event.button == 1:
+                    x,y = event.pos
+                    self.ship.shoot_missile(x,y)
             # Navigating the menu
             if self.mode == "menu":
                 if event.type == KEYDOWN:

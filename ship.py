@@ -131,7 +131,7 @@ class Ship(Sprite):
                 self.score_buff_timer = 1000*settings.score_buff_duration
             self.score_factor *= settings.item_score_buff
         elif type == "shield":
-            self.shield_timer += 1000*settings.shield_duration
+            self.shield_timer == min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
         elif type == "ship_buff":
             self.gain_level()
         elif type == "size_minus":
@@ -168,11 +168,16 @@ class Ship(Sprite):
             self.status = self.last_status
             self.update_image()
 
+    def shoot_missile(self, x, y):
+        if self.missiles > 0:
+            self.missiles -= 1
+            self.bullets.add(Bullet(x-settings.missile_explosion_size/2, y-settings.missile_explosion_size/2, 0, 15, timer=1000*settings.missile_duration))
+
     def reset_items(self):
         self.bullets_buff = 0
         self.speed_factor = 1
         self.magnet = False
-        self.missiles = 0
+        self.missiles = settings.starting_missiles
         self.score_factor = 1
         self.shield_timer = 1000*settings.shield_starting_timer
         self.size_factor = 1
