@@ -42,7 +42,7 @@ bullet_speed = 1
 max_bullets = 3
 
 # Item settings
-item_types = ["score_buff","size_plus","size_minus","bullets_buff", "hp_plus", "invert_controlls", "life_plus","life_minus", "magnet", "missile", "shield", "ship_buff", "speed_buff", "speed_nerf"]
+item_types = ["size_minus","size_plus", "score_buff", "bullets_buff", "hp_plus", "invert_controlls", "life_plus","life_minus", "magnet", "missile", "shield", "ship_buff", "speed_buff", "speed_nerf"]
 item_size = 0.5*grid_width
 item_duration = 5
 item_probability = 1#0.5
@@ -51,8 +51,8 @@ hp_plus = 5
 speed_buff = 1.6
 speed_nerf = 1/speed_buff
 item_score_buff = 1.5
-item_size_minus = 1/1.5
 item_size_plus = 1.5
+item_size_minus = 1/item_size_plus
 
 # Display settings
 healthbar_width =2*grid_width

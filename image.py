@@ -8,45 +8,68 @@ screen = pygame.display.set_mode(
 class Image:
     '''Class to manage loading images to be used as surfaces for sprites.
     (Inheriting properties from the 'Surface'-class is not be possible in pygame)'''
-    def __init__(self, path, colorkey=(0,0,0), scaling_width=None):
-        #loads images, trims their boundary and makes it transparent
-        raw_image = pygame.image.load(path)
-        # colorkey:
-        temp = raw_image.copy()
-        temp.set_colorkey(colorkey)
-        mask = pygame.mask.from_surface(temp)
-        mask.invert()
-        mask = mask.connected_component()
-        mask.invert()
-        masked_image = mask.to_surface(surface=raw_image, setcolor=None)
-        temp = masked_image.copy()
-        temp.set_colorkey((0,0,0))
-        bounding_rect = masked_image.get_bounding_rect()
-        self.surface = pygame.Surface(bounding_rect.size)
-        self.surface.blit(masked_image,(0,0),bounding_rect)
-        self.surface.set_colorkey((0,0,0))
-        self.rect = self.surface.get_rect()
-        self.w = self.rect.w
-        self.h = self.rect.h
-        if scaling_width:
-            self.rescale(width=scaling_width)
-        self.mask = pygame.mask.from_surface(self.surface)
+    def __init__(self, surface, mask, colorkey = None):
+        self.surface = surface
+        self.mask = mask
+        if colorkey:
+            self.surface.set_colorkey(colorkey)
 
-    def rescale(self, width=100):
+    @property
+    def rect(self):
+        return self.surface.get_rect()
+    
+    @property
+    def w(self):
+        return self.rect.w
+    
+    @property
+    def h(self):
+        return self.rect.h
+
+    def scale_by(self, factor):
+        return Image(pygame.transform.scale(self.surface, (factor*self.w, factor*self.h)),
+            self.mask.scale((factor*self.w, factor*self.h)))
+
+    def rescale(self, width):
         factor = width / self.w
-        self.surface = pygame.transform.scale(
-            self.surface, (factor*self.w, factor*self.h))
-        self.rect = self.surface.get_rect()
-        self.w = self.rect.w
-        self.h = self.rect.h
-
-    def blit(self, screen):
-        screen.blit(self.surface, self.rect, colorkey=self.surface.get_colorkey())
+        scale_by(self, factor)
 
     cache = {}
     @classmethod
-    def load(cls, path, colorkey=settings.bg_color, scaling_width=None):
+    def load(cls, path, colorkey=(0,0,0), scaling_width=None):
         #lazy image loader, each image gets loaded only once
-        if path not in cls.cache:
-            cls.cache[path] = Image(path, colorkey, scaling_width)
-        return cls.cache[path]
+        if path in cls.cache:
+            return cls.cache[path]
+        else:
+            #loads images, trims their boundary and makes it transparent
+            raw_image = pygame.image.load(path)
+            if colorkey != (0,0,0):
+                temp = raw_image.copy()
+                temp.set_colorkey(colorkey)
+                mask = pygame.mask.from_surface(temp)
+                mask.invert()
+                mask = mask.connected_component()
+                mask.invert()
+                masked_image = mask.to_surface(surface=raw_image, setcolor=None)
+                temp = masked_image.copy()
+                temp.set_colorkey((0,0,0))
+                bounding_rect = masked_image.get_bounding_rect()
+                surface = pygame.Surface(bounding_rect.size)
+                surface.blit(masked_image,(0,0),bounding_rect)
+                surface.set_colorkey((0,0,0))
+            else:
+                bounding_rect = raw_image.get_bounding_rect()
+                surface = pygame.Surface(bounding_rect.size)
+                surface.blit(raw_image,(0,0),bounding_rect)
+                surface.set_colorkey((0,0,0))
+            if scaling_width:
+                factor = scaling_width / bounding_rect.w
+                surface = pygame.transform.scale(
+                            surface, (factor*bounding_rect.w, factor*bounding_rect.h))
+            mask = pygame.mask.from_surface(surface)
+            image = Image(surface, mask)
+            cls.cache[path] = image
+            return image
+
+    def blit(self, screen):
+        screen.blit(self.surface, self.rect, colorkey=self.surface.get_colorkey())

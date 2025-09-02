@@ -2,6 +2,7 @@ import pygame, settings
 from numpy.linalg import norm
 from math import sin, cos, pi
 from random import random
+from image import Image
 
 
 class Sprite(pygame.sprite.Sprite):
@@ -34,7 +35,6 @@ class Sprite(pygame.sprite.Sprite):
         self.boundary_behaviour = boundary_behaviour
         self._norm = norm(self.direction)
         
-
     def set_image(self, image):
         self.surface = image.surface
         self.w = image.w
@@ -48,6 +48,12 @@ class Sprite(pygame.sprite.Sprite):
         self.set_image(image)
         self.rect.center = center
         self.change_position(self.rect.x, self.rect.y)
+
+    def scale_image_by(self, factor):
+        # rescales the image preserving the center of the sprite
+        image = Image(self.surface, self.mask)
+        image.scale_by(factor)
+        self.change_image(image)
 
     def change_direction(self, x, y):
         self.direction = (x, y)
