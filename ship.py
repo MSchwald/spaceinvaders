@@ -38,7 +38,7 @@ class Ship(Sprite):
     def set_level(self, ship_level):
         """Updates the level and dependend private variables"""
         self.level = ship_level
-        self.v = settings.level_speed[ship_level]
+        self.v = self.speed_factor*settings.level_speed[ship_level]
         self.update_image()
         self.max_energy = settings.level_energy[ship_level]
         self.energy = self.max_energy
@@ -125,6 +125,8 @@ class Ship(Sprite):
         elif type == "missile":
             self.missiles += 1
         elif type == "score_buff":
+            if self.score_factor == 1:
+                self.score_buff_timer = 1000*settings.score_buff_duration
             self.score_factor *= settings.item_score_buff
         elif type == "shield":
             self.shields += 1
@@ -143,11 +145,16 @@ class Ship(Sprite):
                 if self.size_factor != 1:
                     self.size_change_timer = 1000*settings.size_change_duration
         elif type == "speed_buff":
-            self.speed_factor = settings.speed_buff
-            self.v *= self.speed_factor
+            if self.v*settings.speed_buff < settings.bullet_speed:
+                self.speed_factor = settings.speed_buff
+                self.v = self.speed_factor*settings.level_speed[self.level]
+                if self.speed_factor != 1:
+                    self.speed_change_timer = 1000*settings.speed_change_duration
         elif type == "speed_nerf":
             self.speed_factor = settings.speed_nerf
-            self.v *= self.speed_factor
+            self.v = self.speed_factor*settings.level_speed[self.level]
+            if self.speed_factor != 1:
+                self.speed_change_timer = 1000*settings.speed_change_duration
 
     def reset_items(self):
         self.bullets_buff = 0
@@ -160,6 +167,15 @@ class Ship(Sprite):
         self.status = "normal"
 
     def update(self, dt):
+        if self.score_factor != 1:
+            self.score_buff_timer -= dt
+            if self.score_buff_timer <= 0:
+                self.score_factor = 1
+        if self.speed_factor != 1:
+            self.speed_change_timer -= dt
+            if self.speed_change_timer <= 0:
+                self.speed_factor = 1
+                self.v = settings.level_speed[self.level]
         if self.size_factor != 1:
             self.size_change_timer -= dt
             if self.size_change_timer <= 0:
