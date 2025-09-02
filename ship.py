@@ -40,7 +40,8 @@ class Ship(Sprite):
         self.level = ship_level
         self.v = settings.level_speed[ship_level]
         self.update_image()
-        self.energy = settings.level_energy[ship_level]
+        self.max_energy = settings.level_energy[ship_level]
+        self.energy = self.max_energy
         self.reset_firepoints()
 
     def reset_firepoints(self):
@@ -115,6 +116,10 @@ class Ship(Sprite):
             else:
                 self.status = "inverse_controlls"
             self.update_image()
+        elif type == "life_minus":
+            self.lose_life()
+        elif type == "life_plus":
+            self.lives += 1
         elif type == "magnet":
             self.magnet = True
             self.status = "magnetic"

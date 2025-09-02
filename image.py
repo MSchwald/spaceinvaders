@@ -39,7 +39,6 @@ class Image:
         self.rect = self.surface.get_rect()
         self.w = self.rect.w
         self.h = self.rect.h
-        print(self.rect)
 
     def blit(self, screen):
         screen.blit(self.surface, self.rect, colorkey=self.surface.get_colorkey())

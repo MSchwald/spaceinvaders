@@ -42,13 +42,15 @@ bullet_speed = 1
 max_bullets = 3
 
 # Item settings
-item_types = ["bullets_buff", "hp_plus", "invert_controlls", "magnet", "missile", "shield", "ship_buff", "speed_buff", "speed_nerf"]
+item_types = ["bullets_buff", "hp_plus", "invert_controlls", "life_plus","life_minus", "magnet", "missile", "shield", "ship_buff", "speed_buff", "speed_nerf"]
 item_size = 0.5*grid_width
 item_duration = 5
 item_probability = 0.5
 item_speed = 0.3
 hp_plus = 5
 
+# Display settings
+healthbar_width =2*grid_width
 
 # Fonts
 stats_font = "fonts/ARCADE_I.ttf"

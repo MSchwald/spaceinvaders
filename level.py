@@ -38,7 +38,6 @@ class Level:
     def next(self, ship):
         if self.number < max_level:
             self.number += 1
-            ship.set_level(min(3, ship.level+1))
             self.start(ship)
 
     def restart(self, ship):
