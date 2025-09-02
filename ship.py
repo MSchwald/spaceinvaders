@@ -92,17 +92,14 @@ class Ship(Sprite):
                 self.x+self.fire_points[i][0]-settings.bullet_width[self.bullet_sizes[i]]/2, self.y+self.fire_points[i][1], speed, self.bullet_sizes[i]))
 
     def control(self, keys):
-        self.change_direction(self.controlls_factor*(keys[K_d]-keys[K_a]), self.controlls_factor*(keys[K_s]-keys[K_w]))
+        if self.status == "inverse_controlls":
+            self.change_direction(-keys[K_d]+keys[K_a], -keys[K_s]+keys[K_w])
+        else:
+            self.change_direction(keys[K_d]-keys[K_a], keys[K_s]-keys[K_w])
 
     def update_image(self):
-        if self.status == "normal":
-            self.change_image(Image.load(f'images/ship/a-{self.level}.png').scale_by(self.size_factor))
-        elif self.status == "inverse_controlls":
-            self.change_image(Image.load(f'images/ship/g-{self.level}.png').scale_by(self.size_factor))
-        elif self.status == "shield":
-            self.change_image(Image.load(f'images/ship/h-{self.level}.png').scale_by(self.size_factor))
-        elif self.status == "magnetic":
-            self.change_image(Image.load(f'images/ship/e-{self.level}.png').scale_by(self.size_factor))
+        letter = {"normal":"a", "inverse_controlls":"g", "shield":"h", "magnetic":"e"}[self.status]
+        self.change_image(Image.load(f'images/ship/{letter}-{self.level}.png').scale_by(self.size_factor))
         self.reset_firepoints()
 
     def collect_item(self, type):
@@ -111,7 +108,6 @@ class Ship(Sprite):
         elif type == "hp_plus":
             self.energy += settings.hp_plus
         elif type == "invert_controlls":
-            self.controlls_factor *= -1
             if self.status == "inverse_controlls":
                 self.status = "normal"
             else:
@@ -151,7 +147,6 @@ class Ship(Sprite):
 
     def reset_items(self):
         self.bullets_buff = 0
-        self.controlls_factor = 1
         self.speed_factor = 1
         self.magnet = False
         self.missiles = 0
@@ -159,4 +154,3 @@ class Ship(Sprite):
         self.shields = 0
         self.size_factor = 1
         self.status = "normal"
-        
