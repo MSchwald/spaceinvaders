@@ -6,7 +6,7 @@ from random import random
 
 class Sprite(pygame.sprite.Sprite):
     # class for all sprites
-    def __init__(self, image, grid=None, center=None, x=0, y=0, v=0, direction=[0, 0], constraints=None, boundary_behaviour="clamp"):
+    def __init__(self, image, grid=None, center=None, x=0, y=0, v=0, direction=(0, 0), constraints=None, boundary_behaviour="clamp"):
         # possible boundary behaviours:
         #   clamp: sprite stops at the boundary (e.g. the ship)
         #   reflect: sprite gets reflected from the boundary
@@ -27,7 +27,7 @@ class Sprite(pygame.sprite.Sprite):
         self.v = v
         if direction == "random":
             angle = 2*pi*random()
-            self.direction = [cos(angle),sin(angle)]
+            self.direction = (cos(angle),sin(angle))
         else:
             self.direction = direction
         self.constraints = constraints
@@ -50,7 +50,7 @@ class Sprite(pygame.sprite.Sprite):
         self.change_position(self.rect.x, self.rect.y)
 
     def change_direction(self, x, y):
-        self.direction = [x, y]
+        self.direction = (x, y)
         self._norm = norm(self.direction)
 
     def turn_direction(self, phi):
@@ -69,12 +69,12 @@ class Sprite(pygame.sprite.Sprite):
             if self.boundary_behaviour == "reflect":
                 if x != x_clamp:
                     self.x = 2*x_clamp-x
-                    self.direction[0] *= -1
+                    self.direction = (-self.direction[0],self.direction[1])
                 else:
                     self.x = x_clamp
                 if y != y_clamp:
                     self.y = 2*y_clamp-y
-                    self.direction[1] *= -1
+                    self.direction = (self.direction[0],-self.direction[1])
                 else:
                     self.y = y_clamp
             else:

@@ -3,9 +3,9 @@ from pygame.locals import *
 from alien import Alien
 
 #placement of enemies in an 16x9-grid
-lst = {1: [(4, 1, "big_asteroid", "random"), (6, 1, "big_asteroid", [0,1]), (9, 1, "big_asteroid", [0,1]), (11, 1, "big_asteroid", "random"), (2, 1, "small_asteroid", "random"), (13, 1, "small_asteroid", "random")],
-2: [(1, 1, "purple", [1, 1]), (3, 1, "big_asteroid", [1, 1]), (5, 1, "purple", [1, 1])],
-3: [(1, 1, "ufo", [2, 0])]}
+lst = {1: [(4, 1, "big_asteroid", "random"), (6, 1, "big_asteroid", (0,1)), (9, 1, "big_asteroid", (0,1)), (11, 1, "big_asteroid", "random"), (2, 1, "small_asteroid", "random"), (13, 1, "small_asteroid", "random")],
+2: [(1, 1, "purple", (1, 1)), (3, 1, "big_asteroid", (1, 1)), (5, 1, "purple", (1, 1))],
+3: [(1, 1, "ufo", (2, 0))]}
 max_level = max(lst.keys())
 
 

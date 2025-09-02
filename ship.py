@@ -10,7 +10,7 @@ class Ship(Sprite):
     """A class to manage the ship."""
 
     def __init__(self, x=0, y=0, ship_lives=settings.ship_lives, ship_level=settings.ship_starting_level):
-        super().__init__(Image.load(f"images/ship/a-{ship_level}.PNG", scaling_width=settings.ship_width[ship_level]), x=0, y=0, constraints=pygame.Rect(
+        super().__init__(Image.load(f"images/ship/a-{ship_level}.png", scaling_width=settings.ship_width[ship_level]), x=0, y=0, constraints=pygame.Rect(
             settings.ship_constraints), boundary_behaviour="clamp")
         # initializes an empty group of sprites for the bullets shot by the ship
         self.bullets = pygame.sprite.Group()
