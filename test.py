@@ -3,30 +3,31 @@ from image import Image
 
 pygame.init()
 
+screen = pygame.display.set_mode((1600,900))
 
 
-screen = pygame.display.set_mode((1200,800))
+w,h = health.w,health.h
+n=0
 
 while True:
     screen.fill((0,0,0))
 
-    '''health = pygame.image.load("images/Health bar/health.png")
-                w,h=health.get_size()
-                empty_bar = pygame.image.load("images/Health bar/empty_bar.png")
-                screen.blit(empty_bar,(0,0))
-                screen.blit(health,(19,18), area=(0,0,5/15*w,h))'''
+    
+    screen.blit(empty_bar.surface,(0,0))
+    screen.blit(health.surface,(19,18), area=(0,0,n/45*w,h))
 
-    image = Image.load('images/ship/a-1.png')
-
-    screen.blit(image.scale_by(2).surface,(0,0))
+    #screen.blit(image.scale_by(2).surface,(0,0))
     pygame.display.flip()
-
-
-
-
 
 
     for event in pygame.event.get():
             # Clicking the 'X' of the window ends the game
             if event.type == pygame.QUIT:
                 sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    n = max(0,n-1)
+                if event.key == pygame.K_RIGHT:
+                    n = min(45,n+1)
+
+

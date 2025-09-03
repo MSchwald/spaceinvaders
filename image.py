@@ -36,8 +36,9 @@ class Image:
 
     cache = {}
     @classmethod
-    def load(cls, path, colorkey=(0,0,0), scaling_width=None):
-        #lazy image loader, each image gets loaded only once
+    def load(cls, path, colorkey=(0,0,0), scaling_width=None, scaling_height=None):
+        '''lazy image loader, each image gets loaded and formated only once,
+            either the desired width or height can be specified'''
         if path in cls.cache:
             return cls.cache[path]
         else:
@@ -66,6 +67,11 @@ class Image:
                 factor = scaling_width / bounding_rect.w
                 surface = pygame.transform.scale(
                             surface, (factor*bounding_rect.w, factor*bounding_rect.h))
+            elif scaling_height:
+                factor = scaling_height / bounding_rect.h
+                surface = pygame.transform.scale(
+                            surface, (factor*bounding_rect.w, factor*bounding_rect.h))
+
             mask = pygame.mask.from_surface(surface)
             image = Image(surface, mask)
             cls.cache[path] = image

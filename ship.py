@@ -131,7 +131,7 @@ class Ship(Sprite):
                 self.score_buff_timer = 1000*settings.score_buff_duration
             self.score_factor *= settings.item_score_buff
         elif type == "shield":
-            self.shield_timer == min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
+            self.shield_timer = min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
         elif type == "ship_buff":
             self.gain_level()
         elif type == "size_minus":

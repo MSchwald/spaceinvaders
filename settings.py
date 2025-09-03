@@ -11,11 +11,11 @@ bg_color = (0, 0, 0)
 starting_score = 0
 ship_starting_level = 1
 level_speed = {1: 0.5, 2: 0.6, 3: 0.7}
-level_energy = {1: 10, 2: 20, 3: 30}
+level_energy = {1: 15, 2: 30, 3: 45}
 ship_lives = 3
 ship_width = {1:grid_width, 2:grid_width, 3:1.2*grid_width}
 shield_starting_timer = 3
-max_shield_duration = 10
+max_shield_duration = 15
 
 
 # Bullet settings
@@ -74,4 +74,3 @@ text_font = "fonts/ARCADE_R.ttf"
 menu_boundary = 20
 title_menu_distance = 30
 line_distance = 12
-

@@ -10,6 +10,7 @@ from image import Image
 from random import random, choice
 from item import Item
 from sprite import Sprite
+from statusbar import Statusbar
 
 
 class Game:
@@ -41,6 +42,9 @@ class Game:
 
         # Initializes the Ship
         self.ship = Ship()
+
+        #Initializes status bar
+        self.statusbar = Statusbar()
 
         # Start the first game level
         self.level = Level(settings.game_starting_level)
@@ -206,10 +210,11 @@ class Game:
     def update_screen(self):
         """Updates screen with all sprites and stats"""
         self.screen.fill(settings.bg_color)
+
+        self.statusbar.blit(self.screen, self.ship, self.level.number)
         # blit the game stats onto the screen
-        game_stats = self.font.stats.render(
-            f"Score: {self.ship.score}, Level: {self.level.number}, Lives: {self.ship.lives}, Energy: {self.ship.energy}, Shield: {self.ship.shield_timer/1000}, Missiles: {self.ship.missiles}", False, (255, 255, 255))
-        self.screen.blit(game_stats, (10, 10))
+        #game_stats = self.font.stats.render(f"Score: {int(self.ship.score)}, Level: {self.level.number}, Lives: {self.ship.lives}, Shield: {self.ship.shield_timer/1000}, Missiles: {self.ship.missiles}", False, (255, 255, 255))
+        #self.screen.blit(game_stats, (10, 100))
 
         # blit updated sprites
         self.blit_sprites()
