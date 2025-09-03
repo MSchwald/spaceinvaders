@@ -31,7 +31,8 @@ class Level:
 
     def start(self, ship):
         ship.reset_position()
-        # Resets the Group of aliens
+        # Resets the Groups of bullets and aliens
+        self.bullets.empty()
         self.aliens.empty()
         for (x, y, type, direction) in lst[self.number]:
             self.aliens.add(Alien(grid=[x,y], type=type, direction=direction))
