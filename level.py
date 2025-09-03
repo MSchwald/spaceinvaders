@@ -14,6 +14,7 @@ class Level:
 
     def __init__(self, number):
         self.number = number
+        self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
 

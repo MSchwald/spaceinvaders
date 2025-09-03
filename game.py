@@ -107,8 +107,8 @@ class Game:
                         self.active_menu = self.pause_menu
                         break
                     # SPACE shoots bullets
-                    elif event.key == K_SPACE and len(self.ship.bullets) < settings.max_bullets*(2*self.ship.level-1):
-                        self.ship.shoot_bullets()
+                    elif event.key == K_SPACE:
+                        self.ship.shoot_bullets(self.level)
                     # Keys to test the different ship-levels, only for beta-version
                     elif event.key == K_1:
                         self.ship.set_level(1)
@@ -122,7 +122,7 @@ class Game:
                     self.ship.deactivate_shield()
                 if event.type == MOUSEBUTTONDOWN and event.button == 1:
                     x,y = event.pos
-                    self.ship.shoot_missile(x,y)
+                    self.ship.shoot_missile(self.level,x,y)
             # Navigating the menu
             if self.mode == "menu":
                 if event.type == KEYDOWN:
@@ -143,7 +143,7 @@ class Game:
 
     def update_sprites(self, dt):
         """update position of all sprites according to the passed time"""
-        for bullet in self.ship.bullets:
+        for bullet in self.level.bullets:
             bullet.update(dt)
 
         self.ship.update(dt)
@@ -161,7 +161,7 @@ class Game:
         """Checks for collisions of sprites, inflicts damage, adds points, generate items"""
         # Check if bullets hit aliens
         collisions = pygame.sprite.groupcollide(
-            self.ship.bullets, self.level.aliens, True, False, collided=pygame.sprite.collide_mask)
+            self.level.bullets, self.level.aliens, True, False, collided=pygame.sprite.collide_mask)
         for bullet in collisions.keys():
             for alien in collisions[bullet]:
                 alien.get_damage(bullet.damage)
@@ -229,7 +229,7 @@ class Game:
 
     def blit_sprites(self):
         """blit the updated sprites"""
-        for bullet in self.ship.bullets:
+        for bullet in self.level.bullets:
             bullet.blit(self.screen)
         self.ship.blit(self.screen)
 

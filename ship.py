@@ -12,14 +12,10 @@ class Ship(Sprite):
     def __init__(self, x=0, y=0, ship_lives=settings.ship_lives, ship_level=settings.ship_starting_level):
         super().__init__(Image.load(f"images/ship/a-{ship_level}.png", scaling_width=settings.ship_width[ship_level]), x=0, y=0, constraints=pygame.Rect(
             settings.ship_constraints), boundary_behaviour="clamp")
-        # initializes an empty group of sprites for the bullets shot by the ship
-        self.bullets = pygame.sprite.Group()
         self.start_new_game(ship_lives, ship_level)
 
     def start_new_game(self, ship_lives=settings.ship_lives, ship_level=settings.ship_starting_level):
         """Start new game"""
-        # Delete all bullets
-        self.bullets.empty()
         self.reset_items()
         self.reset_stats(ship_lives, ship_level)
         self.reset_position()
@@ -81,17 +77,18 @@ class Ship(Sprite):
         if self.energy == 0:
             self.lose_level()
 
-    def shoot_bullets(self):
-        # Takes Doppler effect into account to calculate the bullets' speed
-        doppler = 0
-        if self.direction[1] != 0:
-            doppler = self.v*self.direction[1]/self._norm
-        # Fires bullets
-        for i in range(len(self.fire_points)):
-            type = self.bullet_sizes[i]
-            self.bullets.add(Bullet(type, v=settings.bullet_speed[type]-doppler,
-                                    center=(self.x+self.fire_points[i][0],self.y+self.fire_points[i][1])))
-            print(self.x+self.fire_points[i][0],self.y+self.fire_points[i][1],"\n")
+    def shoot_bullets(self, level):
+        # if there aren't too many bullets on the screen yet
+        if len(level.bullets) < settings.max_bullets*(2*self.level-1):
+            # Takes Doppler effect into account to calculate the bullets' speed
+            doppler = 0
+            if self.direction[1] != 0:
+                doppler = self.v*self.direction[1]/self._norm
+            # Fires bullets
+            for i in range(len(self.fire_points)):
+                type = self.bullet_sizes[i]
+                level.bullets.add(Bullet(type, v=settings.bullet_speed[type]-doppler,
+                                        center=(self.x+self.fire_points[i][0],self.y+self.fire_points[i][1])))
 
     def control(self, keys):
         if self.status == "shield":
@@ -171,10 +168,10 @@ class Ship(Sprite):
             self.status = self.last_status
             self.update_image()
 
-    def shoot_missile(self, x, y):
+    def shoot_missile(self, level, x, y):
         if self.missiles > 0:
             self.missiles -= 1
-            self.bullets.add(Bullet(15, center=(x,y)))
+            level.bullets.add(Bullet(15, center=(x,y)))
 
     def reset_items(self):
         self.bullets_buff = 0
