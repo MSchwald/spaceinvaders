@@ -42,5 +42,6 @@ class Level:
 
     def restart(self, ship):
         self.number = 1
+        self.items.empty()
         ship.start_new_game()
         self.start(ship)

@@ -211,13 +211,14 @@ class Game:
         """Updates screen with all sprites and stats"""
         self.screen.fill(settings.bg_color)
 
+        # first blit the status bar onto the screen
         self.statusbar.blit(self.screen, self.ship, self.level.number)
-        # blit the game stats onto the screen
-        #game_stats = self.font.stats.render(f"Score: {int(self.ship.score)}, Level: {self.level.number}, Lives: {self.ship.lives}, Shield: {self.ship.shield_timer/1000}, Missiles: {self.ship.missiles}", False, (255, 255, 255))
-        #self.screen.blit(game_stats, (10, 100))
 
-        # blit updated sprites
+        # then blit the updated sprites (ship, enemies, items, bullets)
         self.blit_sprites()
+
+        # blit the aim for the missiles on top
+        self.aim.blit(self.screen)
 
         # pause menu
         if self.mode == "menu":
@@ -227,7 +228,7 @@ class Game:
         pygame.display.flip()
 
     def blit_sprites(self):
-        """blit updated sprites onto the background"""
+        """blit the updated sprites"""
         for bullet in self.ship.bullets:
             bullet.blit(self.screen)
         self.ship.blit(self.screen)
@@ -237,4 +238,4 @@ class Game:
         for item in self.level.items:
             item.blit(self.screen)
 
-        self.aim.blit(self.screen)
+        
