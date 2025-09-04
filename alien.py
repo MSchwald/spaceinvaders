@@ -5,6 +5,7 @@ import image
 from image import Image
 from sprite import Sprite
 from bullet import Bullet
+from random import random
 
 class Alien(Sprite):
     """A class to manage the enemies"""
@@ -21,9 +22,14 @@ class Alien(Sprite):
 
     def update(self, dt, level):
         if self.type == "purple":
-            #purple aliens do actions every two seconds
+            #purple aliens do actions every second
             if self.timer//1000 !=(self.timer+dt)//1000:
                 level.bullets.add(Bullet("g",center=self.rect.midbottom))
+
+        elif self.type == "ufo":
+            #ufo aliens do actions every two seconds
+            if self.timer//2000 !=(self.timer+dt)//2000:
+                level.aliens.add(Alien("purple",center=self.rect.midbottom, direction=(2*random()-1,1)))
 
         #timer, movement and animation are handles in the Sprite class
         super().update(dt)

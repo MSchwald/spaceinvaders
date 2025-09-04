@@ -16,6 +16,7 @@ class Ship(Sprite):
 
     def start_new_game(self, ship_lives=settings.ship_lives, ship_level=settings.ship_starting_level):
         """Start new game"""
+        self.bullets = pygame.sprite.Group()
         self.reset_items()
         self.reset_stats(ship_lives, ship_level)
         self.reset_position()
@@ -78,8 +79,8 @@ class Ship(Sprite):
             self.lose_level()
 
     def shoot_bullets(self, level):
-        # if there aren't too many bullets on the screen yet
-        if len(level.bullets) < settings.max_bullets*(2*self.level-1):
+        # if there aren't too many bullets from the ship on the screen yet
+        if len(self.bullets) < settings.max_bullets*(2*self.level-1):
             # Takes Doppler effect into account to calculate the bullets' speed
             doppler = 0
             if self.direction[1] != 0:
@@ -87,8 +88,10 @@ class Ship(Sprite):
             # Fires bullets
             for i in range(len(self.fire_points)):
                 type = self.bullet_sizes[i]
-                level.bullets.add(Bullet(type, v=settings.bullet_speed[type]-doppler,
-                                        center=(self.x+self.fire_points[i][0],self.y+self.fire_points[i][1])))
+                bullet = Bullet(type, v=settings.bullet_speed[type]-doppler,
+                                        center=(self.x+self.fire_points[i][0],self.y+self.fire_points[i][1]))
+                level.bullets.add(bullet)
+                self.bullets.add(bullet)
 
     def control(self, keys):
         if self.status == "shield":
