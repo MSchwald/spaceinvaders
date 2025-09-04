@@ -30,6 +30,7 @@ class Bullet(Sprite):
             frames = [Image.load(f"images/bullet/explosion{n}.png", scaling_factor=settings.missile_explosion_size/810) for n in range(6)]
             animation_type = "vanish"
             animation_time = settings.missile_duration
+            self.hit_enemies = pygame.sprite.Group()
         if v is None:
             v = settings.bullet_speed[type]
         if direction is None:

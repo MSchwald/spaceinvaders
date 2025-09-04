@@ -23,7 +23,7 @@ bullet_width = {1:7/100*grid_width, 2:9/100*grid_width, 3:11/100*grid_width}
 
 # Alien settings
 type_speed = {"big_asteroid": 0.5, "small_asteroid": 1, "purple": 0.4, "ufo": 1}
-type_energy = {"big_asteroid": 4, "small_asteroid": 1, "purple": 5, "ufo": 20}
+type_energy = {"big_asteroid": 4, "small_asteroid": 1, "purple": 20, "ufo": 30}
 type_points = {"big_asteroid": 20,
                "small_asteroid": 10, "purple": 100, "ufo": 500}
 type_width = {"big_asteroid": grid_width,

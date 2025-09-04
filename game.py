@@ -161,21 +161,26 @@ class Game:
         """Checks for collisions of sprites, inflicts damage, adds points, generate items"""
         # Check if bullets hit aliens
         collisions = pygame.sprite.groupcollide(
-            self.level.bullets, self.level.aliens, True, False, collided=pygame.sprite.collide_mask)
+            self.level.bullets, self.level.aliens, False, False, collided=pygame.sprite.collide_mask)
         for bullet in collisions.keys():
             for alien in collisions[bullet]:
-                alien.get_damage(bullet.damage)
-                if alien.energy <= 0 or alien.type == "big_asteroid":
-                    if alien.type == "big_asteroid":
-                        pieces = [
-                            Alien("small_asteroid", center=alien.rect.center, direction=alien.direction) for i in range(4)]
-                        for i in range(4):
-                            pieces[i].turn_direction((2*i+1)*pi/4)
-                            self.level.aliens.add(pieces[i])
-                    self.ship.score += self.ship.score_factor*alien.points
-                    if random() <= settings.item_probability:
-                        self.level.items.add(Item(choice(settings.item_types),center=alien.rect.center))
-                    alien.remove(self.level.aliens)
+                if bullet.type != "missile":
+                    bullet.kill()
+                if bullet.type != "missile" or alien not in bullet.hit_enemies:
+                    alien.get_damage(bullet.damage)
+                    if bullet.type == "missile":
+                        bullet.hit_enemies.add(alien)
+                    if alien.energy <= 0 or alien.type == "big_asteroid":
+                        if alien.type == "big_asteroid":
+                            pieces = [
+                                Alien("small_asteroid", center=alien.rect.center, direction=alien.direction) for i in range(4)]
+                            for i in range(4):
+                                pieces[i].turn_direction((2*i+1)*pi/4)
+                                self.level.aliens.add(pieces[i])
+                        self.ship.score += self.ship.score_factor*alien.points
+                        if random() <= settings.item_probability:
+                            self.level.items.add(Item(choice(settings.item_types),center=alien.rect.center))
+                        alien.remove(self.level.aliens)
 
         # Check if aliens hit the ship
         for alien in self.level.aliens:
