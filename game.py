@@ -244,6 +244,8 @@ class Game:
         # display the new screen
         pygame.display.flip()
 
+        print(len(self.level.bullets),len(self.level.ship_bullets),"\n")
+
     def blit_sprites(self):
         """blit the updated sprites"""
         for bullet in self.level.bullets:

@@ -14,6 +14,7 @@ class Level:
 
     def __init__(self, number):
         self.number = number
+        self.ship_bullets = pygame.sprite.Group()
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
@@ -32,6 +33,7 @@ class Level:
     def start(self, ship):
         ship.reset_position()
         # Resets the Groups of bullets and aliens
+        self.ship_bullets.empty()
         self.bullets.empty()
         self.aliens.empty()
         for (x, y, type, direction) in lst[self.number]:
