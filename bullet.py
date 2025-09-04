@@ -23,14 +23,18 @@ class Bullet(Sprite):
         if effect_time is None:
             effect_time = settings.bullet_effect_time[type]
         self.effect_time = effect_time
-        if type != "missile":
+        if type in [1,2,3]:
             if image is None:
                 image = Image.load(f'images/bullet/{type}.png', scaling_width = settings.bullet_width[type])
-        else:
+        elif type == "missile":
             frames = [Image.load(f"images/bullet/explosion{n}.png", scaling_factor=settings.missile_explosion_size/810) for n in range(6)]
             animation_type = "vanish"
             animation_time = settings.missile_duration
             self.hit_enemies = pygame.sprite.Group()
+        elif type == "g":
+            frames = [Image.load(f"images/bullet/g{n}.png", scaling_factor=2) for n in range(4)]
+            animation_type = "once"
+            animation_time = 0.5
         if v is None:
             v = settings.bullet_speed[type]
         if direction is None:

@@ -17,10 +17,6 @@ ship_width = {1:grid_width, 2:grid_width, 3:1.2*grid_width}
 shield_starting_timer = 3
 max_shield_duration = 15
 
-
-# Bullet settings
-bullet_width = {1:7/100*grid_width, 2:9/100*grid_width, 3:11/100*grid_width}
-
 # Alien settings
 type_speed = {"big_asteroid": 0.5, "small_asteroid": 1, "purple": 0.4, "ufo": 1}
 type_energy = {"big_asteroid": 4, "small_asteroid": 1, "purple": 20, "ufo": 30}
@@ -32,7 +28,7 @@ type_colorkey = {"big_asteroid": (0,0,0),
                "small_asteroid": (0,0,0), "purple": (254,254,254), "ufo": (0,0,0)}
 
 # Game stats
-game_starting_level = 1
+game_starting_level = 2
 
 # boundaries for the movement of the sprites
 # [left, top, width, height]
@@ -46,12 +42,11 @@ starting_missiles = 10
 missile_explosion_size = 1.5*grid_width
 missile_duration = 0.5
 missile_damage = 15
-#7,9,11
-bullet_width = {1:2*7*grid_width/100, 2:2*9*grid_width/100, 3:2*11*grid_width/100, 4:2*13*grid_width/100, "missile":missile_explosion_size}
-bullet_damage = {1:1,2:2,3:3,4:4,"missile":missile_damage}
-bullet_owner = {1:"player",2:"player",3:"player",4:"player","missile":"player"}
-bullet_speed = {1:1,2:1,3:1,4:1,"missile":0}
-bullet_effect_time = {1:None,2:None,3:None,4:None,"missile":1000*missile_duration}
+bullet_width = {1:2*7*grid_width/100, 2:2*9*grid_width/100, 3:2*11*grid_width/100, 4:2*13*grid_width/100, "missile":missile_explosion_size, "g":7/100*grid_width}
+bullet_damage = {1:1,2:2,3:3,4:4,"missile":missile_damage, "g":3}
+bullet_owner = {1:"player",2:"player",3:"player",4:"player","missile":"player", "g":"enemy"}
+bullet_speed = {1:1,2:1,3:1,4:1,"missile":0, "g":0.2}
+bullet_effect_time = {1:None,2:None,3:None,4:None,"missile":1000*missile_duration, "g":None}
 
 # Item settings
 item_types = ["size_plus","size_minus", "score_buff", "bullets_buff", "hp_plus", "invert_controlls", "life_plus","life_minus", "magnet", "missile", "shield", "ship_buff", "speed_buff", "speed_nerf"]

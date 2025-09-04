@@ -149,7 +149,7 @@ class Game:
         self.ship.update(dt)
 
         for alien in self.level.aliens:
-            alien.update(dt)
+            alien.update(dt, self.level)
         for item in self.level.items:
             item.update(dt, self.ship)
 

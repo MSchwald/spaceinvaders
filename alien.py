@@ -4,7 +4,7 @@ import settings
 import image
 from image import Image
 from sprite import Sprite
-
+from bullet import Bullet
 
 class Alien(Sprite):
     """A class to manage the enemies"""
@@ -18,3 +18,12 @@ class Alien(Sprite):
 
     def get_damage(self, damage):
         self.energy -= damage
+
+    def update(self, dt, level):
+        if self.type == "purple":
+            #purple aliens do actions every two seconds
+            if self.timer//500 !=(self.timer+dt)//500:
+                level.bullets.add(Bullet("g",center=self.rect.midbottom))
+
+        #timer, movement and animation are handles in the Sprite class
+        super().update(dt)
