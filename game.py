@@ -187,6 +187,7 @@ class Game:
                     alien.reflect()
                 else:
                     self.level.ship.get_damage(alien.energy)
+                    alien.energy = 0
                     alien.kill()
         
 

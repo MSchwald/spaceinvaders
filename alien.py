@@ -13,8 +13,8 @@ from item import Item
 class Alien(Sprite):
     """A class to manage the enemies"""
 
-    def __init__(self, type, level, cycle_time=None, random_cycle_time=(1000,2000),
-                grid=None, center=None, x=0, y=0, direction=(0,0),
+    def __init__(self, type, level, cycle_time=None, random_cycle_time=(100,200),
+                grid=None, center=None, x=0, y=0, v=None, direction=(0,0), constraints=pygame.Rect(settings.alien_constraints), boundary_behaviour="reflect",
                 scaling_width=settings.grid_width):
         #level: needs access to the level object from the game file
         #cycle_time: Alien periodically does actions after given time (in ms)
@@ -23,10 +23,10 @@ class Alien(Sprite):
         #Load frames and images
         if type in ["big_asteroid", "small_asteroid"]:
             super().__init__(frames = [Image.load(f"images/{type}/{str(n+1)}.png", scaling_width=settings.alien_width[type]) for n in range(14)], animation_type="loop", fps=10, grid=grid, center=center, x=x, y=y, v=settings.alien_speed[type], direction=direction,
-                         constraints=pygame.Rect(settings.alien_constraints), boundary_behaviour="reflect")
+                         constraints=constraints, boundary_behaviour=boundary_behaviour)
         else:
             super().__init__(Image.load(f'images/alien/{str(type)}.png',colorkey=settings.alien_colorkey[type], scaling_width=settings.alien_width[type]), grid=grid, center=center, x=x, y=y, v=settings.alien_speed[type], direction=direction,
-                             constraints=pygame.Rect(settings.alien_constraints), boundary_behaviour="reflect")
+                             constraints=constraints, boundary_behaviour=boundary_behaviour)
         if type == "purple":
             sound.alien_spawn.play()
         
@@ -57,7 +57,8 @@ class Alien(Sprite):
     def do_action(self):
         if self.type == "purple":
             #purple aliens shoot green bullets
-            self.shoot("g")
+            #self.shoot("g")
+            self.level.alien_random_entrance("big_asteroid")
 
         elif self.type == "ufo":
             #ufo aliens throw purple aliens
@@ -72,6 +73,8 @@ class Alien(Sprite):
         self.level.aliens.add(Alien("purple",self.level,center=self.rect.midbottom, direction=(2*random()-1,1)))
 
     def get_damage(self, damage):
+        if self.type == "big_asteroid":
+            self.energy = 0
         self.energy -= damage
         if self.energy > 0 and self.type not in ["big_asteroid", "small_asteroid"]:
             {"purple": sound.enemy_hit,"ufo": sound.metal_hit}[self.type].play()
@@ -79,16 +82,17 @@ class Alien(Sprite):
             self.kill()
 
     def kill(self):
-        {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob}[self.type].play()
-        if self.type == "big_asteroid":
-            # big asteroids split into four smaller asteroids when hit
-            pieces = [Alien("small_asteroid", self.level, center=self.rect.center, direction=self.direction) for i in range(4)]
-            for i in range(4):
-                pieces[i].turn_direction((2*i+1)*pi/4)
-                self.level.aliens.add(pieces[i])
-        self.level.ship.get_points(self.points)
-        if random() <= settings.item_probability:
-            self.level.items.add(Item(choice(settings.item_types),center=self.rect.center))
+        if self.energy <= 0:
+            {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob}[self.type].play()
+            if self.type == "big_asteroid":
+                # big asteroids split into four smaller asteroids when hit
+                pieces = [Alien("small_asteroid", self.level, center=self.rect.center, direction=self.direction, constraints=self.constraints, boundary_behaviour=self.boundary_behaviour) for i in range(4)]
+                for i in range(4):
+                    pieces[i].turn_direction((2*i+1)*pi/4)
+                    self.level.aliens.add(pieces[i])
+            self.level.ship.get_points(self.points)
+            if random() <= settings.item_probability:
+                self.level.items.add(Item(choice(settings.item_types),center=self.rect.center))
         super().kill()
 
     def reflect(self):
