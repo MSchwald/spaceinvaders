@@ -4,6 +4,7 @@ import settings
 from image import Image
 from sprite import Sprite
 from bullet import Bullet
+import sound
 
 
 class Ship(Sprite):
@@ -72,6 +73,7 @@ class Ship(Sprite):
             self.set_level(1)
             self.reset_items()
             game_level.start(self)
+            sound.lose_life.play()
 
     def get_damage(self, damage, game_level):
         self.energy = max(0,self.energy-damage)
@@ -81,6 +83,7 @@ class Ship(Sprite):
     def shoot_bullets(self, level):
         # if there aren't too many bullets from the ship on the screen yet
         if len(level.ship_bullets) < settings.max_bullets*(2*self.level-1):
+            sound.bullet.play()
             # Takes Doppler effect into account to calculate the bullets' speed
             doppler = 0
             if self.direction[1] != 0:
@@ -110,56 +113,74 @@ class Ship(Sprite):
         if type == "bullets_buff":
             self.bullets_buff += 1
             self.reset_firepoints()
+            sound.item_collect.play()
         elif type == "hp_plus":
             self.energy += settings.hp_plus
+            sound.good_item.play()
         elif type == "invert_controlls":
             if self.status == "inverse_controlls":
                 self.status = "normal"
             else:
                 self.status = "inverse_controlls"
                 self.controlls_timer = 1000*settings.invert_controlls_duration
+                sound.bad_item.play()
             self.update_image()
         elif type == "life_minus":
-            self.lose_life()
+            self.lives -= 1
+            if self.lives > 0:
+                self.set_level(1)
+                self.reset_items()
+                sound.lose_life.play()
         elif type == "life_plus":
             self.lives += 1
+            sound.extra_life.play()
         elif type == "magnet":
             self.magnet = True
             self.status = "magnetic"
             self.update_image()
+            sound.item_collect.play()
         elif type == "missile":
             self.missiles += 1
+            sound.collect_missile.play()
         elif type == "score_buff":
             if self.score_factor == 1:
                 self.score_buff_timer = 1000*settings.score_buff_duration
             self.score_factor *= settings.item_score_buff
+            sound.item_collect.play()
         elif type == "shield":
             self.shield_timer = min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
+            sound.good_item.play()
         elif type == "ship_buff":
             self.gain_level()
+            sound.ship_level_up.play()
         elif type == "size_minus":
+            sound.shrink.play()
             if self.size_factor*settings.item_size_minus>=0.3:
                 self.size_factor *= settings.item_size_minus
                 self.update_image()
                 if self.size_factor != 1:
                     self.size_change_timer = 1000*settings.size_change_duration
         elif type == "size_plus":
+            sound.grow.play()
             if self.size_factor*settings.item_size_plus<=1/0.3:
                 self.size_factor *= settings.item_size_plus
                 self.update_image()
                 if self.size_factor != 1:
                     self.size_change_timer = 1000*settings.size_change_duration
         elif type == "speed_buff":
+            sound.item_collect.play()
             if self.v*settings.speed_buff < settings.bullet_speed[1]:
                 self.speed_factor = settings.speed_buff
                 self.v = self.speed_factor*settings.level_speed[self.level]
                 if self.speed_factor != 1:
                     self.speed_change_timer = 1000*settings.speed_change_duration
         elif type == "speed_nerf":
+            sound.bad_item.play()
             self.speed_factor = settings.speed_nerf
             self.v = self.speed_factor*settings.level_speed[self.level]
             if self.speed_factor != 1:
                 self.speed_change_timer = 1000*settings.speed_change_duration
+
 
     def activate_shield(self):
         self.last_status = self.status
@@ -173,6 +194,7 @@ class Ship(Sprite):
 
     def shoot_missile(self, level, x, y):
         if self.missiles > 0:
+            sound.explosion.play()
             self.missiles -= 1
             level.bullets.add(Bullet("missile", center=(x,y)))
 

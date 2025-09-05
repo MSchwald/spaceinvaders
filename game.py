@@ -11,6 +11,7 @@ from random import random, choice
 from item import Item
 from sprite import Sprite
 from statusbar import Statusbar
+import sound
 
 
 class Game:
@@ -60,6 +61,7 @@ class Game:
         self.running = True  # checks if the game gets shut down
         self.mode = "game"  # possible modes: "game", "menu"
         self.level.start(self.ship)
+        sound.start.play()
         while self.running:
             self.handle_events()
 
@@ -118,6 +120,7 @@ class Game:
                         self.ship.set_level(3)
                     elif event.key == K_LSHIFT:
                         self.ship.activate_shield()
+                        sound.shield.play()
                 if event.type == KEYUP and event.key == K_LSHIFT:
                     self.ship.deactivate_shield()
                 if event.type == MOUSEBUTTONDOWN and event.button == 1:
@@ -128,11 +131,14 @@ class Game:
                 if event.type == KEYDOWN:
                     if event.key in [K_w, K_s]:
                         self.active_menu.move_selection(event.key)
+                        sound.menu_move.play()
                     if event.key == K_RETURN:
                         selection = self.active_menu.select()
+                        sound.menu_select.play()
                         if selection == "Restart":
                             self.mode = "game"
                             self.level.restart(self.ship)
+                            sound.start.play()
                         elif selection == "Exit":
                             self.running = False
                             break
@@ -169,10 +175,13 @@ class Game:
                         bullet.kill()
                     if bullet.type != "missile" or alien not in bullet.hit_enemies:
                         alien.get_damage(bullet.damage)
+                        if alien.energy > 0:
+                            sound.enemy_hit.play()
                         if bullet.type == "missile":
                             bullet.hit_enemies.add(alien)
                         if alien.energy <= 0 or alien.type == "big_asteroid":
                             if alien.type == "big_asteroid":
+                                sound.asteroid.play()
                                 pieces = [
                                     Alien("small_asteroid", center=alien.rect.center, direction=alien.direction) for i in range(4)]
                                 for i in range(4):
@@ -182,6 +191,10 @@ class Game:
                             if random() <= settings.item_probability:
                                 self.level.items.add(Item(choice(settings.item_types),center=alien.rect.center))
                             alien.kill()
+                            if alien.type == "small_asteroid":
+                                sound.small_asteroid.play()
+                            elif alien.type != "big_asteroid":
+                                sound.alienblob.play()
 
         # Check if bullets hit the ship
         for bullet in self.level.bullets:
@@ -189,19 +202,28 @@ class Game:
                 if self.ship.status == "shield":
                     bullet.reflect()
                     bullet.owner = "player"
+                    sound.shield_reflect.play()
                 else:
                     self.ship.get_damage(bullet.damage, self.level)
                     bullet.kill()
+                    sound.player_hit.play()
 
         # Check if aliens hit the ship
         for alien in self.level.aliens:
             if pygame.sprite.collide_mask(self.ship, alien):
                 if self.ship.status == "shield":
                     alien.change_direction(-alien.direction[0],-alien.direction[1])
+                    sound.shield_reflect.play()
                 else:
                     self.ship.get_damage(alien.energy, self.level)
                     self.ship.score += self.ship.score_factor*alien.points
                     alien.kill()
+                    if alien.type == "big_asteroid":
+                        sound.asteroid.play()
+                    elif alien.type == "small_asteroid":
+                        sound.small_asteroid.play()
+                    else:
+                        sound.alienblob.play()
         
 
         # Check if ship collects an item

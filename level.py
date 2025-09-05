@@ -1,6 +1,7 @@
 import pygame, settings
 from pygame.locals import *
 from alien import Alien
+import sound
 
 #placement of enemies in an 16x9-grid
 lst = {1: [(4, 1, "big_asteroid", "random"), (6, 1, "big_asteroid", (0,1)), (9, 1, "big_asteroid", (0,1)), (11, 1, "big_asteroid", "random"), (2, 1, "small_asteroid", "random"), (13, 1, "small_asteroid", "random")],
@@ -21,6 +22,7 @@ class Level:
 
     def status(self, ship):
         if ship.lives <= 0:
+            sound.game_over.play()
             return "game over"
         elif not self.aliens:
             if self.number < max_level:
@@ -40,6 +42,7 @@ class Level:
             self.aliens.add(Alien(grid=[x,y], type=type, direction=direction))
 
     def next(self, ship):
+        sound.start.play()
         if self.number < max_level:
             self.number += 1
             self.start(ship)

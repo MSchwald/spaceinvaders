@@ -8,7 +8,6 @@ grid_width = screen_width/16
 bg_color = (0, 0, 0)
 
 # Ship settings
-starting_score = 0
 ship_starting_level = 1
 level_speed = {1: 0.5, 2: 0.6, 3: 0.7}
 level_energy = {1: 15, 2: 30, 3: 45}
@@ -28,7 +27,8 @@ type_colorkey = {"big_asteroid": (0,0,0),
                "small_asteroid": (0,0,0), "purple": (254,254,254), "ufo": (0,0,0)}
 
 # Game stats
-game_starting_level = 2
+game_starting_level = 1
+starting_score = 0
 
 # boundaries for the movement of the sprites
 # [left, top, width, height]

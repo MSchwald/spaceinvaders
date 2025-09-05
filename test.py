@@ -2,7 +2,12 @@ import pygame, sys
 from image import Image
 from sprite import Sprite
 
+
 pygame.init()
+
+sound = pygame.mixer.Sound("sounds/blob.wav")
+
+sound.play()
 
 screen = pygame.display.set_mode((1600,900))
 

@@ -6,6 +6,7 @@ from image import Image
 from sprite import Sprite
 from bullet import Bullet
 from random import random,choice,randint
+import sound
 
 class Alien(Sprite):
     """A class to manage the enemies"""
@@ -39,10 +40,12 @@ class Alien(Sprite):
                     self.cycle_time = randint(self.random_cycle_time[0],self.random_cycle_time[1])
                 if self.type == "purple":
                     #purple aliens shoot bullets
+                    sound.alienshoot1.play()
                     level.bullets.add(Bullet("g",center=self.rect.midbottom))
 
                 elif self.type == "ufo":
                     #ufo aliens throw purple aliens
+                    sound.alien_spawn.play()
                     level.aliens.add(Alien("purple",center=self.rect.midbottom, direction=(2*random()-1,1)))
 
         #timer, movement and animation get handled in the Sprite class
