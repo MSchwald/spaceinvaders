@@ -176,7 +176,10 @@ class Game:
                     if bullet.type != "missile" or alien not in bullet.hit_enemies:
                         alien.get_damage(bullet.damage)
                         if alien.energy > 0:
-                            sound.enemy_hit.play()
+                            if alien.type == "purple":
+                                sound.enemy_hit.play()
+                            if alien.type == "ufo":
+                                sound.metal_hit.play()
                         if bullet.type == "missile":
                             bullet.hit_enemies.add(alien)
                         if alien.energy <= 0 or alien.type == "big_asteroid":
@@ -267,8 +270,6 @@ class Game:
 
         # display the new screen
         pygame.display.flip()
-
-        print(len(self.level.bullets),len(self.level.ship_bullets),"\n")
 
     def blit_sprites(self):
         """blit the updated sprites"""

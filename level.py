@@ -26,8 +26,11 @@ class Level:
             return "game over"
         elif not self.aliens:
             if self.number < max_level:
+                sound.start.play()
                 return "solved"
             else:
+                pygame.mixer.stop()
+                sound.game_won.play()
                 return "game won"
         else:
             return "running"
@@ -42,7 +45,6 @@ class Level:
             self.aliens.add(Alien(grid=[x,y], type=type, direction=direction))
 
     def next(self, ship):
-        sound.start.play()
         if self.number < max_level:
             self.number += 1
             self.start(ship)
