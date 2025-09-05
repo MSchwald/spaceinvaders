@@ -52,3 +52,8 @@ class Bullet(Sprite):
         super().update(dt)
         if self.effect_time and self.timer > self.effect_time:
                 self.kill()
+
+    def reflect(self):
+        sound.shield.stop()
+        sound.shield_reflect.play()
+        super().reflect(flip_x=True, flip_y=True)

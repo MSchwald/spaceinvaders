@@ -30,10 +30,10 @@ class Sprite(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.animation_type = animation_type
+        self.frames = frames
         if animation_type is None:
             self.set_image(image)
         else:
-            self.frames = frames
             self.set_image(frames[0])
             self.frame_number = 0
             self.frame_index = 0
@@ -176,11 +176,11 @@ class Sprite(pygame.sprite.Sprite):
         self.pause_timer = 0
         self.pause_duration = time
 
-    def reflect(self):
+    def reflect(self, flip_x=True, flip_y=True):
         self.direction = (-self.direction[0],-self.direction[1])
-        self.image = Image.reflect(self.image)
+        self.image = Image.reflect(self.image, flip_x, flip_y)
         if self.frames:
-            self.frames = [Image.reflect(image) for image in self.frames]            
+            self.frames = [Image.reflect(image, flip_x, flip_y) for image in self.frames]            
 
     def blit(self, screen):
         screen.blit(self.surface, self.rect)

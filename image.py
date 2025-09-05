@@ -87,11 +87,11 @@ class Image:
 
     reflected_cache ={}
     @classmethod
-    def reflect(cls, image):
+    def reflect(cls, image, flip_x, flip_y):
         if id(image.surface) in cls.reflected_cache:
             return cls.reflected_cache[id(image.surface)]
         else:
-            flipped_surface = pygame.transform.flip(image.surface, flip_x=True, flip_y=True)
+            flipped_surface = pygame.transform.flip(image.surface, flip_x=flip_x, flip_y=flip_y)
             flipped_image = Image(flipped_surface, pygame.mask.from_surface(flipped_surface))
             cls.reflected_cache[id(image.surface)] = flipped_image
             return flipped_image

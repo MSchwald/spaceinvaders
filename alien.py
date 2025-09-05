@@ -71,6 +71,7 @@ class Alien(Sprite):
     def kill(self):
         {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob}[self.type].play()
         if self.type == "big_asteroid":
+            # big asteroids split into four smaller asteroids when hit
             pieces = [Alien("small_asteroid", self.level, center=self.rect.center, direction=self.direction) for i in range(4)]
             for i in range(4):
                 pieces[i].turn_direction((2*i+1)*pi/4)
@@ -79,3 +80,8 @@ class Alien(Sprite):
         if random() <= settings.item_probability:
             self.level.items.add(Item(choice(settings.item_types),center=self.rect.center))
         super().kill()
+
+    def reflect(self):
+        sound.shield.stop()
+        sound.shield_reflect.play()
+        super().reflect(flip_x=False, flip_y=False)

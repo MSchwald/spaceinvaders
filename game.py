@@ -170,6 +170,7 @@ class Game:
                         alien.get_damage(bullet.damage)
                         bullet.kill()
                     if bullet.type == "missile" and alien not in bullet.hit_enemies:
+                        # missiles hit each enemy at most once during their explosion time
                         alien.get_damage(bullet.damage)
                         bullet.hit_enemies.add(alien)
 
@@ -179,8 +180,6 @@ class Game:
                 if self.ship.status == "shield":
                     bullet.reflect()
                     bullet.owner = "player"
-                    sound.shield.stop()
-                    sound.shield_reflect.play()
                 else:
                     self.ship.get_damage(bullet.damage, self.level)
                     bullet.kill()
@@ -190,9 +189,7 @@ class Game:
         for alien in self.level.aliens:
             if pygame.sprite.collide_mask(self.ship, alien):
                 if self.ship.status == "shield":
-                    alien.change_direction(-alien.direction[0],-alien.direction[1])
-                    sound.shield.stop()
-                    sound.shield_reflect.play()
+                    alien.reflect()
                 else:
                     self.ship.get_damage(alien.energy, self.level)
                     self.ship.score += self.ship.score_factor*alien.points
