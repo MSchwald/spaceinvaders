@@ -35,22 +35,22 @@ class Level:
         else:
             return "running"
 
-    def start(self, ship, game_level):
+    def start(self, ship):
         ship.reset_position()
         # Resets the Groups of bullets and aliens
         self.ship_bullets.empty()
         self.bullets.empty()
         self.aliens.empty()
         for (x, y, type, direction) in lst[self.number]:
-            self.aliens.add(Alien(type=type, level=game_level, grid=(x,y), direction=direction))
+            self.aliens.add(Alien(type=type, level=self, grid=(x,y), direction=direction))
 
     def next(self, ship):
         if self.number < max_level:
             self.number += 1
             self.start(ship)
 
-    def restart(self, ship, game_level):
+    def restart(self, ship):
         self.number = settings.game_starting_level
         self.items.empty()
         ship.start_new_game()
-        self.start(ship, game_level)
+        self.start(ship)

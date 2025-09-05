@@ -60,8 +60,7 @@ class Game:
         """Starts the main loop for the game."""
         self.running = True  # checks if the game gets shut down
         self.mode = "game"  # possible modes: "game", "menu"
-        self.level.start(self.ship, self.level)
-        sound.start.play()
+        self.level.start(self.ship)
         while self.running:
             self.handle_events()
 
@@ -137,7 +136,7 @@ class Game:
                         sound.menu_select.play()
                         if selection == "Restart":
                             self.mode = "game"
-                            self.level.restart(self.ship, self.level)
+                            self.level.restart(self.ship)
                             sound.start.play()
                         elif selection == "Exit":
                             self.running = False
@@ -184,9 +183,8 @@ class Game:
                             bullet.hit_enemies.add(alien)
                         if alien.energy <= 0 or alien.type == "big_asteroid":
                             if alien.type == "big_asteroid":
-                                sound.asteroid.play()
                                 pieces = [
-                                    Alien("small_asteroid", center=alien.rect.center, direction=alien.direction) for i in range(4)]
+                                    Alien("small_asteroid", self.level, center=alien.rect.center, direction=alien.direction) for i in range(4)]
                                 for i in range(4):
                                     pieces[i].turn_direction((2*i+1)*pi/4)
                                     self.level.aliens.add(pieces[i])
@@ -194,10 +192,6 @@ class Game:
                             if random() <= settings.item_probability:
                                 self.level.items.add(Item(choice(settings.item_types),center=alien.rect.center))
                             alien.kill()
-                            if alien.type == "small_asteroid":
-                                sound.small_asteroid.play()
-                            elif alien.type != "big_asteroid":
-                                sound.alienblob.play()
 
         # Check if bullets hit the ship
         for bullet in self.level.bullets:
@@ -223,12 +217,6 @@ class Game:
                     self.ship.get_damage(alien.energy, self.level)
                     self.ship.score += self.ship.score_factor*alien.points
                     alien.kill()
-                    if alien.type == "big_asteroid":
-                        sound.asteroid.play()
-                    elif alien.type == "small_asteroid":
-                        sound.small_asteroid.play()
-                    else:
-                        sound.alienblob.play()
         
 
         # Check if ship collects an item

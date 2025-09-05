@@ -72,7 +72,7 @@ class Ship(Sprite):
         if self.lives > 0:
             self.set_level(1)
             self.reset_items()
-            game_level.start(self)
+            game_level.start(self, game_level)
             sound.lose_life.play()
 
     def get_damage(self, damage, game_level):

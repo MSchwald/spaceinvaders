@@ -19,6 +19,8 @@ class Alien(Sprite):
         #random_cycle_time ein Tupel von Zahlen: Alien macht zufällige im vorgegebenen Zeitintervall Aktionen (in ms)
         super().__init__(Image.load(f'images/alien/{str(type)}.png',colorkey=settings.type_colorkey[type], scaling_width=settings.type_width[type]), grid=grid, center=center, x=x, y=y, v=settings.type_speed[type], direction=direction,
                          constraints=pygame.Rect(settings.alien_constraints), boundary_behaviour="reflect")
+        if type == "purple":
+            sound.alien_spawn.play()
         self.type = type
         self.level = level
         self.energy = settings.type_energy[type]
@@ -55,9 +57,11 @@ class Alien(Sprite):
             choice([lambda: self.shoot("g"), lambda: self.throw_alien("purple")])()
 
     def shoot(self, bullet_type):
-        sound.alienshoot1.play()
         self.level.bullets.add(Bullet(bullet_type,center=self.rect.midbottom))
 
     def throw_alien(self, alien_type):
-        sound.alien_spawn.play()
         self.level.aliens.add(Alien("purple",self.level,center=self.rect.midbottom, direction=(2*random()-1,1)))
+
+    def kill(self):
+        {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob}[self.type].play()
+        super().kill()

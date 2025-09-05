@@ -4,6 +4,7 @@ import settings
 import image
 from sprite import Sprite
 from image import Image
+import sound
 
 class Bullet(Sprite):
     """A class to manage the bullets shot by the player or enemies"""
@@ -32,6 +33,7 @@ class Bullet(Sprite):
             animation_time = settings.missile_duration
             self.hit_enemies = pygame.sprite.Group()
         elif type == "g":
+            sound.alienshoot1.play()
             frames = [Image.load(f"images/bullet/g{n}.png", scaling_factor=2) for n in range(4)]
             animation_type = "once"
             animation_time = 0.5
