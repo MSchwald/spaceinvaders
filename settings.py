@@ -17,13 +17,13 @@ shield_starting_timer = 3
 max_shield_duration = 15
 
 # Alien settings
-type_speed = {"big_asteroid": 0.5, "small_asteroid": 1, "purple": 0.4, "ufo": 1}
-type_energy = {"big_asteroid": 4, "small_asteroid": 1, "purple": 20, "ufo": 30}
-type_points = {"big_asteroid": 20,
+alien_speed = {"big_asteroid": 0.5, "small_asteroid": 1, "purple": 0.4, "ufo": 1}
+alien_energy = {"big_asteroid": 4, "small_asteroid": 1, "purple": 20, "ufo": 30}
+alien_points = {"big_asteroid": 20,
                "small_asteroid": 10, "purple": 100, "ufo": 500}
-type_width = {"big_asteroid": grid_width,
+alien_width = {"big_asteroid": grid_width,
                "small_asteroid": grid_width/2, "purple": 1.5*grid_width, "ufo": grid_width}
-type_colorkey = {"big_asteroid": (0,0,0),
+alien_colorkey = {"big_asteroid": (0,0,0),
                "small_asteroid": (0,0,0), "purple": (254,254,254), "ufo": (0,0,0)}
 
 # Game stats
