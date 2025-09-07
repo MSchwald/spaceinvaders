@@ -8,9 +8,9 @@ class Font():
     """Initializes the fonts used in the game"""
 
     def __init__(self):
-        self.stats = pygame.font.Font(settings.stats_font, 30)
-        self.menu = pygame.font.Font(settings.menu_font, 30)
-        self.text = pygame.font.Font(settings.text_font, 30)
+        #self.stats = pygame.font.Font(settings.stats_font, 30)
+        self.menu = pygame.font.Font(settings.menu_font, settings.menu_font_size)
+        self.text = pygame.font.Font(settings.text_font, settings.text_font_size)
 
 
 class Menu():
