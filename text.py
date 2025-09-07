@@ -3,18 +3,25 @@ from pygame.locals import *
 import settings
 import sound
 
+#Fonts and menu formatting automatically rescales with the screen width
 
 class Font():
     """Initializes the fonts used in the game"""
 
     def __init__(self):
-        #self.stats = pygame.font.Font(settings.stats_font, 30)
-        self.menu = pygame.font.Font(settings.menu_font, settings.menu_font_size)
-        self.text = pygame.font.Font(settings.text_font, settings.text_font_size)
+        self.menu_font_size = int(settings.menu_font_size*settings.screen_width/1600)
+        self.text_font_size = int(settings.text_font_size*settings.screen_width/1600)
+        self.menu = pygame.font.Font(settings.menu_font, self.menu_font_size)
+        self.text = pygame.font.Font(settings.text_font, self.text_font_size)
+
 
 
 class Menu():
     """Class to create menus with a given title message and a given list of options"""
+    
+    boundary_size = int(settings.menu_boundary*settings.screen_width/1600)
+    title_distance = int(settings.title_menu_distance*settings.screen_width/1600)
+    line_distance = int(settings.line_distance*settings.screen_width/1600)
 
     def __init__(self, font, message=["Press Return to continue."], options=["Continue"], current_selection=0):
         self.font = font
@@ -39,25 +46,25 @@ class Menu():
                                for line in self.lines.values())
         self.line_length = max(line.get_width()
                                for line in self.lines.values())
-        self.h = 2*settings.menu_boundary + self.number_of_lines * \
-            (self.line_height+settings.line_distance) + \
-            settings.title_menu_distance - settings.line_distance
-        self.w = 2*settings.menu_boundary + self.line_length
+        self.h = 2*Menu.boundary_size + self.number_of_lines * \
+            (self.line_height+Menu.line_distance) + \
+            Menu.title_distance - Menu.line_distance
+        self.w = 2*Menu.boundary_size + self.line_length
         # Blit all the lines on a blue rectangle
         self.surface = pygame.Surface((self.w, self.h))
         self.surface.fill((0, 0, 255))
         for i in range(len(message)):
-            self.surface.blit(self.lines[i], (settings.menu_boundary,
-                              settings.menu_boundary+i*(self.line_height+settings.line_distance)))
+            self.surface.blit(self.lines[i], (Menu.boundary_size,
+                              Menu.boundary_size+i*(self.line_height+Menu.line_distance)))
         for i in range(len(message), self.number_of_lines):
             self.surface.blit(self.lines[i], ((self.w-self.lines[i].get_width(
-            ))/2, settings.title_menu_distance+settings.menu_boundary+i*(self.line_height+settings.line_distance)))
+            ))/2, Menu.title_distance+Menu.boundary_size+i*(self.line_height+Menu.line_distance)))
         # Create a surface for each possible highlighted option
         self.surface_highlighted = {}
         for j in range(len(self.options)):
             self.surface_highlighted[j] = self.surface.copy()
             self.surface_highlighted[j].blit(self.active_lines[j], ((self.w-self.active_lines[j].get_width(
-            ))/2, settings.title_menu_distance+settings.menu_boundary+(len(message)+j)*(self.line_height+settings.line_distance)))
+            ))/2, Menu.title_distance+Menu.boundary_size+(len(message)+j)*(self.line_height+Menu.line_distance)))
 
     def move_selection(self, event_key):
         """Navigate through the menu"""

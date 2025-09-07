@@ -4,7 +4,7 @@ from pygame.locals import *
 # Screen settings
 screen_width = 1600 #default: 1600
 screen_height = 9/16*screen_width
-grid_width = screen_width/16 #default:100
+grid_width = screen_width/16 #default: 100
 bg_color = (0, 0, 0)
 
 # Ship settings
@@ -65,12 +65,12 @@ item_score_buff = 1.5
 item_size_plus = 1.5
 item_size_minus = 1/item_size_plus
 
-# Fonts, formatting should scales with screen width
+# Fonts and menu formatting
 stats_font = "fonts/ARCADE_I.ttf"
 menu_font = "fonts/ARCADE_N.ttf"
 text_font = "fonts/ARCADE_R.ttf"
-menu_font_size = int(30*screen_width/1600)
-text_font_size = int(30*screen_width/1600)
-menu_boundary = int(20*screen_width/1600)
-title_menu_distance = int(30*screen_width/1600)
-line_distance = int(12*screen_width/1600)
+menu_font_size = 30
+text_font_size = 30
+menu_boundary = 20
+title_menu_distance = 30
+line_distance = 12
