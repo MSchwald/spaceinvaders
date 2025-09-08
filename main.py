@@ -8,9 +8,4 @@ if __name__ == '__main__':
     game = Game()
     game.run()
 
-    """if Highscores.player_name is None:
-                    Highscores.update(game.level.ship.score)
-                print(Highscores.new_highscore)"""
-    print("The game is over, thank you for playing.")
-
     sys.exit()

@@ -45,7 +45,11 @@ class Menu():
         # Blit all the lines on a blue rectangle
         self.surface = pygame.Surface((self.w, self.h))
         self.surface.fill((0, 0, 255))
-        for i in range(len(message)):
+        if message:
+            #blit the title of the message in the center
+            self.surface.blit(self.lines[0], ((self.w-self.lines[0].get_width())/2,
+                              Menu.boundary_size))
+        for i in range(1,len(message)):
             self.surface.blit(self.lines[i], (Menu.boundary_size,
                               Menu.boundary_size+i*(self.line_height+Menu.line_distance)))
         for i in range(len(message), self.number_of_lines):

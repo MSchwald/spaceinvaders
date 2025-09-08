@@ -11,7 +11,6 @@ from sprite import Sprite
 from statusbar import Statusbar
 import sound
 from pathlib import Path
-from highscores import Highscores
 import json,string
 
 
@@ -33,11 +32,11 @@ class Game:
         self.pause_menu = Menu(message=["PAUSE"], options=[
                                "Continue", "Restart", "Exit"])
         self.level_solved_menu = Menu(message=[
-                                      "Level solved. Press RETURN", "to start the next level."], options=["Continue"])
+                                      "Level solved!", "Press RETURN to", "start the next level."], options=["Continue"])
         self.game_won_menu = Menu(message=[
-                                  "Congratulations, you have", "finished all levels!"], options=["Check high scores","Restart", "Exit"])
+                                  "Congratulations!", "You have finished", "all available levels!"], options=["Check high scores","Restart", "Exit"])
         self.game_over_menu = Menu(message=[
-                                  "Game over!", "you ran out of lives!"], options=["Check high scores","Restart", "Exit"])
+                                  "Game over!", "You ran out of lives!"], options=["Check high scores","Restart", "Exit"])
         self.highscores_checked = Menu(message=[
                                   "Play again?"], options=["Restart", "Exit"])
 
