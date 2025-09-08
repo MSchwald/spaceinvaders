@@ -10,6 +10,7 @@ from item import Item
 from sprite import Sprite
 from statusbar import Statusbar
 import sound
+from pathlib import Path
 
 
 class Game:

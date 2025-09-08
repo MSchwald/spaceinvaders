@@ -200,7 +200,7 @@ class Ship(Sprite):
             self.level.bullets.add(Bullet("missile", center=(x,y)))
 
     def get_points(self, points):
-        self.score += self.score_factor*points
+        self.score += int(self.score_factor*points)
 
     def reset_items(self):
         self.bullets_buff = 0
