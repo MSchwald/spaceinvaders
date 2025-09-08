@@ -48,7 +48,8 @@ class Game:
                 self.highscores = json.load(f)
         except FileNotFoundError:
             if settings.default_highscores:
-                self.highscores = settings.default_highscores
+                self.highscores = sorted(settings.default_highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+        self.allowed_chars = string.ascii_letters + string.digits #allowed characters in the table
 
         # Start the first game level
         self.level = Level(settings.game_starting_level)
@@ -133,17 +134,18 @@ class Game:
 
             #Enter the name into the high score table
             if self.mode == "enter name":
-                self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
+                self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[str(score[0]) + " " + str(score[1]) for score in self.highscores], current_selection=self.highscore_place)
                 if event.type == KEYDOWN:
                     if event.key == K_BACKSPACE:
-                        self.player_name = self.player_name[:-1]
+                        self.highscores[self.highscore_place][0] = self.highscores[self.highscore_place][0][:-1]
                         #self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
                     if event.key == K_RETURN:
-                        Highscores.update(self.player_name, self.level.ship.score)
+                        with open("highscores.json", "w", encoding="utf-8") as f:
+                            json.dump(self.highscores,f)
                         self.active_menu = self.highscores_checked
                         self.mode = "menu"
-                    elif event.unicode in self.allowed_chars and len(self.player_name)<10:
-                        self.player_name += event.unicode
+                    elif event.unicode in self.allowed_chars and len(self.highscores[self.highscore_place][0])<10:
+                        self.highscores[self.highscore_place][0] += event.unicode
                         #self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
             
             # Navigating the menu
@@ -165,11 +167,13 @@ class Game:
                                 self.level.next()
                         elif selection == "Check high scores":
                             if len(self.highscores) < settings.max_number_of_highscores or self.level.ship.score > self.highscores[-1][1]:
-                                self.allowed_chars = string.ascii_letters + string.digits
-                                self.player_name = ""
+                                self.highscore_place = [i for i in range(len(self.highscores)) if self.highscores[i][1]<self.level.ship.score][0]
+                                self.highscores.append(["", self.level.ship.score])
+                                self.highscores = sorted(self.highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+                                print(self.highscores)
                                 self.mode = "enter name"
                             else:
-                                self.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!"], options=["OK"])
+                                self.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!", ""]+[str(score[0]) + " " + str(score[1]) for score in self.highscores], options=["OK"])
                         else:
                             self.active_menu = self.highscores_checked
                 
