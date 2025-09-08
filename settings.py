@@ -3,8 +3,8 @@ from pygame.locals import *
 
 # Screen settings
 screen_width = 1600 #default: 1600
-screen_height = 9/16*screen_width
-grid_width = screen_width/16 #default: 100
+screen_height = int(9/16*screen_width)
+grid_width = int(screen_width/16) #default: 100
 bg_color = (0, 0, 0)
 
 # Ship settings
