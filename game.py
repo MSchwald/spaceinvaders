@@ -12,6 +12,7 @@ from statusbar import Statusbar
 import sound
 from pathlib import Path
 from highscores import Highscores
+import json,string
 
 
 class Game:
@@ -27,7 +28,7 @@ class Game:
         self.screen = pygame.display.set_mode(
             (settings.screen_width, settings.screen_height))
 
-        # Initialize test menu
+        # Initialize menus
         self.active_menu = None
         self.pause_menu = Menu(message=["PAUSE"], options=[
                                "Continue", "Restart", "Exit"])
@@ -37,7 +38,17 @@ class Game:
                                   "Congratulations, you have", "finished all levels!"], options=["Check high scores","Restart", "Exit"])
         self.game_over_menu = Menu(message=[
                                   "Game over!", "you ran out of lives!"], options=["Check high scores","Restart", "Exit"])
+        self.highscores_checked = Menu(message=[
+                                  "Play again?"], options=["Restart", "Exit"])
 
+
+        # Load high scores
+        try:
+            with open("highscores.json", "r", encoding="utf-8") as f:
+                self.highscores = json.load(f)
+        except FileNotFoundError:
+            if settings.default_highscores:
+                self.highscores = settings.default_highscores
 
         # Start the first game level
         self.level = Level(settings.game_starting_level)
@@ -119,6 +130,22 @@ class Game:
                 if event.type == MOUSEBUTTONDOWN and event.button == 1:
                     x,y = event.pos
                     self.level.ship.shoot_missile(x,y)
+
+            #Enter the name into the high score table
+            if self.mode == "enter name":
+                self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
+                if event.type == KEYDOWN:
+                    if event.key == K_BACKSPACE:
+                        self.player_name = self.player_name[:-1]
+                        #self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
+                    if event.key == K_RETURN:
+                        Highscores.update(self.player_name, self.level.ship.score)
+                        self.active_menu = self.highscores_checked
+                        self.mode = "menu"
+                    elif event.unicode in self.allowed_chars and len(self.player_name)<10:
+                        self.player_name += event.unicode
+                        #self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
+            
             # Navigating the menu
             if self.mode == "menu":
                 if event.type == KEYDOWN:
@@ -137,8 +164,15 @@ class Game:
                             if self.active_menu == self.level_solved_menu:
                                 self.level.next()
                         elif selection == "Check high scores":
-                            Highscores.check(self.level.ship.highscores)
-
+                            if len(self.highscores) < settings.max_number_of_highscores or self.level.ship.score > self.highscores[-1][1]:
+                                self.allowed_chars = string.ascii_letters + string.digits
+                                self.player_name = ""
+                                self.mode = "enter name"
+                            else:
+                                self.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!"], options=["OK"])
+                        else:
+                            self.active_menu = self.highscores_checked
+                
     def update_sprites(self, dt):
         """update position of all sprites according to the passed time"""
         self.level.update(dt)
@@ -219,7 +253,7 @@ class Game:
         self.aim.blit(self.screen)
 
         # pause menu
-        if self.mode == "menu":
+        if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)
 
         # display the new screen

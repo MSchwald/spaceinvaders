@@ -7,6 +7,10 @@ screen_height = int(9/16*screen_width)
 grid_width = int(screen_width/16) #default: 100
 bg_color = (0, 0, 0)
 
+# Game settings
+game_starting_level = 4
+starting_score = 0
+
 # Ship settings
 ship_starting_rank = 1
 rank_speed = {1: 0.5, 2: 0.6, 3: 0.7}
@@ -25,10 +29,6 @@ alien_width = {"big_asteroid": 100,
                "small_asteroid": 50, "purple": 150, "ufo": 100}
 alien_colorkey = {"big_asteroid": (0,0,0),
                "small_asteroid": (0,0,0), "purple": (254,254,254), "ufo": (0,0,0)}
-
-# Game stats
-game_starting_level = 1
-starting_score = 0
 
 # boundaries for the movement of the sprites
 # [left, top, width, height]
@@ -76,5 +76,5 @@ title_menu_distance = 30
 line_distance = 12
 
 # Highscores
-default_highscores = [["Markus",500],["Tobi",400],["Nadine",300],["Marc",200],["Katharina",100]]
-max_number_of_highscores = 5
+default_highscores = [["Markus",500],["Tobi",400],["Nadine",300],["Marc",200],["Katharina",10]]
+max_number_of_highscores = 10
