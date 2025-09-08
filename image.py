@@ -45,27 +45,27 @@ class Image:
             if path in cls.cache:
                 return cls.cache[path]
             else:
-                #loads images, trims their boundary and makes it transparent
+                #loads image
                 raw_image = pygame.image.load(path)
+                #If boundary is not black, we first need to remove it
                 if colorkey != (0,0,0):
                     temp = raw_image.copy()
                     temp.set_colorkey(colorkey)
+                    #temp has now transparent boundary, but unfortunately
+                    #maybe also transparent pixels in the inside
                     mask = pygame.mask.from_surface(temp)
-                    mask.invert()
-                    mask = mask.connected_component()
-                    mask.invert()
-                    masked_image = mask.to_surface(surface=raw_image, setcolor=None)
-                    temp = masked_image.copy()
-                    temp.set_colorkey((0,0,0))
-                    bounding_rect = masked_image.get_bounding_rect()
-                    surface = pygame.Surface(bounding_rect.size)
-                    surface.blit(masked_image,(0,0),bounding_rect)
-                    surface.set_colorkey((0,0,0))
-                else:
-                    bounding_rect = raw_image.get_bounding_rect()
-                    surface = pygame.Surface(bounding_rect.size)
-                    surface.blit(raw_image,(0,0),bounding_rect)
-                    surface.set_colorkey((0,0,0))
+                    mask.invert() #the inverted mask covers all transparent pixels
+                    mask = mask.connected_component() #this component is exactly the boundary
+                    mask.invert() #its inverse is the mask of the actual figure on the image
+                    raw_image = mask.to_surface(surface=raw_image, setcolor=None)
+                    raw_image.set_colorkey((0,0,0))
+                    #now it can be blitted with transparent boundary onto the black background
+                bounding_rect = raw_image.get_bounding_rect()
+                surface = pygame.Surface(bounding_rect.size)
+                #surface now has its boundary trimmed to the smallest rectangle
+                #containing the complete figure
+                surface.blit(raw_image,(0,0),bounding_rect)
+                surface.set_colorkey((0,0,0))
                 if scaling_width:
                     factor = scaling_width*settings.grid_width/100 / bounding_rect.w
                     surface = pygame.transform.scale(
