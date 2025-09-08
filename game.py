@@ -3,7 +3,7 @@ from pygame.locals import *
 import settings
 from alien import Alien
 from level import Level, max_level
-from text import Font, Menu
+from text import Menu
 from image import Image
 from random import random, choice
 from item import Item
@@ -11,6 +11,7 @@ from sprite import Sprite
 from statusbar import Statusbar
 import sound
 from pathlib import Path
+from highscores import Highscores
 
 
 class Game:
@@ -26,19 +27,16 @@ class Game:
         self.screen = pygame.display.set_mode(
             (settings.screen_width, settings.screen_height))
 
-        # Initialize fonts
-        self.font = Font()
-
         # Initialize test menu
         self.active_menu = None
-        self.pause_menu = Menu(self.font, message=["PAUSE"], options=[
+        self.pause_menu = Menu(message=["PAUSE"], options=[
                                "Continue", "Restart", "Exit"])
-        self.level_solved_menu = Menu(self.font, message=[
+        self.level_solved_menu = Menu(message=[
                                       "Level solved. Press RETURN", "to start the next level."], options=["Continue"])
-        self.game_won_menu = Menu(self.font, message=[
-                                  "Congratulations, you have", "finished all levels!"], options=["Restart", "Exit"])
-        self.game_over_menu = Menu(self.font, message=[
-                                  "Game over!", "you ran out of lives!"], options=["Restart", "Exit"])
+        self.game_won_menu = Menu(message=[
+                                  "Congratulations, you have", "finished all levels!"], options=["Check high scores","Restart", "Exit"])
+        self.game_over_menu = Menu(message=[
+                                  "Game over!", "you ran out of lives!"], options=["Check high scores","Restart", "Exit"])
 
 
         # Start the first game level
@@ -138,6 +136,8 @@ class Game:
                             self.mode = "game"
                             if self.active_menu == self.level_solved_menu:
                                 self.level.next()
+                        elif selection == "Check high scores":
+                            Highscores.check(self.level.ship.highscores)
 
     def update_sprites(self, dt):
         """update position of all sprites according to the passed time"""

@@ -3,28 +3,20 @@ from pygame.locals import *
 import settings
 import sound
 
-#Fonts and menu formatting automatically rescales with the screen width
-
-class Font():
-    """Initializes the fonts used in the game"""
-
-    def __init__(self):
-        self.menu_font_size = int(settings.menu_font_size*settings.screen_width/1600)
-        self.text_font_size = int(settings.text_font_size*settings.screen_width/1600)
-        self.menu = pygame.font.Font(settings.menu_font, self.menu_font_size)
-        self.text = pygame.font.Font(settings.text_font, self.text_font_size)
-
-
+#Fonts and menu formatting automatically rescale with the screen width
 
 class Menu():
     """Class to create menus with a given title message and a given list of options"""
-    
+    pygame.font.init()
+    menu_font_size = int(settings.menu_font_size*settings.screen_width/1600)
+    text_font_size = int(settings.text_font_size*settings.screen_width/1600)
+    menu_font = pygame.font.Font(settings.menu_font, menu_font_size)
+    text_font = pygame.font.Font(settings.text_font, text_font_size)
     boundary_size = int(settings.menu_boundary*settings.screen_width/1600)
     title_distance = int(settings.title_menu_distance*settings.screen_width/1600)
     line_distance = int(settings.line_distance*settings.screen_width/1600)
 
-    def __init__(self, font, message=["Press Return to continue."], options=["Continue"], current_selection=0):
-        self.font = font
+    def __init__(self, message=["Press Return to continue."], options=["Continue"], current_selection=0):
         self.message = message
         self.options = options
         self.current_selection = current_selection
@@ -33,13 +25,13 @@ class Menu():
         self.active_lines = {}
         for i in range(len(message)):
             # Renders each line of the title message
-            self.lines[i] = self.font.text.render(
+            self.lines[i] = Menu.text_font.render(
                 message[i], False, (255, 255, 255))
         for j in range(len(options)):
             # Renders each of the options, inactive and active
-            self.lines[len(message)+j] = self.font.menu.render(options[j],
+            self.lines[len(message)+j] = Menu.menu_font.render(options[j],
                                                                False, (200, 200, 255), (0, 0, 255))
-            self.active_lines[j] = self.font.menu.render(
+            self.active_lines[j] = Menu.menu_font.render(
                 options[j], False, (255, 255, 0), (100, 100, 100))
         # Calculates size of the menu
         self.line_height = max(line.get_height()

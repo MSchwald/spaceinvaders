@@ -26,7 +26,6 @@ class Level:
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.items = pygame.sprite.Group()
-        self.player_name = "anonymous" #default name for highscores
 
 
     def status(self):
