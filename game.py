@@ -86,9 +86,10 @@ class Game:
         self.level.ship.control(keys)
 
     def update(self, dt):
+        self.check_level_status()
         self.update_sprites(dt)
         self.collision_checks()
-        self.check_level_status()
+        
 
     def render(self):
         self.update_screen()

@@ -37,7 +37,7 @@ class Alien(Sprite):
             super().__init__(frames = [Image.load(f"images/{type}/{str(n+1)}.png", scaling_width=settings.alien_width[type]) for n in range(14)], animation_type="loop", fps=10, grid=grid, center=center, x=x, y=y, v=settings.alien_speed[type], direction=direction,
                          constraints=constraints, boundary_behaviour=boundary_behaviour)
             #mass is so far only relevant for collisions between the asteroids
-            self.m = (self.w/settings.grid_width)**2
+            self.m = (self.w/settings.grid_width)**3
         else:
             super().__init__(Image.load(f'images/alien/{str(type)}.png',colorkey=settings.alien_colorkey[type], scaling_width=settings.alien_width[type]), grid=grid, center=center, x=x, y=y, v=settings.alien_speed[type], direction=direction,
                              constraints=constraints, boundary_behaviour=boundary_behaviour)
@@ -59,18 +59,17 @@ class Alien(Sprite):
         #asteroids can collide (elastic collision of balls)
         if self.type in ["big_asteroid","small_asteroid"]:
             for ast in self.level.asteroids:
-                dp = (self.x-ast.x,self.y-ast.y)
+                dp = (self.rect.center[0]-ast.rect.center[0],self.rect.center[1]-ast.rect.center[1])
                 n2dp = norm2(dp)
                 dv = (self.vx-ast.vx,self.vy-ast.vy)
                 d2 =(self.w+ast.w)**2/4
                 n2dv = norm2(dv)
                 if n2dv>1e-8 and n2dp < d2:
-                    
                     dpdv = dp[0]*dv[0]+dp[1]*dv[1]
                     t = (-dpdv-sqrt(dpdv**2-n2dv*(n2dp-d2)))/n2dv
                     super().update_position(t)
                     Sprite.update_position(ast,t)
-                    n = normalize((self.x-ast.x,self.y-ast.y))
+                    n = normalize((self.rect.center[0]-ast.rect.center[0],self.rect.center[1]-ast.rect.center[1]))
                     dv = (self.vx-ast.vx,self.vy-ast.vy)
                     dvn = dv[0]*n[0]+dv[1]*n[1]
                     f = 2/(self.m+ast.m)*dvn
@@ -128,11 +127,12 @@ class Alien(Sprite):
         if self.energy <= 0:
             {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob}[self.type].play()
             if self.type == "big_asteroid":
-                # big asteroids split into four smaller asteroids when hit
+                # big asteroids split into n smaller asteroids when hit (default: n=4)
+                n=4
                 pieces = [Alien("small_asteroid", self.level, center=self.rect.center, direction=self.direction, constraints=self.constraints, boundary_behaviour=self.boundary_behaviour) for i in range(4)]
-                for i in range(4):
-                    pieces[i].turn_direction((2*i+1)*pi/4)
-                    self.level.aliens.add(pieces[i])
+                for i in range(n):
+                    pieces[i].turn_direction((2*i+1)*pi/n)
+                    self.level.asteroids.add(pieces[i])
             self.level.ship.get_points(self.points)
             if random() <= settings.item_probability:
                 self.level.items.add(Item(choice(settings.item_types), self.level, center=self.rect.center))
