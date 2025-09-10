@@ -118,6 +118,7 @@ class Sprite(pygame.sprite.Sprite):
             y_clamp = min(max(y, self.constraints.y),
                           self.constraints.bottom-self.h)
             if self.boundary_behaviour == "reflect":
+                #reflection only prevents exiting, not entering the constraints
                 if (x - x_clamp) * self.direction[0] > 0:
                     self.x = 2*x_clamp - x
                     self.direction = (-self.direction[0], self.direction[1])

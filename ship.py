@@ -115,7 +115,7 @@ class Ship(Sprite):
             self.reset_firepoints()
             sound.item_collect.play()
         elif type == "hp_plus":
-            self.energy += settings.hp_plus
+            self.energy = min(self.max_energy, self.energy+settings.hp_plus)
             sound.good_item.play()
         elif type == "invert_controlls":
             if self.status == "inverse_controlls":

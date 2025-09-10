@@ -74,7 +74,7 @@ class Alien(Sprite):
         self.energy = energy
 
     def update(self, dt):
-        #asteroids can collide (elastic collision of balls)
+        #asteroids can collide (elastic collision of 2d balls)
         if self.type in ["big_asteroid","small_asteroid"]:
             for ast in self.level.asteroids:
                 dp = (self.rect.center[0]-ast.rect.center[0],self.rect.center[1]-ast.rect.center[1])

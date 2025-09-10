@@ -30,19 +30,23 @@ class Level:
 
     def status(self):
         if self.ship.lives <= 0:
+            pygame.mixer.stop()
             sound.game_over.play()
             return "game over"
         match self.number:
             case 1:
                 if not self.asteroids:
+                    pygame.mixer.stop()
                     sound.start.play()
                     return "solved"
             case 2:
                 if not self.aliens:
+                    pygame.mixer.stop()
                     sound.start.play()
                     return "solved"
             case 3:
                 if self.ufo.energy == 0:
+                    pygame.mixer.stop()
                     sound.start.play()
                     return "solved"
             case 4:

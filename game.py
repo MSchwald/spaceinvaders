@@ -25,7 +25,7 @@ class Game:
 
         # Fixes screen as a pygame surface on which we can blit sprites
         self.screen = pygame.display.set_mode(
-            (settings.screen_width, settings.screen_height))
+            (settings.screen_width, settings.screen_height), pygame.FULLSCREEN)
 
         # Initialize menus
         self.active_menu = None
