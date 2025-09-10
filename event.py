@@ -1,5 +1,5 @@
 import pygame, settings
-from random import randint
+from random import randint,random
 
 class Event:
     def __init__(self, type, level, cycle_time=None, random_cycle_time=None):
@@ -26,6 +26,7 @@ class Event:
         if self.type == "asteroid_hail":
             self.level.alien_random_entrance("big_asteroid")
         if self.type == "alien_attack":
-            pass
-            #choice([lambda: self.level.alien_random_entrance("purple"),
-            #lambda: self.throw_alien("purple")])()
+            if random() > 0.5:
+                self.level.alien_random_entrance("purple", boundary_behaviour="reflect")
+            else:
+                self.level.alien_random_entrance("blob", energy=settings.alien_energy["blob"]//4, boundary_behaviour="reflect")

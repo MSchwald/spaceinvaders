@@ -118,12 +118,12 @@ class Sprite(pygame.sprite.Sprite):
             y_clamp = min(max(y, self.constraints.y),
                           self.constraints.bottom-self.h)
             if self.boundary_behaviour == "reflect":
-                if x != x_clamp:
-                    self.x = 2*x_clamp-x
-                    self.direction = (-self.direction[0],self.direction[1])
+                if (x - x_clamp) * self.direction[0] > 0:
+                    self.x = 2*x_clamp - x
+                    self.direction = (-self.direction[0], self.direction[1])
                 else:
                     self.x = x_clamp
-                if y != y_clamp:
+                if (y - y_clamp) * self.direction[1] > 0:
                     self.y = 2*y_clamp-y
                     self.direction = (self.direction[0],-self.direction[1])
                 else:
