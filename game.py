@@ -29,6 +29,8 @@ class Game:
 
         # Initialize menus
         self.active_menu = None
+        self.main_menu = Menu(message=["Space invaders"], options=[
+                               "Start game", "Highscores", "Buy Premium", "Exit"])
         self.pause_menu = Menu(message=["PAUSE"], options=[
                                "Continue", "Restart", "Exit"])
         self.level_solved_menu = Menu(message=[
@@ -51,7 +53,7 @@ class Game:
         self.allowed_chars = string.ascii_letters + string.digits #allowed characters in the table
 
         # Start the first game level
-        self.level = Level(settings.game_starting_level)
+        self.level = Level(0)
 
         #Initializes status bar
         self.statusbar = Statusbar(self.level)
@@ -65,7 +67,8 @@ class Game:
     def run(self):
         """Starts the main loop for the game."""
         self.running = True  # checks if the game gets shut down
-        self.mode = "game"  # possible modes: "game", "menu"
+        self.mode = "menu"  # possible modes: "game", "menu"
+        self.active_menu = self.main_menu
         self.level.start()
         while self.running:
             self.handle_events()
@@ -155,7 +158,7 @@ class Game:
                         self.active_menu.move_selection(event.key)
                     if event.key == K_RETURN:
                         selection = self.active_menu.select()
-                        if selection == "Restart":
+                        if selection in ["Restart","Start game"]:
                             self.mode = "game"
                             self.level.restart()
                         elif selection == "Exit":
@@ -165,6 +168,12 @@ class Game:
                             self.mode = "game"
                             if self.active_menu == self.level_solved_menu:
                                 self.level.next()
+                        elif selection == "Highscores":
+                            self.active_menu = Menu(message=["Highscores", "Do you think you can beat them?", ""]+[str(score[0]) + " " + str(score[1]) for score in self.highscores], options=["Go back"])
+                        elif selection == "Go back":
+                            self.active_menu = self.main_menu
+                        elif selection == "Buy Premium":
+                            self.active_menu = Menu(message=["Haha", "Did you believe there", "is a premium version?"], options=["Go back"])
                         elif selection == "Check high scores":
                             if len(self.highscores) < settings.max_number_of_highscores or self.level.ship.score > self.highscores[-1][1]:
                                 pygame.mixer.stop()

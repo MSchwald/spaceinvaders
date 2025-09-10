@@ -71,6 +71,9 @@ class Level:
         self.aliens.empty()
         self.blobs.empty()
         match self.number:
+            case 0:
+                self.goal = "Welcome!"
+                self.progress = "Ready?"
             case 1:
                 self.goal = "Destroy all asteroids!"
                 self.alien_random_entrance("big_asteroid",amount=5,boundary_behaviour="reflect")

@@ -78,5 +78,5 @@ title_menu_distance = 30
 line_distance = 12
 
 # Highscores
-default_highscores = [["Markus",500],["Tobi",400],["Nadine",30],["Marc",20]]
+default_highscores = [["Markus",500],["Tobi",400],["Nadine",300],["Marc",200],["Katharina",100]]
 max_number_of_highscores = 5
