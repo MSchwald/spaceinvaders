@@ -38,7 +38,6 @@ class Bullet(Sprite):
                 size = settings.alien_energy["blob"]
             image = blubber_images[size-1]
             self.damage = ceil(size/settings.alien_energy["blob"]*settings.bullet_damage[type])
-            print(self.damage)
         elif type == "missile":
             frames = [Image.load(f"images/bullet/explosion{n}.png", scaling_factor=settings.missile_explosion_size/810) for n in range(6)]
             animation_type = "vanish"

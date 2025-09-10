@@ -150,6 +150,8 @@ class Level:
             alien.change_direction(random()*(constraints.w-alien.w)+constraints.x-alien.x, constraints.bottom-alien.rect.bottom)
             if type in ["big_asteroid","small_asteroid"]:
                 self.asteroids.add(alien)
+            elif type == "blob":
+                sound.blob_spawns.play()
             else:
                 self.aliens.add(alien)
 

@@ -62,7 +62,6 @@ class Alien(Sprite):
                              constraints=constraints, boundary_behaviour=boundary_behaviour)
         if type == "purple":
             sound.alien_spawn.play()
-        
         self.type = type
         self.level = level
         self.points = settings.alien_points[type]
