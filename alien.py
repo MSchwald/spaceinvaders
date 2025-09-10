@@ -177,6 +177,7 @@ class Alien(Sprite):
             #blobs split into two smaller halfs
             # big asteroids split into smaller asteroids when hit
             if self.energy > 1:
+                sound.slime_hit.play()
                 if self.direction==(0,0):
                     phi = random()
                     w=(cos(2*pi*phi),sin(2*pi*phi))

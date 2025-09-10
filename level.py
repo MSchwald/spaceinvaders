@@ -126,10 +126,8 @@ class Level:
                             self.blobs.add(merged_blob)
                             blob1.hard_kill()
                             blob2.hard_kill()
+                            sound.blob_merge.play()
                             break
-
-        
-
 
     def next(self):
         if self.number < max_level:

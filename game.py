@@ -217,6 +217,7 @@ class Game:
                                 if alien.energy == 1:
                                     alien.kill()
                                 else:
+                                    sound.slime_hit.play()
                                     alien.energy = alien.energy//2
                                     alien.change_image(blob_images[alien.energy-1])
                             else:

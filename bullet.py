@@ -32,6 +32,7 @@ class Bullet(Sprite):
             if image is None:
                 image = Image.load(f'images/bullet/{type}.png', scaling_width = settings.bullet_width[type])
         elif type == "blubber":
+            sound.blubber.play()
             if size is None:
                 size = settings.alien_energy["blob"]
             image = blubber_images[size-1]
