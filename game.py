@@ -118,12 +118,12 @@ class Game:
                     elif event.key == K_SPACE:
                         self.level.ship.shoot_bullets()
                     # Keys to test the different ship-levels, only for beta-version
-                    elif event.key == K_1:
-                        self.level.ship.set_rank(1)
-                    elif event.key == K_2:
-                        self.level.ship.set_rank(2)
-                    elif event.key == K_3:
-                        self.level.ship.set_rank(3)
+                    #elif event.key == K_1:
+                    #    self.level.ship.set_rank(1)
+                    #elif event.key == K_2:
+                    #    self.level.ship.set_rank(2)
+                    #elif event.key == K_3:
+                    #    self.level.ship.set_rank(3)
                     elif event.key == K_LSHIFT:
                         self.level.ship.activate_shield()
                 if event.type == KEYUP and event.key == K_LSHIFT:

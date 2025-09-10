@@ -84,7 +84,7 @@ class Ship(Sprite):
 
     def shoot_bullets(self):
         # if there aren't too many bullets from the ship on the screen yet
-        if len(self.level.ship_bullets) < settings.max_bullets*(2*self.rank-1):
+        if len(self.level.ship_bullets) < settings.max_bullets*(2*self.rank-1) and self.status != "shield":
             sound.bullet.play()
             # Takes Doppler effect into account to calculate the bullets' speed
             doppler = self.vy
