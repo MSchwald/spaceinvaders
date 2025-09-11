@@ -5,8 +5,8 @@ import sound
 
 #Fonts and menu formatting automatically rescale with the screen width
 
-color = {"white":(255, 255, 255), "blue": (0, 0, 255), "yellow": (255, 255, 0),
-    "light_grey": (200, 200, 255), "grey": (100, 100, 100)}
+color = {"white":(255, 255, 255), "blue": (0, 0, 200), "yellow": (255, 255, 0),
+    "light_grey": (200, 200, 255), "grey": (100, 100, 100), "red": (180, 0, 0)}
 
 class Menu():
     """Class to create menus with a given title message and a given list of options"""
@@ -43,9 +43,12 @@ class Menu():
         if len(message) > 1:
             self.h += Menu.title_distance
         self.w = 2*Menu.boundary_size + self.line_length
-        # Blit all the lines onto a blue rectangle
+        # Blit all the lines onto a blue rectangle with red boundary
         self.surface = pygame.Surface((self.w, self.h))
-        self.surface.fill(color["blue"])
+        self.surface.fill((color["red"]))
+        background = pygame.Surface((self.w-Menu.boundary_size, self.h-Menu.boundary_size))
+        background.fill(color["blue"])
+        self.surface.blit(background, (Menu.boundary_size//2,Menu.boundary_size//2))
         self.line_position = []
         for i in range(self.number_of_lines):
             if i in range(1,len(message)):
@@ -110,7 +113,6 @@ class Menu():
                 game.active_menu = highscores_checked
 
 # Menus in the game
-
 main_menu = Menu(message=["Space invaders"],
                 options=["Start game", "Highscores", "Buy Premium", "Credits", "Exit"])
 pause_menu = Menu(message=["PAUSE"],
