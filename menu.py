@@ -5,6 +5,9 @@ import sound
 
 #Fonts and menu formatting automatically rescale with the screen width
 
+color = {"white":(255, 255, 255), "blue": (0, 0, 255), "yellow": (255, 255, 0),
+    "light_grey": (200, 200, 255), "grey": (100, 100, 100)}
+
 class Menu():
     """Class to create menus with a given title message and a given list of options"""
     pygame.font.init()
@@ -21,61 +24,56 @@ class Menu():
         self.options = options
         self.current_selection = current_selection
         self.number_of_lines = len(message)+len(options)
-        self.lines = {}
-        self.active_lines = {}
-        for i in range(len(message)):
-            # Renders each line of the title message
-            self.lines[i] = Menu.text_font.render(
-                message[i], False, (255, 255, 255))
-        for j in range(len(options)):
-            # Renders each of the options, inactive and active
-            self.lines[len(message)+j] = Menu.menu_font.render(options[j],
-                                                               False, (200, 200, 255), (0, 0, 255))
-            self.active_lines[j] = Menu.menu_font.render(
-                options[j], False, (255, 255, 0), (100, 100, 100))
+        # Renders each line of title message and options
+        self.lines = (
+            [Menu.text_font.render(line, False, color["white"]) for line in message]
+            +[Menu.menu_font.render(line, False, color["light_grey"], color["blue"]) for line in options]
+        )
+        self.active_lines = (
+            [Menu.menu_font.render(line, False, color["yellow"], color["grey"]) for line in options]
+        )
         # Calculates size of the menu
         self.line_height = max(line.get_height()
-                               for line in self.lines.values())
+                               for line in self.lines)
         self.line_length = max(line.get_width()
-                               for line in self.lines.values())
+                               for line in self.lines)
         self.h = 2*Menu.boundary_size + self.number_of_lines * \
             (self.line_height+Menu.line_distance) + \
             Menu.title_distance - Menu.line_distance
+        if len(message) > 1:
+            self.h += Menu.title_distance
         self.w = 2*Menu.boundary_size + self.line_length
-        # Blit all the lines on a blue rectangle
+        # Blit all the lines onto a blue rectangle
         self.surface = pygame.Surface((self.w, self.h))
-        self.surface.fill((0, 0, 255))
-        if message:
-            #blit the title of the message in the center
-            self.surface.blit(self.lines[0], ((self.w-self.lines[0].get_width())/2,
-                              Menu.boundary_size))
-        for i in range(1,len(message)):
-            self.surface.blit(self.lines[i], (Menu.boundary_size,
-                              Menu.boundary_size+i*(self.line_height+Menu.line_distance)))
-        for i in range(len(message), self.number_of_lines):
-            self.surface.blit(self.lines[i], ((self.w-self.lines[i].get_width(
-            ))/2, Menu.title_distance+Menu.boundary_size+i*(self.line_height+Menu.line_distance)))
-        # Create a surface for each possible highlighted option
-        self.surface_highlighted = {}
-        for j in range(len(self.options)):
-            self.surface_highlighted[j] = self.surface.copy()
-            self.surface_highlighted[j].blit(self.active_lines[j], ((self.w-self.active_lines[j].get_width(
-            ))/2, Menu.title_distance+Menu.boundary_size+(len(message)+j)*(self.line_height+Menu.line_distance)))
-
+        self.surface.fill(color["blue"])
+        self.line_position = []
+        for i in range(self.number_of_lines):
+            if i in range(1,len(message)):
+                x = Menu.boundary_size
+            else:
+                x = (self.w-self.lines[i].get_width())//2
+            y = Menu.boundary_size+i*(self.line_height+Menu.line_distance)
+            if i>0:
+                y+=Menu.title_distance
+            if i >= len(message) and len(message) > 1:
+                y+=Menu.title_distance
+            self.line_position.append((x, y))
+            self.surface.blit(self.lines[i], (x, y))
+            
     def blit(self, screen):
         """blits the menu with the current selection highlighted"""
-        screen.blit(self.surface_highlighted[self.current_selection], ((
-            screen.get_width()-self.w)/2, (screen.get_height()-self.h)/2))
+        self.highlighted_surface = self.surface.copy()
+        j = self.current_selection
+        self.highlighted_surface.blit(self.active_lines[j], (self.line_position[j+len(self.message)]))
+        screen.blit(self.highlighted_surface, ((
+            screen.get_width()-self.w)//2, (screen.get_height()-self.h)//2))
 
     def move_selection(self, event_key):
         """Navigate through the menu"""
         sound.menu_move.play()
-        if event_key == K_w:
-            self.current_selection = (
-                self.current_selection - 1) % len(self.options)
-        if event_key == K_s:
-            self.current_selection = (
-                self.current_selection + 1) % len(self.options)
+        self.current_selection = (
+            (self.current_selection + {K_w : -1, K_s : 1}[event_key]) % len(self.options)
+        )
 
     @classmethod
     def choose_current_selection(cls, game):

@@ -3,7 +3,7 @@ from pygame.locals import *
 import settings
 from alien import Alien,blob_images
 from level import Level
-from text import *
+from menu import *
 from image import Image
 from random import random, choice
 from item import Item
@@ -13,6 +13,7 @@ import sound
 from pathlib import Path
 import json,string
 from screen import display_size, screen, screen_rect
+from highscores import Highscores
 
 
 class Game:
@@ -27,16 +28,8 @@ class Game:
         self.display = pygame.display.set_mode(display_size, pygame.FULLSCREEN)
         self.screen = screen #The game's surface
 
-        # Load high scores or use the default ones from the settings
-        try:
-            with open("highscores.json", "r", encoding="utf-8") as f:
-                self.highscores = json.load(f)
-        except FileNotFoundError:
-            if settings.default_highscores:
-                self.highscores = sorted(settings.default_highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
-        self.allowed_chars = string.ascii_letters + string.digits #allowed characters in the table
-
         self.level = Level(0)
+        self.highscores = Highscores().score_list
         self.statusbar = Statusbar(self.level)
         self.clock = pygame.time.Clock()
 

@@ -2,11 +2,31 @@ from pathlib import Path
 import json
 import settings
 import string
-from text import Menu
+from menu import Menu
 
-#unused, might be used later to refactor game.py
+
 
 class Highscores:
+    def __init__(self):
+        """load saved high scores or use the default ones from the settings"""
+        try:
+            with open("highscores.json", "r", encoding="utf-8") as f:
+                self.score_list = json.load(f)
+        except FileNotFoundError:
+            if settings.default_highscores:
+                self.score_list = sorted(settings.default_highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+        #self.lines = [Menu.text_font.render(
+        #        message[i], False, (255, 255, 255))
+
+
+        self.allowed_chars = string.ascii_letters + string.digits
+
+
+
+
+
+
+
     player_name = None
     highscores = []
 
