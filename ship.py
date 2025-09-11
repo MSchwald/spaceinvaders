@@ -110,74 +110,75 @@ class Ship(Sprite):
         self.reset_firepoints()
 
     def collect_item(self, type):
-        if type == "bullets_buff":
-            self.bullets_buff += 1
-            self.reset_firepoints()
-            sound.item_collect.play()
-        elif type == "hp_plus":
-            self.energy = min(self.max_energy, self.energy+settings.hp_plus)
-            sound.good_item.play()
-        elif type == "invert_controlls":
-            if self.status == "inverse_controlls":
-                self.status = "normal"
-            else:
-                self.status = "inverse_controlls"
-                self.controlls_timer = 1000*settings.invert_controlls_duration
+        match type:
+            case "bullets_buff":
+                self.bullets_buff += 1
+                self.reset_firepoints()
+                sound.item_collect.play()
+            case "hp_plus":
+                self.energy = min(self.max_energy, self.energy+settings.hp_plus)
+                sound.good_item.play()
+            case "invert_controlls":
+                if self.status == "inverse_controlls":
+                    self.status = "normal"
+                else:
+                    self.status = "inverse_controlls"
+                    self.controlls_timer = 1000*settings.invert_controlls_duration
+                    sound.bad_item.play()
+                self.update_image()
+            case "life_minus":
+                self.lives -= 1
+                if self.lives > 0:
+                    sound.lose_life.play()
+            case "life_plus":
+                self.lives += 1
+                sound.extra_life.play()
+            case "magnet":
+                self.magnet = True
+                self.status = "magnetic"
+                self.update_image()
+                sound.item_collect.play()
+            case "missile":
+                self.missiles += 1
+                sound.collect_missile.play()
+            case "score_buff":
+                if self.score_factor == 1:
+                    self.score_buff_timer = 1000*settings.score_buff_duration
+                self.score_factor *= settings.item_score_buff
+                sound.item_collect.play()
+            case "shield":
+                self.shield_timer = min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
+                sound.good_item.play()
+            case "ship_buff":
+                self.gain_rank()
+                sound.ship_level_up.play()
+            case "size_minus":
+                sound.shrink.play()
+                if self.size_factor*settings.item_size_minus>=0.3:
+                    self.size_factor *= settings.item_size_minus
+                    self.update_image()
+                    if self.size_factor != 1:
+                        self.size_change_timer = 1000*settings.size_change_duration
+            case "size_plus":
+                sound.grow.play()
+                if self.size_factor*settings.item_size_plus<=1/0.3:
+                    self.size_factor *= settings.item_size_plus
+                    self.update_image()
+                    if self.size_factor != 1:
+                        self.size_change_timer = 1000*settings.size_change_duration
+            case "speed_buff":
+                sound.item_collect.play()
+                if self.v*settings.speed_buff < settings.bullet_speed[1]:
+                    self.speed_factor = settings.speed_buff
+                    self.v = self.speed_factor*settings.rank_speed[self.rank]
+                    if self.speed_factor != 1:
+                        self.speed_change_timer = 1000*settings.speed_change_duration
+            case "speed_nerf":
                 sound.bad_item.play()
-            self.update_image()
-        elif type == "life_minus":
-            self.lives -= 1
-            if self.lives > 0:
-                sound.lose_life.play()
-        elif type == "life_plus":
-            self.lives += 1
-            sound.extra_life.play()
-        elif type == "magnet":
-            self.magnet = True
-            self.status = "magnetic"
-            self.update_image()
-            sound.item_collect.play()
-        elif type == "missile":
-            self.missiles += 1
-            sound.collect_missile.play()
-        elif type == "score_buff":
-            if self.score_factor == 1:
-                self.score_buff_timer = 1000*settings.score_buff_duration
-            self.score_factor *= settings.item_score_buff
-            sound.item_collect.play()
-        elif type == "shield":
-            self.shield_timer = min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
-            sound.good_item.play()
-        elif type == "ship_buff":
-            self.gain_rank()
-            sound.ship_level_up.play()
-        elif type == "size_minus":
-            sound.shrink.play()
-            if self.size_factor*settings.item_size_minus>=0.3:
-                self.size_factor *= settings.item_size_minus
-                self.update_image()
-                if self.size_factor != 1:
-                    self.size_change_timer = 1000*settings.size_change_duration
-        elif type == "size_plus":
-            sound.grow.play()
-            if self.size_factor*settings.item_size_plus<=1/0.3:
-                self.size_factor *= settings.item_size_plus
-                self.update_image()
-                if self.size_factor != 1:
-                    self.size_change_timer = 1000*settings.size_change_duration
-        elif type == "speed_buff":
-            sound.item_collect.play()
-            if self.v*settings.speed_buff < settings.bullet_speed[1]:
-                self.speed_factor = settings.speed_buff
+                self.speed_factor = settings.speed_nerf
                 self.v = self.speed_factor*settings.rank_speed[self.rank]
                 if self.speed_factor != 1:
                     self.speed_change_timer = 1000*settings.speed_change_duration
-        elif type == "speed_nerf":
-            sound.bad_item.play()
-            self.speed_factor = settings.speed_nerf
-            self.v = self.speed_factor*settings.rank_speed[self.rank]
-            if self.speed_factor != 1:
-                self.speed_change_timer = 1000*settings.speed_change_duration
 
     def activate_shield(self):
         if self.shield_timer > 0:

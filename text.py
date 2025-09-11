@@ -62,6 +62,11 @@ class Menu():
             self.surface_highlighted[j].blit(self.active_lines[j], ((self.w-self.active_lines[j].get_width(
             ))/2, Menu.title_distance+Menu.boundary_size+(len(message)+j)*(self.line_height+Menu.line_distance)))
 
+    def blit(self, screen):
+        """blits the menu with the current selection highlighted"""
+        screen.blit(self.surface_highlighted[self.current_selection], ((
+            screen.get_width()-self.w)/2, (screen.get_height()-self.h)/2))
+
     def move_selection(self, event_key):
         """Navigate through the menu"""
         sound.menu_move.play()
@@ -72,14 +77,41 @@ class Menu():
             self.current_selection = (
                 self.current_selection + 1) % len(self.options)
 
-    def select(self):
+    @classmethod
+    def choose_current_selection(cls, game):
         sound.menu_select.play()
-        return self.options[self.current_selection]
+        match game.active_menu.options[game.active_menu.current_selection]:
+            case "Restart" | "Start game":
+                game.mode = "game"
+                game.level.restart()
+            case "Exit":
+                game.running = False
+            case "Continue":
+                game.mode = "game"
+                if game.active_menu == level_solved_menu:
+                    game.level.next()
+            case "Highscores":
+                game.active_menu = Menu(message=["Highscores", "Do you think you can beat them?", ""]+[str(score[0]) + " " + str(score[1]) for score in game.highscores], options=["Go back"])
+            case "Go back":
+                game.active_menu = main_menu
+            case "Buy Premium":
+                game.active_menu = premium_menu
+            case "Credits":
+                game.active_menu = credits_menu
+            case "Check high scores":
+                if len(game.highscores) < settings.max_number_of_highscores or game.level.ship.score > game.highscores[-1][1]:
+                    pygame.mixer.stop()
+                    sound.new_highscore.play()
+                    game.highscore_place = [i for i in range(len(game.highscores)) if game.highscores[i][1]<game.level.ship.score][0]
+                    game.highscores.append(["", game.level.ship.score])
+                    game.highscores = sorted(game.highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+                    game.mode = "enter name"
+                else:
+                    game.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!", ""]+[str(score[0]) + " " + str(score[1]) for score in game.highscores], options=["OK"])
+            case _:
+                game.active_menu = highscores_checked
 
-    def blit(self, screen):
-        """blits the menu with the current selection highlighted"""
-        screen.blit(self.surface_highlighted[self.current_selection], ((
-            screen.get_width()-self.w)/2, (screen.get_height()-self.h)/2))
+# Menus in the game
 
 main_menu = Menu(message=["Space invaders"],
                 options=["Start game", "Highscores", "Buy Premium", "Credits", "Exit"])

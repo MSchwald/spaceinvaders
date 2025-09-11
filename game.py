@@ -115,37 +115,7 @@ class Game:
                     if event.key in [K_w, K_s]:
                         self.active_menu.move_selection(event.key)
                     if event.key == K_RETURN:
-                        selection = self.active_menu.select()
-                        if selection in ["Restart","Start game"]:
-                            self.mode = "game"
-                            self.level.restart()
-                        elif selection == "Exit":
-                            self.running = False
-                            break
-                        elif selection == "Continue":
-                            self.mode = "game"
-                            if self.active_menu == level_solved_menu:
-                                self.level.next()
-                        elif selection == "Highscores":
-                            self.active_menu = Menu(message=["Highscores", "Do you think you can beat them?", ""]+[str(score[0]) + " " + str(score[1]) for score in self.highscores], options=["Go back"])
-                        elif selection == "Go back":
-                            self.active_menu = main_menu
-                        elif selection == "Buy Premium":
-                            self.active_menu = premium_menu
-                        elif selection == "Credits":
-                            self.active_menu = credits_menu
-                        elif selection == "Check high scores":
-                            if len(self.highscores) < settings.max_number_of_highscores or self.level.ship.score > self.highscores[-1][1]:
-                                pygame.mixer.stop()
-                                sound.new_highscore.play()
-                                self.highscore_place = [i for i in range(len(self.highscores)) if self.highscores[i][1]<self.level.ship.score][0]
-                                self.highscores.append(["", self.level.ship.score])
-                                self.highscores = sorted(self.highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
-                                self.mode = "enter name"
-                            else:
-                                self.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!", ""]+[str(score[0]) + " " + str(score[1]) for score in self.highscores], options=["OK"])
-                        else:
-                            self.active_menu = highscores_checked
+                        Menu.choose_current_selection(self)
 
     # set the direction of the ship according to keyboard input
         keys = pygame.key.get_pressed()
@@ -173,8 +143,3 @@ class Game:
 
         self.display.blit(self.screen,screen_rect)
         pygame.display.flip()
-
-
-        
-
-        
