@@ -12,20 +12,20 @@ from statusbar import Statusbar
 import sound
 from pathlib import Path
 import json,string
+from screen import display_size, screen, screen_rect
 
 
 class Game:
-    """Overall class to manage the game stats and behavior."""
+    """Overall class to manage the games logic and updating the screen """
 
     def __init__(self):
         """Initialize the game and starting stats"""
 
-        # Initializes all pygame modules
         pygame.init()
 
-        # Fixes screen as a pygame surface on which we can blit sprites
-        self.screen = pygame.display.set_mode((settings.screen_width, settings.screen_height), pygame.FULLSCREEN)
-
+        # Fixes the maximal screen on the display with 16:9 ratio
+        self.display = pygame.display.set_mode(display_size, pygame.FULLSCREEN)
+        self.screen = screen #The game's surface
 
         # Initialize menus
         self.active_menu = None
@@ -287,20 +287,18 @@ class Game:
 
     def update_screen(self):
         """Updates screen with all sprites and stats"""
+        self.display.fill((50,50,50)) #padding visible if screen ratio is not 16:9
         self.screen.fill(settings.bg_color)
 
-        # first blit the status bar onto the screen
         self.statusbar.blit(self.screen)
-
-        # then blit the updated sprites (ship, enemies, items, bullets)
-        self.blit_sprites()
-
-        # blit the aim for the missiles on top
+        self.blit_sprites() #ship, enemies, items, bullets
         self.aim.blit(self.screen)
 
         # pause menu
         if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)
+
+        self.display.blit(self.screen,screen_rect)
 
         # display the new screen
         pygame.display.flip()
