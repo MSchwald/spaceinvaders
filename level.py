@@ -7,6 +7,8 @@ from random import random
 from math import hypot
 from event import Event
 from random import randint
+from sprite import Sprite
+from image import Image
 
 #placement of enemies in an 16x9-grid
 max_level = 5
@@ -27,6 +29,7 @@ class Level:
         self.asteroids = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.blobs = pygame.sprite.Group()
+        self.crosshairs = Sprite(Image.load('images/bullet/aim.png', scaling_width = settings.missile_explosion_size))
 
     def status(self):
         if self.ship.lives <= 0:
@@ -106,6 +109,7 @@ class Level:
 
 
     def update(self, dt):
+
         self.timer += dt
         match self.number:
             case 1:                
@@ -118,7 +122,8 @@ class Level:
                 self.progress = f"Blob energy: {sum([blob.energy for blob in self.blobs])}"
             case 5:
                 self.progress = f"Timer: {int(60-self.timer/1000)}"
-        # update all bullets, the ship and enemies
+        
+        # update the status of all level objects, the crosshairs and level events
         for bullet in self.bullets:
             bullet.update(dt)
         self.ship.update(dt)
@@ -128,6 +133,9 @@ class Level:
             alien.update(dt)
         for item in self.items:
             item.update(dt)
+        self.crosshairs.rect.center = pygame.mouse.get_pos()
+        self.crosshairs.x = self.crosshairs.rect.x
+        self.crosshairs.y = self.crosshairs.rect.y
         for event in self.events:
             event.update(dt)
 

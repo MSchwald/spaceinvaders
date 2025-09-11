@@ -39,7 +39,6 @@ class Game:
         self.level = Level(0)
         self.statusbar = Statusbar(self.level)
         self.clock = pygame.time.Clock()
-        self.crosshairs = Sprite(Image.load('images/bullet/aim.png', scaling_width = settings.missile_explosion_size))
 
     def run(self):
         """Starts the main loop for the game."""
@@ -168,12 +167,6 @@ class Game:
         """update position of all sprites according to the passed time"""
         self.level.update(dt)
 
-        self.crosshairs.rect.center = pygame.mouse.get_pos()
-        self.crosshairs.x = self.crosshairs.rect.x
-        self.crosshairs.y = self.crosshairs.rect.y
-
-
-
     def collision_checks(self):
         """Checks for collisions of sprites, inflicts damage, adds points, generate items"""
         # Check if bullets hit asteroids
@@ -263,13 +256,13 @@ class Game:
     def update_screen(self):
         """Updates screen with all sprites and stats"""
         self.display.fill((50,50,50)) #padding visible if screen ratio is not 16:9
-        self.screen.fill(settings.bg_color)
+        self.screen.fill(settings.bg_color) #background
 
         self.statusbar.blit(self.screen)
         self.blit_sprites() #ship, enemies, items, bullets
-        self.crosshairs.blit(self.screen)
 
-        # pause menu
+        self.level.crosshairs.blit(self.screen)
+
         if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)
 
@@ -290,5 +283,6 @@ class Game:
             alien.blit(self.screen)
         for item in self.level.items:
             item.blit(self.screen)
+        
 
         
