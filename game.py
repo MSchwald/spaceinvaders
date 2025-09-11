@@ -110,30 +110,32 @@ class Game:
                 self.running = False
                 break
             # Controls in game mode
-            if self.mode == "game":
-                if event.type == KEYDOWN:
-                    # RETURN pauses the game and opens the main menu
-                    if event.key == K_RETURN:
-                        self.mode = "menu"
-                        self.active_menu = self.pause_menu
-                        break
-                    # SPACE shoots bullets
-                    elif event.key == K_SPACE:
-                        self.level.ship.shoot_bullets()
-                    # Keys to test the different ship-levels, only for beta-version
-                    #elif event.key == K_1:
-                    #    self.level.ship.set_rank(1)
-                    #elif event.key == K_2:
-                    #    self.level.ship.set_rank(2)
-                    #elif event.key == K_3:
-                    #    self.level.ship.set_rank(3)
-                    elif event.key == K_LSHIFT:
-                        self.level.ship.activate_shield()
-                if event.type == KEYUP and event.key == K_LSHIFT:
-                    self.level.ship.deactivate_shield()
-                if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                    x,y = event.pos
-                    self.level.ship.shoot_missile(x,y)
+
+            match self.mode:
+                "game":
+                    match (event.type, event.key):
+                        case (KEYDOWN, K_RETURN):
+                            self.mode = "menu"
+                            self.active_menu = self.pause_menu
+                            break
+                        case (KEYDOWN, K_SPACE):
+                            self.level.ship.shoot_bullets()
+                        case (KEYUP, K_LSHIFT):
+                            self.level.ship.activate_shield()
+                        # case (KEYUP, K_1):
+                        #     self.level.ship.set_rank(1)
+                        # case (KEYUP, K_2):
+                        #     self.level.ship.set_rank(1)
+                        # case (KEYUP, K_LSHIFT):
+                        #     self.level.ship.set_rank(1)
+                        case (KEYUP, K_LSHIFT):
+                            self.level.ship.deactivate_shield()
+                        case (MOUSEBUTTONDOWN, _):
+                            if event.button == 1:
+                                x,y = event.pos
+                                self.level.ship.shoot_missile(x,y)
+                # "enter name": # plain names is not the best way to check for
+                #     ...
 
             #Enter the name into the high score table
             if self.mode == "enter name":
