@@ -59,6 +59,20 @@ class Level:
             event.update(dt)
         self.update_level_progress()
 
+    def blit(self, screen):
+        """blit the current state of the level"""
+        for bullet in self.bullets:
+            bullet.blit(screen)
+        self.ship.blit(screen)
+
+        for asteroid in self.asteroids:
+            asteroid.blit(screen)
+        for alien in self.aliens:
+            alien.blit(screen)
+        for item in self.items:
+            item.blit(screen)
+        self.crosshairs.blit(screen)
+
     def update_level_goal(self):
         """each level has a different goal"""
         match self.number:
