@@ -4,11 +4,17 @@ import settings
 import image
 from sprite import Sprite
 from image import Image
+import sound
+from math import ceil
+
+w,N=settings.bullet_width["blubber"],settings.alien_energy["blob"]
+blubber_image = Image.load(f'images/bullet/blubber.png', scaling_width = w)
+blubber_images = [blubber_image.scale_by((N/n)**(-1/3)) for n in range(1,N+1)]
 
 class Bullet(Sprite):
     """A class to manage the bullets shot by the player or enemies"""
 
-    def __init__(self, type, owner=None, damage=None, effect_time = None, image=None,
+    def __init__(self, type, size=None, owner=None, damage=None, effect_time = None, image=None,
             v=None, grid=None, center=None, x=0, y=0, direction=None,
             constraints=pygame.Rect(0, 0, settings.screen_width, settings.screen_height),
             boundary_behaviour="vanish",
@@ -23,14 +29,25 @@ class Bullet(Sprite):
         if effect_time is None:
             effect_time = settings.bullet_effect_time[type]
         self.effect_time = effect_time
-        if type != "missile":
+        if type in [1,2,3]:
             if image is None:
                 image = Image.load(f'images/bullet/{type}.png', scaling_width = settings.bullet_width[type])
-        else:
+        elif type == "blubber":
+            sound.blubber.play()
+            if size is None:
+                size = settings.alien_energy["blob"]
+            image = blubber_images[size-1]
+            self.damage = ceil(size/settings.alien_energy["blob"]*settings.bullet_damage[type])
+        elif type == "missile":
             frames = [Image.load(f"images/bullet/explosion{n}.png", scaling_factor=settings.missile_explosion_size/810) for n in range(6)]
             animation_type = "vanish"
             animation_time = settings.missile_duration
             self.hit_enemies = pygame.sprite.Group()
+        elif type == "g":
+            sound.alienshoot1.play()
+            frames = [Image.load(f"images/bullet/g{n}.png", scaling_width = settings.bullet_width[type]) for n in range(4)]
+            animation_type = "once"
+            animation_time = 0.5
         if v is None:
             v = settings.bullet_speed[type]
         if direction is None:
@@ -43,6 +60,13 @@ class Bullet(Sprite):
             animation_type=animation_type, frames=frames, animation_time=animation_time)
 
     def update(self, dt):
+        #timer, movement and animation get handled in the Sprite class
         super().update(dt)
+        # explosions by missiles need to get deleted manually after their duration
         if self.effect_time and self.timer > self.effect_time:
                 self.kill()
+
+    def reflect(self):
+        sound.shield.stop()
+        sound.shield_reflect.play()
+        super().reflect(flip_x=True, flip_y=True)

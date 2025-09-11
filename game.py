@@ -1,16 +1,17 @@
 import pygame
 from pygame.locals import *
 import settings
-from ship import Ship
-from alien import Alien
+from alien import Alien,blob_images
 from level import Level, max_level
-from text import Font, Menu
-from math import pi
+from text import Menu
 from image import Image
 from random import random, choice
 from item import Item
 from sprite import Sprite
 from statusbar import Statusbar
+import sound
+from pathlib import Path
+import json,string
 
 
 class Game:
@@ -23,31 +24,39 @@ class Game:
         pygame.init()
 
         # Fixes screen as a pygame surface on which we can blit sprites
-        self.screen = pygame.display.set_mode(
-            (settings.screen_width, settings.screen_height))
+        self.screen = pygame.display.set_mode((settings.screen_width, settings.screen_height), pygame.FULLSCREEN)
 
-        # Initialize fonts
-        self.font = Font()
 
-        # Initialize test menu
+        # Initialize menus
         self.active_menu = None
-        self.pause_menu = Menu(self.font, message=["PAUSE"], options=[
+        self.main_menu = Menu(message=["Space invaders"], options=[
+                               "Start game", "Highscores", "Buy Premium", "Credits", "Exit"])
+        self.pause_menu = Menu(message=["PAUSE"], options=[
                                "Continue", "Restart", "Exit"])
-        self.level_solved_menu = Menu(self.font, message=[
-                                      "Level solved. Press RETURN", "to start the next level."], options=["Continue"])
-        self.game_won_menu = Menu(self.font, message=[
-                                  "Congratulations, you have", "finished all levels!"], options=["Restart", "Exit"])
-        self.game_over_menu = Menu(self.font, message=[
-                                  "Game over!", "you ran out of lives!"], options=["Restart", "Exit"])
+        self.level_solved_menu = Menu(message=[
+                                      "Level solved!", "Press RETURN to", "start the next level."], options=["Continue"])
+        self.game_won_menu = Menu(message=[
+                                  "Congratulations!", "You have finished", "all available levels!"], options=["Check high scores","Restart", "Exit"])
+        self.game_over_menu = Menu(message=[
+                                  "Game over!", "You ran out of lives!"], options=["Check high scores","Restart", "Exit"])
+        self.highscores_checked = Menu(message=[
+                                  "Play again?"], options=["Restart", "Exit"])
 
-        # Initializes the Ship
-        self.ship = Ship()
 
-        #Initializes status bar
-        self.statusbar = Statusbar()
+        # Load high scores
+        try:
+            with open("highscores.json", "r", encoding="utf-8") as f:
+                self.highscores = json.load(f)
+        except FileNotFoundError:
+            if settings.default_highscores:
+                self.highscores = sorted(settings.default_highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+        self.allowed_chars = string.ascii_letters + string.digits #allowed characters in the table
 
         # Start the first game level
-        self.level = Level(settings.game_starting_level)
+        self.level = Level(0)
+
+        #Initializes status bar
+        self.statusbar = Statusbar(self.level)
 
         # Starts a clock to measure ingame time
         self.clock = pygame.time.Clock()
@@ -58,8 +67,9 @@ class Game:
     def run(self):
         """Starts the main loop for the game."""
         self.running = True  # checks if the game gets shut down
-        self.mode = "game"  # possible modes: "game", "menu"
-        self.level.start(self.ship)
+        self.mode = "menu"  # possible modes: "game", "menu"
+        self.active_menu = self.main_menu
+        self.level.start()
         while self.running:
             self.handle_events()
 
@@ -76,12 +86,13 @@ class Game:
         self.handle_event_queue()
         # set the direction of the ship according to keyboard input
         keys = pygame.key.get_pressed()
-        self.ship.control(keys)
+        self.level.ship.control(keys)
 
     def update(self, dt):
+        self.check_level_status()
         self.update_sprites(dt)
         self.collision_checks()
-        self.check_level_status()
+        
 
     def render(self):
         self.update_screen()
@@ -108,21 +119,38 @@ class Game:
                         break
                     # SPACE shoots bullets
                     elif event.key == K_SPACE:
-                        self.ship.shoot_bullets(self.level)
+                        self.level.ship.shoot_bullets()
                     # Keys to test the different ship-levels, only for beta-version
-                    elif event.key == K_1:
-                        self.ship.set_level(1)
-                    elif event.key == K_2:
-                        self.ship.set_level(2)
-                    elif event.key == K_3:
-                        self.ship.set_level(3)
+                    #elif event.key == K_1:
+                    #    self.level.ship.set_rank(1)
+                    #elif event.key == K_2:
+                    #    self.level.ship.set_rank(2)
+                    #elif event.key == K_3:
+                    #    self.level.ship.set_rank(3)
                     elif event.key == K_LSHIFT:
-                        self.ship.activate_shield()
+                        self.level.ship.activate_shield()
                 if event.type == KEYUP and event.key == K_LSHIFT:
-                    self.ship.deactivate_shield()
+                    self.level.ship.deactivate_shield()
                 if event.type == MOUSEBUTTONDOWN and event.button == 1:
                     x,y = event.pos
-                    self.ship.shoot_missile(self.level,x,y)
+                    self.level.ship.shoot_missile(x,y)
+
+            #Enter the name into the high score table
+            if self.mode == "enter name":
+                self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[str(score[0]) + " " + str(score[1]) for score in self.highscores], current_selection=self.highscore_place)
+                if event.type == KEYDOWN:
+                    if event.key == K_BACKSPACE:
+                        self.highscores[self.highscore_place][0] = self.highscores[self.highscore_place][0][:-1]
+                        #self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
+                    if event.key == K_RETURN:
+                        with open("highscores.json", "w", encoding="utf-8") as f:
+                            json.dump(self.highscores,f)
+                        self.active_menu = self.highscores_checked
+                        self.mode = "menu"
+                    elif event.unicode in self.allowed_chars and len(self.highscores[self.highscore_place][0])<10:
+                        self.highscores[self.highscore_place][0] += event.unicode
+                        #self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"])
+            
             # Navigating the menu
             if self.mode == "menu":
                 if event.type == KEYDOWN:
@@ -130,86 +158,131 @@ class Game:
                         self.active_menu.move_selection(event.key)
                     if event.key == K_RETURN:
                         selection = self.active_menu.select()
-                        if selection == "Restart":
+                        if selection in ["Restart","Start game"]:
                             self.mode = "game"
-                            self.level.restart(self.ship)
+                            self.level.restart()
                         elif selection == "Exit":
                             self.running = False
                             break
                         elif selection == "Continue":
                             self.mode = "game"
                             if self.active_menu == self.level_solved_menu:
-                                self.level.next(self.ship)
-
+                                self.level.next()
+                        elif selection == "Highscores":
+                            self.active_menu = Menu(message=["Highscores", "Do you think you can beat them?", ""]+[str(score[0]) + " " + str(score[1]) for score in self.highscores], options=["Go back"])
+                        elif selection == "Go back":
+                            self.active_menu = self.main_menu
+                        elif selection == "Buy Premium":
+                            self.active_menu = Menu(message=["Haha", "Did you believe there", "is a premium version?"], options=["Go back"])
+                        elif selection == "Credits":
+                            self.active_menu = Menu(message=["Credits", "Programmed with pygame", "Sprites and sound effects from", "pixabay.com, craftpix.net,", "opengameart.net and Google Gemini"], options=["Go back"])
+                        elif selection == "Check high scores":
+                            if len(self.highscores) < settings.max_number_of_highscores or self.level.ship.score > self.highscores[-1][1]:
+                                pygame.mixer.stop()
+                                sound.new_highscore.play()
+                                self.highscore_place = [i for i in range(len(self.highscores)) if self.highscores[i][1]<self.level.ship.score][0]
+                                self.highscores.append(["", self.level.ship.score])
+                                self.highscores = sorted(self.highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+                                self.mode = "enter name"
+                            else:
+                                self.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!", ""]+[str(score[0]) + " " + str(score[1]) for score in self.highscores], options=["OK"])
+                        else:
+                            self.active_menu = self.highscores_checked
+                
     def update_sprites(self, dt):
         """update position of all sprites according to the passed time"""
-        for bullet in self.level.bullets:
-            bullet.update(dt)
-
-        self.ship.update(dt)
-
-        for alien in self.level.aliens:
-            alien.update(dt)
-        for item in self.level.items:
-            item.update(dt, self.ship)
+        self.level.update(dt)
 
         self.aim.rect.center = pygame.mouse.get_pos()
         self.aim.x = self.aim.rect.x
         self.aim.y = self.aim.rect.y
 
+
+
     def collision_checks(self):
         """Checks for collisions of sprites, inflicts damage, adds points, generate items"""
-        # Check if bullets hit aliens
+        # Check if bullets hit asteroids
         collisions = pygame.sprite.groupcollide(
-            self.level.bullets, self.level.aliens, False, False, collided=pygame.sprite.collide_mask)
+            self.level.bullets, self.level.asteroids, False, False, collided=pygame.sprite.collide_mask)
         for bullet in collisions.keys():
-            for alien in collisions[bullet]:
+            for asteroid in collisions[bullet]:
                 if bullet.type != "missile":
+                    asteroid.get_damage(bullet.damage)
                     bullet.kill()
-                if bullet.type != "missile" or alien not in bullet.hit_enemies:
-                    alien.get_damage(bullet.damage)
-                    if bullet.type == "missile":
-                        bullet.hit_enemies.add(alien)
-                    if alien.energy <= 0 or alien.type == "big_asteroid":
-                        if alien.type == "big_asteroid":
-                            pieces = [
-                                Alien("small_asteroid", center=alien.rect.center, direction=alien.direction) for i in range(4)]
-                            for i in range(4):
-                                pieces[i].turn_direction((2*i+1)*pi/4)
-                                self.level.aliens.add(pieces[i])
-                        self.ship.score += self.ship.score_factor*alien.points
-                        if random() <= settings.item_probability:
-                            self.level.items.add(Item(choice(settings.item_types),center=alien.rect.center))
-                        alien.remove(self.level.aliens)
+                    asteroid.kill()
+                if bullet.type == "missile" and asteroid not in bullet.hit_enemies:
+                    # missiles hit each enemy at most once during their explosion time
+                    asteroid.get_damage(bullet.damage)
+                    asteroid.kill()
 
-        # Check if aliens hit the ship
-        for alien in self.level.aliens:
-            if pygame.sprite.collide_mask(self.ship, alien):
-                if self.ship.status == "shield":
-                    alien.change_direction(-alien.direction[0],-alien.direction[1])
+        #Check if bullets hit aliens or the ship
+        for bullet in self.level.bullets:
+            if bullet.owner == "player":
+                for alien in self.level.aliens:
+                    if pygame.sprite.collide_mask(bullet, alien):
+                        if bullet.type != "missile":
+                            alien.get_damage(bullet.damage)
+                            bullet.kill()
+                        if bullet.type == "missile" and alien not in bullet.hit_enemies:
+                            # missiles hit each enemy at most once during their explosion time
+                            if alien.type == "blob":
+                                if alien.energy == 1:
+                                    alien.kill()
+                                else:
+                                    sound.slime_hit.play()
+                                    alien.energy = alien.energy//2
+                                    alien.change_image(blob_images[alien.energy-1])
+                            else:
+                                alien.get_damage(bullet.damage)
+                            bullet.hit_enemies.add(alien)
+            elif bullet.owner == "enemy" and pygame.sprite.collide_mask(bullet, self.level.ship):
+                if self.level.ship.status == "shield":
+                    bullet.reflect()
+                    bullet.owner = "player"
                 else:
-                    self.ship.get_damage(alien.energy)
-                    self.ship.score += self.ship.score_factor*alien.points
+                    self.level.ship.get_damage(bullet.damage)
+                    bullet.kill()
+                    sound.player_hit.play()
+            
+
+        # Check if enemies hit the ship
+        for asteroid in self.level.asteroids:
+            if pygame.sprite.collide_mask(self.level.ship, asteroid):
+                if self.level.ship.status == "shield":
+                    asteroid.reflect()
+                else:
+                    self.level.ship.get_damage(asteroid.energy)
+                    asteroid.energy = 0
+                    asteroid.kill()
+        for alien in self.level.aliens:
+            if pygame.sprite.collide_mask(self.level.ship, alien):
+                if self.level.ship.status == "shield":
+                    alien.reflect()
+                else:
+                    self.level.ship.get_damage(alien.energy)
+                    alien.energy = 0
                     alien.kill()
+        
 
         # Check if ship collects an item
         for item in self.level.items:
-            if pygame.sprite.collide_mask(self.ship, item):
-                if self.ship.status == "shield":
+            if pygame.sprite.collide_mask(self.level.ship, item):
+                if self.level.ship.status == "shield":
                     item.change_direction(-item.direction[0],-item.direction[1])
                 else:
-                    self.ship.collect_item(item.type)
+                    self.level.ship.collect_item(item.type)
                     item.kill()
+
 
     def check_level_status(self):
         """Check if the current level is solved or the player is game over"""
-        if not self.level.status(self.ship) == "running":
+        if not self.level.status() == "running":
             self.mode = "menu"
-            if self.level.status(self.ship) == "solved":
+            if self.level.status() == "solved":
                 self.active_menu = self.level_solved_menu
-            elif self.level.status(self.ship) == "game won":
+            elif self.level.status() == "game won":
                 self.active_menu = self.game_won_menu
-            elif self.level.status(self.ship) == "game over":
+            elif self.level.status() == "game over":
                 self.active_menu = self.game_over_menu
 
     def update_screen(self):
@@ -217,7 +290,7 @@ class Game:
         self.screen.fill(settings.bg_color)
 
         # first blit the status bar onto the screen
-        self.statusbar.blit(self.screen, self.ship, self.level.number)
+        self.statusbar.blit(self.screen)
 
         # then blit the updated sprites (ship, enemies, items, bullets)
         self.blit_sprites()
@@ -226,7 +299,7 @@ class Game:
         self.aim.blit(self.screen)
 
         # pause menu
-        if self.mode == "menu":
+        if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)
 
         # display the new screen
@@ -236,8 +309,10 @@ class Game:
         """blit the updated sprites"""
         for bullet in self.level.bullets:
             bullet.blit(self.screen)
-        self.ship.blit(self.screen)
+        self.level.ship.blit(self.screen)
 
+        for asteroid in self.level.asteroids:
+            asteroid.blit(self.screen)
         for alien in self.level.aliens:
             alien.blit(self.screen)
         for item in self.level.items:
