@@ -128,8 +128,6 @@ class Ship(Sprite):
         elif type == "life_minus":
             self.lives -= 1
             if self.lives > 0:
-                self.set_rank(1)
-                self.reset_items()
                 sound.lose_life.play()
         elif type == "life_plus":
             self.lives += 1
