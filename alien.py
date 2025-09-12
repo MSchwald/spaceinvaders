@@ -23,9 +23,9 @@ def normalize(v):
     return (v[0]/norm_v,v[1]/norm_v)
 
 w,N=settings.alien_width["blob"],settings.alien_energy["blob"]
-big_blob_image = Image.load("images/alien/blob0.png", scaling_width=w)
-medium_blob_image = Image.load("images/alien/blob1.png", scaling_width=w)
-small_blob_image = Image.load("images/alien/blob2.png", scaling_width=w)
+big_blob_image = Image.load("images/alien/blob0.png", colorkey=settings.alien_colorkey["blob"], scaling_width=w)
+medium_blob_image = Image.load("images/alien/blob1.png", colorkey=settings.alien_colorkey["blob"], scaling_width=w)
+small_blob_image = Image.load("images/alien/blob2.png", colorkey=settings.alien_colorkey["blob"], scaling_width=w)
 blob_images = [small_blob_image.scale_by((N/n)**(-1/3)) for n in range(1,N//8)]+[medium_blob_image.scale_by((N/n)**(-1/3)) for n in range(N//8,N//4+1)]+[big_blob_image.scale_by((N/n)**(-1/3)) for n in range(N//4+1, N+1)]
 
 class Alien(Sprite):
@@ -43,7 +43,7 @@ class Alien(Sprite):
             v = settings.alien_speed[type]
         #Load frames and images
         if type in ["big_asteroid", "small_asteroid"]:
-            super().__init__(frames = [Image.load(f"images/{type}/{str(n+1)}.png", scaling_width=settings.alien_width[type]) for n in range(14)], animation_type="loop", fps=10, grid=grid, center=center, x=x, y=y, v=v, direction=direction,
+            super().__init__(frames = [Image.load(f"images/{type}/{str(n+1)}.png", colorkey=settings.alien_colorkey[type], scaling_width=settings.alien_width[type]) for n in range(14)], animation_type="loop", fps=10, grid=grid, center=center, x=x, y=y, v=v, direction=direction,
                          constraints=constraints, boundary_behaviour=boundary_behaviour)
             #mass is so far only relevant for collisions between the asteroids and blobs
             self.m = (self.w/settings.grid_width)**3

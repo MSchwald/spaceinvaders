@@ -251,9 +251,12 @@ class Level:
                 if self.ship.status == "shield" or self.status == "start":
                     alien.reflect()
                 else:
-                    self.ship.get_damage(alien.energy)
-                    alien.energy = 0
-                    alien.kill()
+                    if self.ship.energy > alien.energy:
+                        self.ship.get_damage(alien.energy)
+                        alien.energy = 0
+                        alien.kill()
+                    else:
+                        self.ship.get_damage(alien.energy)
         
     def ship_collects_item(self):
         """Check if ship collects an item"""

@@ -29,7 +29,7 @@ class Image:
         return self.rect.h
 
     def scale_by(self, factor):
-        return Image(pygame.transform.scale(self.surface, (factor*self.w, factor*self.h)),
+        return Image(pygame.transform.scale(self.surface, (factor*self.w, factor*self.h)).convert_alpha(),
             self.mask.scale((factor*self.w, factor*self.h)))
 
     def rescale(self, width):
@@ -53,7 +53,6 @@ class Image:
             if newpath.exists():
                 #if the image has been preprocessed before, load it into the games cache
                 surface = pygame.image.load(newpath)
-                surface.set_colorkey((0,0,0))
                 mask = pygame.mask.from_surface(surface)
                 image = Image(surface, mask)
                 cls.cache[path] = image
@@ -68,33 +67,35 @@ class Image:
                 temp.set_colorkey(colorkey)
                 #temp has now transparent boundary, but unfortunately
                 #maybe also transparent pixels in the inside
-                mask = pygame.mask.from_surface(temp)
-                mask.invert() #the inverted mask covers all transparent pixels
-                mask = mask.connected_component() #this component is exactly the boundary
-                mask.invert() #its inverse is the mask of the actual figure on the image
-                raw_image = mask.to_surface(surface=raw_image, setcolor=None)
-                #now its boundary is black
-            raw_image.set_colorkey((0,0,0))
+                temp_mask = pygame.mask.from_surface(temp)
+                temp_mask.invert() #the inverted mask covers all transparent pixels
+                temp_mask = temp_mask.connected_component() #this component is exactly the boundary
+                temp_mask.invert() #its inverse is the mask of the actual figure on the image
+                alpha_surf = temp_mask.to_surface(setcolor=(255,255,255,255),
+                                                  unsetcolor=(0,0,0,0))
+                new_raw = pygame.Surface(raw_image.get_size(), pygame.SRCALPHA)
+                new_raw.blit(raw_image, (0,0))
+                new_raw.blit(alpha_surf, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
+                raw_image = new_raw # now its boundary is transparent
             bounding_rect = raw_image.get_bounding_rect()
-            surface = pygame.Surface(bounding_rect.size)
+            surface = pygame.Surface(bounding_rect.size, pygame.SRCALPHA)
             #surface now has its boundary trimmed to the smallest rectangle
             #containing the complete figure
             surface.blit(raw_image,(0,0),bounding_rect)
-            surface.set_colorkey((0,0,0))
             #rescales the image according to the parameters and the grid_width
             if scaling_width:
                 factor = scaling_width*settings.grid_width/100 / bounding_rect.w
                 surface = pygame.transform.scale(
-                        surface, (factor*bounding_rect.w, factor*bounding_rect.h))
+                        surface, (factor*bounding_rect.w, factor*bounding_rect.h)).convert_alpha()
             elif scaling_height:
                 factor = scaling_height*settings.grid_width/100 / bounding_rect.h
                 surface = pygame.transform.scale(
-                            surface, (factor*bounding_rect.w, factor*bounding_rect.h))
+                            surface, (factor*bounding_rect.w, factor*bounding_rect.h)).convert_alpha()
             else:
                 if not scaling_factor:
                     scaling_factor = settings.grid_width/100
                 surface = pygame.transform.scale(
-                    surface, (scaling_factor*settings.grid_width/100*bounding_rect.w, scaling_factor*settings.grid_width/100*bounding_rect.h))
+                    surface, (scaling_factor*settings.grid_width/100*bounding_rect.w, scaling_factor*settings.grid_width/100*bounding_rect.h)).convert_alpha()
             mask = pygame.mask.from_surface(surface)
 
             #preprocessed Image-object, ready to be used in the game

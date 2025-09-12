@@ -1,15 +1,32 @@
 import pygame, sys
-import screen
 
 pygame.init()
 
 clock = pygame.time.Clock()
 
-while True:
-    
-    screen.screen.fill((255,0,0))
-    screen.blit_screen_on_display()
+screen = pygame.display.set_mode((1000,500)) 
+path = "images/alien/ufo.png"
+colorkey = (0,0,0)
 
+raw_image = pygame.image.load(path)
+if colorkey != (0,0,0):
+    raw_image.set_colorkey((0,0,0))
+    temp = raw_image.copy()
+    temp.set_colorkey(colorkey)
+    mask = pygame.mask.from_surface(temp)
+    mask.invert() #the inverted mask covers all transparent pixels
+    mask = mask.connected_component() #this component is exactly the boundary
+    mask.invert() #its inverse is the mask of the actual figure on the image
+    raw_image = mask.to_surface(surface=raw_image, setcolor=None)
+bounding_rect = raw_image.get_bounding_rect()
+cropped = pygame.Surface(bounding_rect.size, pygame.SRCALPHA)
+cropped.blit(raw_image,(0,0), bounding_rect)
+#surface.blit(cropped,(0,0),bounding_rect)
+
+while True:
+       
+    screen.fill((255,0,0))
+    screen.blit(cropped,(100,20))
     pygame.display.flip()
 
 

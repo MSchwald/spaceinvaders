@@ -10,6 +10,7 @@ from math import ceil
 w,N=settings.bullet_width["blubber"],settings.alien_energy["blob"]
 blubber_image = Image.load(f'images/bullet/blubber.png', scaling_width = w)
 blubber_images = [blubber_image.scale_by((N/n)**(-1/3)) for n in range(1,N+1)]
+reflected_blubber_images = [Image.reflect(image, flip_x=True, flip_y=True) for image in blubber_images]
 
 class Bullet(Sprite):
     """A class to manage the bullets shot by the player or enemies"""
@@ -36,6 +37,7 @@ class Bullet(Sprite):
             sound.blubber.play()
             if size is None:
                 size = settings.alien_energy["blob"]
+            self.size = size
             image = blubber_images[size-1]
             self.damage = ceil(size/settings.alien_energy["blob"]*settings.bullet_damage[type])
         elif type == "missile":
@@ -69,4 +71,8 @@ class Bullet(Sprite):
     def reflect(self):
         sound.shield.stop()
         sound.shield_reflect.play()
-        super().reflect(flip_x=True, flip_y=True)
+        if self.type == "blubber":
+            self.direction = (-self.direction[0],-self.direction[1])
+            self.change_image(reflected_blubber_images[self.size-1])
+        else:
+            super().reflect(flip_x=True, flip_y=True)
