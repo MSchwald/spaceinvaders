@@ -28,8 +28,9 @@ class Game:
         self.display = pygame.display.set_mode(display_size, pygame.FULLSCREEN)
         self.screen = screen #The game's surface
 
+        self.player_name = ""
         self.level = Level(0)
-        self.highscores = Highscores().score_list
+        self.highscores = Highscores()
         self.statusbar = Statusbar(self.level)
         self.clock = pygame.time.Clock()
 
@@ -37,7 +38,7 @@ class Game:
         """Starts the main loop for the game."""
         self.running = True  # checks if the game gets shut down
         self.mode = "menu"  # possible modes: "game", "menu", "enter name" (for highscores)
-        self.active_menu = main_menu
+        self.active_menu = Menu.make_main_menu(self)
         self.level.start()
 
         #main loop of the game
@@ -72,10 +73,10 @@ class Game:
             # Controls in game mode
             if self.mode == "game":
                 if event.type == KEYDOWN:
-                    # RETURN pauses the game and opens the main menu
+                    # RETURN pauses the game and opens the pause menu
                     if event.key == K_RETURN:
                         self.mode = "menu"
-                        self.active_menu = pause_menu
+                        self.active_menu = Menu.make_main_menu(self)
                         break
                     # SPACE shoots bullets
                     elif event.key == K_SPACE:
@@ -90,18 +91,20 @@ class Game:
 
             #Enter the name into the high score table
             if self.mode == "enter name":
-                self.active_menu = Menu(message=["Congratulations!", "You achieved a new high score.", "Please enter your name and press RETURN."], options=[str(score[0]) + " " + str(score[1]) for score in self.highscores], current_selection=self.highscore_place)
+                self.highscores.update_name(name=self.player_name, rank=self.score_rank)
+                self.active_menu = Menu.make_highscores_menu(message=["Congratulations!", f"Your score ranks on place {self.score_rank+1}.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"], highscores = self.highscores)
                 if event.type == KEYDOWN:
-                    if event.key == K_BACKSPACE:
-                        self.highscores[self.highscore_place][0] = self.highscores[self.highscore_place][0][:-1]
-                    if event.key == K_RETURN:
-                        with open("highscores.json", "w", encoding="utf-8") as f:
-                            json.dump(self.highscores,f)
-                        self.active_menu = highscores_checked
+                    if event.unicode in self.highscores.allowed_chars and len(self.player_name)<=10:
+                        self.player_name += event.unicode
+                    elif event.key == K_BACKSPACE:
+                        self.player_name = self.player_name[:-1]
+                    elif event.key == K_RETURN:
+                        self.highscores.save()
+                        self.active_menu = Menu.make_main_menu(self)
                         self.mode = "menu"
-                    elif event.unicode in self.allowed_chars and len(self.highscores[self.highscore_place][0])<10:
-                        self.highscores[self.highscore_place][0] += event.unicode
-            
+                        self.render_screen()
+                        continue
+                    
             # Navigating the menu
             if self.mode == "menu":
                 if event.type == KEYDOWN:
@@ -119,8 +122,8 @@ class Game:
         if self.level.status() != "running":
             self.level.play_status_sound()
             self.mode = "menu"
-            self.active_menu ={"level_solved": level_solved_menu,
-                                "game_won":game_won_menu,
+            self.active_menu = {"level_solved": level_solved_menu,
+                                "game_won": game_won_menu,
                                 "game_over":game_over_menu}[self.level.status()]
 
     def render_screen(self):

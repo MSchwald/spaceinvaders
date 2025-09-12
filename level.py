@@ -141,6 +141,8 @@ class Level:
         return False
 
     def status(self):
+        if self.number == 0:
+            return "start"
         if self.ship.lives <= 0:         
             return "game_over"
         if self.goal_fulfilled():

@@ -25,8 +25,6 @@ else:
     screen_w, screen_h = display_w, display_w * dh // dw
     padding_w, padding_h = 0, (display_h - screen_h) // 2
 
-print("screen:", screen_w, screen_h)
-print("padding:", padding_w, padding_h)
 screen = pygame.Surface((screen_w,screen_h))
 screen_rect = pygame.Rect(padding_w,padding_h,screen_w,screen_h)
 

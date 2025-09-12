@@ -19,20 +19,29 @@ class Menu():
     title_distance = int(settings.title_menu_distance*settings.screen_width/1600)
     line_distance = int(settings.line_distance*settings.screen_width/1600)
 
-    def __init__(self, message=["Press Return to continue."], options=["Continue"], current_selection=0):
+    def __init__(self, message=["Press Return to continue."], options=["Continue"], current_selection=0, centered=False):
         self.message = message
         self.options = options
+        self.centered = centered
         self.current_selection = current_selection
         self.number_of_lines = len(message)+len(options)
-        # Renders each line of title message and options
+
+        self.render_lines()
+        self.render_menu()
+
+    def render_lines(self):
+        """Renders each line of title message and options"""
         self.lines = (
-            [Menu.text_font.render(line, False, color["white"]) for line in message]
-            +[Menu.menu_font.render(line, False, color["light_grey"], color["blue"]) for line in options]
+            [Menu.text_font.render(line, False, color["white"]) for line in self.message]
+            +[Menu.menu_font.render(line, False, color["light_grey"], color["blue"]) for line in self.options]
         )
         self.active_lines = (
-            [Menu.menu_font.render(line, False, color["yellow"], color["grey"]) for line in options]
+            [Menu.menu_font.render(line, False, color["yellow"], color["grey"]) for line in self.options]
         )
-        # Calculates size of the menu
+
+    def render_menu(self):
+        """Renders a complete menu window out of the rendered lines"""
+        # Calculates optimal size of the menu
         self.line_height = max(line.get_height()
                                for line in self.lines)
         self.line_length = max(line.get_width()
@@ -40,9 +49,10 @@ class Menu():
         self.h = 2*Menu.boundary_size + self.number_of_lines * \
             (self.line_height+Menu.line_distance) + \
             Menu.title_distance - Menu.line_distance
-        if len(message) > 1:
+        if len(self.message) > 1:
             self.h += Menu.title_distance
         self.w = 2*Menu.boundary_size + self.line_length
+
         # Blit all the lines onto a blue rectangle with red boundary
         self.surface = pygame.Surface((self.w, self.h))
         self.surface.fill((color["red"]))
@@ -51,14 +61,14 @@ class Menu():
         self.surface.blit(background, (Menu.boundary_size//2,Menu.boundary_size//2))
         self.line_position = []
         for i in range(self.number_of_lines):
-            if i in range(1,len(message)):
+            if i in range(1,len(self.message)) and not self.centered:
                 x = Menu.boundary_size
             else:
                 x = (self.w-self.lines[i].get_width())//2
             y = Menu.boundary_size+i*(self.line_height+Menu.line_distance)
             if i>0:
                 y+=Menu.title_distance
-            if i >= len(message) and len(message) > 1:
+            if i >= len(self.message) and len(self.message) > 1:
                 y+=Menu.title_distance
             self.line_position.append((x, y))
             self.surface.blit(self.lines[i], (x, y))
@@ -82,48 +92,80 @@ class Menu():
     def choose_current_selection(cls, game):
         sound.menu_select.play()
         match game.active_menu.options[game.active_menu.current_selection]:
-            case "Restart" | "Start game":
+            case "Restart" | "Start game" | "New game":
                 game.mode = "game"
                 game.level.restart()
-            case "Exit":
-                game.running = False
             case "Continue":
                 game.mode = "game"
-                if game.active_menu == level_solved_menu:
-                    game.level.next()
+            case "Exit":
+                game.running = False
+            case "Next level":
+                game.mode = "game"
+                game.level.next()
             case "Highscores":
-                game.active_menu = Menu(message=["Highscores", "Do you think you can beat them?", ""]+[str(score[0]) + " " + str(score[1]) for score in game.highscores], options=["Go back"])
-            case "Go back":
-                game.active_menu = main_menu
+                game.active_menu = Menu.make_highscores_menu(message=["Highscores", "Do you think you can beat them?"], options=["Go back", "Delete high scores"], highscores = game.highscores)
+            case "Delete high scores":
+                game.highscores.load_default_highscores()
+                game.active_menu = Menu.make_highscores_menu(message=["Highscores", "Do you think you can beat them?"], options=["Go back", "Delete high scores"], highscores = game.highscores)
             case "Buy Premium":
                 game.active_menu = premium_menu
             case "Credits":
                 game.active_menu = credits_menu
             case "Check high scores":
-                if len(game.highscores) < settings.max_number_of_highscores or game.level.ship.score > game.highscores[-1][1]:
+                game.score_rank = game.highscores.highscore_rank(game.level.ship.score)
+                if game.score_rank is not None:
                     pygame.mixer.stop()
                     sound.new_highscore.play()
-                    game.highscore_place = [i for i in range(len(game.highscores)) if game.highscores[i][1]<game.level.ship.score][0]
-                    game.highscores.append(["", game.level.ship.score])
-                    game.highscores = sorted(game.highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
+                    game.highscores.insert_score(name=game.player_name, score=game.level.ship.score, rank=game.score_rank)
                     game.mode = "enter name"
                 else:
-                    game.active_menu = Menu(message=["No new high score!", "Your score was too low,", "maybe next time!", ""]+[str(score[0]) + " " + str(score[1]) for score in game.highscores], options=["OK"])
+                    game.active_menu = Menu.make_highscores_menu(message=["No new high score!", "Your score was too low,", "maybe next time!"], options=["OK"], highscores = game.highscores)
             case _:
-                game.active_menu = highscores_checked
+                game.active_menu = Menu.make_main_menu(game)
+
+    @classmethod
+    def make_highscores_menu(cls, message, options, highscores, centered=True):
+        highscores.render_lines()
+        menu = Menu(message + ["" for i in range(settings.max_number_of_highscores+1)], options, centered=True)
+        for i in range(settings.max_number_of_highscores):
+            menu.lines[len(message)+i+1] = highscores.lines[i]
+        menu.render_menu()
+        return menu
+
+    @classmethod
+    def make_main_menu(cls, game):
+        match game.player_name, game.level.status():
+            case _, "running":
+                m,o = ["Pause"],["Continue", "Restart"]
+            case "", "game_won":
+                m,o = ["Good game!", "Do you want to play again?"],["New game"]
+            case _, "game_won":
+                m,o = [f"Good game, {game.player_name}!", "Do you want to play again?"],["New game"]
+            case "", "game_over":
+                m,o = ["Game over!","You ran out of lives!", "Do you want to play again?"],["New game"]
+            case _, "game_over":
+                m = ["Game over!", f"{game.player_name}, do you want to play again?"]
+                o = ["New game"]
+            case "", "start":
+                m,o=["Space invaders"],["Start game"]
+            case _, "start":
+                m,o=[f"Welcome back, {game.player_name}!"],["Start game"]
+        options = o + ["Highscores", "Buy Premium", "Credits", "Exit"]
+        return Menu(message = m, options = options)
+
+        menu = Menu(message + ["" for i in range(settings.max_number_of_highscores+1)], options, centered=True)
+        for i in range(settings.max_number_of_highscores):
+            menu.lines[len(message)+i+1] = highscores.lines[i]
+        menu.render_menu()
+        return menu
 
 # Menus in the game
-main_menu = Menu(message=["Space invaders"],
-                options=["Start game", "Highscores", "Buy Premium", "Credits", "Exit"])
-pause_menu = Menu(message=["PAUSE"],
-                options=["Continue", "Restart", "Exit"])
 level_solved_menu = Menu(message=["Level solved!", "Press RETURN to", "start the next level."],
-                options=["Continue"])
+                options=["Next level"])
+game_over_menu = Menu(message=["Game over!","You ran out of lives!"],
+                options=["Check high scores"])
 game_won_menu = Menu(message=["Congratulations!", "You have finished", "all available levels!"],
-                options=["Check high scores","Restart", "Exit"])
-game_over_menu = Menu(message=["Game over!", "You ran out of lives!"],
-                options=["Check high scores","Restart", "Exit"])
-highscores_checked = Menu(message=["Play again?"], options=["Restart", "Exit"])
+                options=["Check high scores"])
 premium_menu = Menu(message=["Haha", "Did you believe there", "is a premium version?"],
                 options=["Go back"])
 credits_menu = Menu(message=["Credits", "Programmed with pygame", "Sprites and sound effects from",
