@@ -8,7 +8,6 @@ from image import Image
 from random import random, choice
 from item import Item
 from sprite import Sprite
-from statusbar import Statusbar
 import sound
 from pathlib import Path
 import json,string
@@ -24,19 +23,18 @@ class Game:
 
         pygame.init()
 
-        # Fixes the maximal screen on the display with 16:9 ratio
+        # screen.py fixes the maximal screen on the display with 16:9 ratio
         self.display = pygame.display.set_mode(display_size, pygame.FULLSCREEN)
-        self.screen = screen #The game's surface
+        self.screen = screen # The game's surface
 
-        self.player_name = ""
+        self.player_name = "" # Gets entered when achieving a high score 
         self.level = Level(0)
-        self.highscores = Highscores()
-        self.statusbar = Statusbar(self.level)
+        self.highscores = Highscores()  
         self.clock = pygame.time.Clock()
 
     def run(self):
         """Starts the main loop for the game."""
-        self.running = True  # checks if the game gets shut down
+        self.running = True  # Is False when the player exits the game
         self.mode = "menu"  # possible modes: "game", "menu", "enter name" (for highscores)
         self.active_menu = Menu.make_main_menu(self)
         self.level.start()
@@ -46,13 +44,15 @@ class Game:
             # 1) handle keyboard and mouse input
             self.handle_events()
 
-            # measures passed time and limits the frame rate to 60fps
+            # measure passed time and limit the frame rate to 60fps
             dt = self.clock.tick(60)
             
-            # 2) run the game for dt milliseconds (pauses if in menu mode)
+            # 2) run the game for dt milliseconds (pause if in menu mode)
             if self.mode == "game" or self.level.status == "start":
-                self.level.update(dt) # update all ingame objects according to the passed time
-                self.update_menu_status() # open a menu if necessary
+                self.level.update(dt) # update all ingame objects
+                if self.level.status != "running" and self.level.status != "start":
+                    self.active_menu = Menu.open(self.level)
+                    self.mode = "menu"
 
             # 3) show the new frame of the game on the screen 
             self.render_screen()
@@ -63,17 +63,17 @@ class Game:
         for event in pygame.event.get():
 
             # The 'X' of the window and ESCAPE end the game
-            if event.type == pygame.QUIT:
-                self.running = False
-                break
-            if event.type == KEYDOWN and event.key == K_ESCAPE:
+            if(
+                event.type == pygame.QUIT or
+                (event.type == KEYDOWN and event.key == K_ESCAPE)
+            ):
                 self.running = False
                 break
 
             # Controls in game mode
             if self.mode == "game":
                 if event.type == KEYDOWN:
-                    # RETURN pauses the game and opens the pause menu
+                    # RETURN pauses the game and opens the main menu
                     if event.key == K_RETURN:
                         self.mode = "menu"
                         self.active_menu = Menu.make_main_menu(self)
@@ -86,8 +86,7 @@ class Game:
                 if event.type == KEYUP and event.key == K_LSHIFT:
                     self.level.ship.deactivate_shield()
                 if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                    x,y = event.pos
-                    self.level.ship.shoot_missile(x,y)
+                    self.level.ship.shoot_missile(event.pos)
 
             #Enter the name into the high score table
             if self.mode == "enter name":
@@ -113,31 +112,17 @@ class Game:
                     if event.key == K_RETURN:
                         Menu.choose_current_selection(self)
 
-    # set the direction of the ship according to keyboard input
+        # set the direction of the ship according to keyboard input
         if self.level.status != "start":
             keys = pygame.key.get_pressed()
             self.level.ship.control(keys)   
 
-    def update_menu_status(self):
-        """Check if the current level is solved or the player is game over"""
-        if self.level.status in ["level_solved", "game_won", "game_over"]:
-            self.level.play_status_sound()
-            self.mode = "menu"
-            if self.level.status == "level_solved":
-                self.active_menu = Menu(message=[f"Level {self.level.number} solved!", f"In level {self.level.number+1}, you have to", f"{Level.goal[self.level.number+1]}"],
-                options=["Next level"])
-            else:
-                self.active_menu = {"game_won": game_won_menu,
-                                    "game_over":game_over_menu}[self.level.status]
-
-
     def render_screen(self):
-        """Blit all sprites, stats, menu etc onto the display in the correct order"""
-        self.display.fill((50,50,50)) # padding visible if screen ratio is not 16:9
-        self.screen.fill(settings.bg_color) # background
+        """Blit all stats, sprites, menu etc onto the display in the correct order"""
+        self.display.fill((50,50,50)) # grey padding visible if screen ratio is not 16:9
+        self.screen.fill(settings.bg_color) # black background
 
-        self.statusbar.blit(self.screen) # game stats
-        self.level.blit(self.screen) # ship, enemies, items, bullets, crosshairs
+        self.level.blit(self.screen) # statusbar, ship, enemies, items, bullets, crosshairs
 
         if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)

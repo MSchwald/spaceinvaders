@@ -35,7 +35,7 @@ class Ship(Sprite):
         self.lives = ship_lives
 
     def set_rank(self, rank):
-        """Updates the level and dependend private variables"""
+        """Updates the rank and dependend variables of the ship"""
         self.rank = rank
         self.v = self.speed_factor*settings.rank_speed[rank]
         self.update_image()
@@ -192,11 +192,12 @@ class Ship(Sprite):
             self.status = self.last_status
             self.update_image()
 
-    def shoot_missile(self, x, y):
+    def shoot_missile(self, position):
+        """shoots missile to position = (x,y)"""
         if self.missiles > 0:
             sound.explosion.play()
             self.missiles -= 1
-            self.level.bullets.add(Bullet("missile", center=(x,y)))
+            self.level.bullets.add(Bullet("missile", center=position))
 
     def get_points(self, points):
         self.score += int(self.score_factor*points)

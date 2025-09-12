@@ -9,6 +9,7 @@ from event import Event
 from random import randint
 from sprite import Sprite
 from image import Image
+from statusbar import Statusbar
 
 class Level:
     """A class to manage the game levels"""
@@ -26,7 +27,23 @@ class Level:
         self.asteroids = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.blobs = pygame.sprite.Group()
+        self.statusbar = Statusbar(self)
         self.crosshairs = Sprite(Image.load('images/bullet/aim.png', scaling_width = settings.missile_explosion_size))
+
+    def blit(self, screen):
+        """blit the current state of the level"""
+        self.statusbar.blit(screen) # game stats
+        for bullet in self.bullets:
+            bullet.blit(screen)
+        self.ship.blit(screen)
+
+        for asteroid in self.asteroids:
+            asteroid.blit(screen)
+        for alien in self.aliens:
+            alien.blit(screen)
+        for item in self.items:
+            item.blit(screen)
+        self.crosshairs.blit(screen)
 
     def start(self):
         self.ship.reset_position()
@@ -58,20 +75,6 @@ class Level:
         for event in self.events:
             event.update(dt)
         self.update_level_progress()
-
-    def blit(self, screen):
-        """blit the current state of the level"""
-        for bullet in self.bullets:
-            bullet.blit(screen)
-        self.ship.blit(screen)
-
-        for asteroid in self.asteroids:
-            asteroid.blit(screen)
-        for alien in self.aliens:
-            alien.blit(screen)
-        for item in self.items:
-            item.blit(screen)
-        self.crosshairs.blit(screen)
 
     goal = ["Welcome!","Destroy all asteroids!","Defeat all aliens!","Defeat the ufo!","Defeat the blob!","Survive for a minute!"]
 

@@ -6,7 +6,7 @@ from screen import screen_w,screen_h
 
 # Screen settings get handled automatically from screen.py
 screen_width, screen_height = screen_w, screen_h
-grid_width = screen_width//16 #default: 120
+grid_width = screen_width//16 #default: 100
 bg_color = (0, 0, 0)
 
 # Game settings
@@ -60,7 +60,7 @@ size_change_duration = 10
 speed_change_duration = 5
 score_buff_duration = 10
 shield_duration = 3
-item_probability = 0.2
+item_probability = 0.3
 item_speed = 0.3
 hp_plus = 5
 speed_buff = 1.8

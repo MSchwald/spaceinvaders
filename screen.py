@@ -27,11 +27,3 @@ else:
 
 screen = pygame.Surface((screen_w,screen_h))
 screen_rect = pygame.Rect(padding_w,padding_h,screen_w,screen_h)
-
-def blit_screen_on_display():
-    display.fill((100,100,100))  # grauer Hintergrund
-    #display.blit(screen, screen_rect)
-    # Debug: roten Rahmen ums Spielfeld
-    pygame.draw.rect(display, (200,0,0), screen_rect, 4)
-    display.blit(screen, screen_rect)
-    

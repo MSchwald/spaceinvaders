@@ -3,6 +3,7 @@ from pygame.locals import *
 import settings
 import sound
 from image import Image
+from level import Level
 
 #Fonts and menu formatting automatically rescale with the screen width
 
@@ -90,6 +91,18 @@ class Menu():
         )
 
     @classmethod
+    def open(cls, level):
+        """Returns a menu according to the given level status"""
+        if level.status in ["level_solved", "game_won", "game_over"]:
+            level.play_status_sound()
+            if level.status == "level_solved":
+                return Menu(message=[f"Level {level.number} solved!", f"In level {level.number+1}, you have to", f"{Level.goal[level.number+1]}"],
+                options=["Next level"])
+            else:
+                return {"game_won": game_won_menu,
+                        "game_over":game_over_menu}[level.status]
+
+    @classmethod
     def choose_current_selection(cls, game):
         sound.menu_select.play()
         match game.active_menu.options[game.active_menu.current_selection]:
@@ -154,7 +167,7 @@ class Menu():
                 m = ["Game over!", f"{game.player_name}, do you want to play again?"]
                 o = ["New game"]
             case "", "start":
-                m,o=["Space invaders","Please press RETURN"],["Start game"]
+                m,o=["Space invaders", "Navigate menu with W,S","and pressing RETURN."],["Start game"]
             case _, "start":
                 m,o=[f"Welcome back, {game.player_name}!"],["Start game"]
         options = o + ["How to play","Highscores", "Buy Premium", "Credits", "Exit"]
@@ -176,19 +189,19 @@ premium_menu = Menu(message=["Haha", "Did you believe there", "is a premium vers
 credits_menu = Menu(message=["Credits", "Programmed with pygame", "Sprites and sound effects from",
                 "pixabay.com, craftpix.net,", "opengameart.net and Google Gemini", "", "And thank you for beta testing!"],
                 options=["Go back"])
-controll_menu = Menu(message=["Controlls", "W,A,S,D: controll the ship", "  and navigate the menu", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile", "Escape: end the game"],
+controll_menu = Menu(message=["Controlls", "W,A,S,D: controll the ship", "  and navigate the menu", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile", "RETURN: pause the game","Escape: end the game"],
                 options=["Item list","Go back"])
 items_menu1 = Menu(message=["Item list", "  upgrades your bullets", "  upgrades your ship", f"  gives back {settings.hp_plus} energy", f"  inverts controlls for {settings.invert_controlls_duration}s", "  attracts items to you", f"  score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"],
                 options=["More items", "Back to controlls","Back to menu"])
 h = items_menu1.line_height
-images = [Image.load(f"images/item/{item}.png").scale_by(h/settings.item_size) for item in ["bullets_buff","ship_buff","hp_plus","invert_controlls","magnet","score_buff"]]
+images = [Image.load(f"images/item/{item}.png", scaling_width=settings.item_size).scale_by(h/settings.item_size) for item in ["bullets_buff","ship_buff","hp_plus","invert_controlls","magnet","score_buff"]]
 for i in range(6):
     items_menu1.surface.blit(images[i].surface,items_menu1.line_position[i+1])
 
 items_menu2 = Menu(message=["Item list","    gives or takes a life", f"    increases or decreases ship size for {settings.size_change_duration}s", f"    increases or decreases ship speed {settings.speed_change_duration}s", f"    increases shield timer by {settings.shield_duration}s,", "    use it to reflect enemies and bullets.", "    gives an extra missile.", "    They are strong, use them wisely!"],
                 options=["Previous items", "Back to controlls","Back to menu"])
 h = items_menu1.line_height
-images = [Image.load(f"images/item/{item}.png").scale_by(h/settings.item_size) for item in ["life_plus","life_minus","size_plus","size_minus","speed_buff","speed_nerf","shield","missile"]]
+images = [Image.load(f"images/item/{item}.png", scaling_width=settings.item_size).scale_by(h/settings.item_size) for item in ["life_plus","life_minus","size_plus","size_minus","speed_buff","speed_nerf","shield","missile"]]
 for i in range(3):
     x,y = items_menu2.line_position[i+1]
     items_menu2.surface.blit(images[2*i].surface,(x,y))
