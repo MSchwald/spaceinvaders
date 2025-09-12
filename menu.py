@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import settings
 import sound
+from image import Image
 
 #Fonts and menu formatting automatically rescale with the screen width
 
@@ -102,6 +103,12 @@ class Menu():
             case "Next level":
                 game.mode = "game"
                 game.level.next()
+            case "How to play" | "Back to controlls":
+                game.active_menu = controll_menu
+            case "Item list" | "Previous items":
+                game.active_menu = items_menu1
+            case "More items":
+                game.active_menu = items_menu2
             case "Highscores":
                 game.active_menu = Menu.make_highscores_menu(message=["Highscores", "Do you think you can beat them?"], options=["Go back", "Delete high scores"], highscores = game.highscores)
             case "Delete high scores":
@@ -150,7 +157,7 @@ class Menu():
                 m,o=["Space invaders"],["Start game"]
             case _, "start":
                 m,o=[f"Welcome back, {game.player_name}!"],["Start game"]
-        options = o + ["Highscores", "Buy Premium", "Credits", "Exit"]
+        options = o + ["How to play","Highscores", "Buy Premium", "Credits", "Exit"]
         return Menu(message = m, options = options)
 
         menu = Menu(message + ["" for i in range(settings.max_number_of_highscores+1)], options, centered=True)
@@ -169,5 +176,28 @@ game_won_menu = Menu(message=["Congratulations!", "You have finished", "all avai
 premium_menu = Menu(message=["Haha", "Did you believe there", "is a premium version?"],
                 options=["Go back"])
 credits_menu = Menu(message=["Credits", "Programmed with pygame", "Sprites and sound effects from",
-                "pixabay.com, craftpix.net,", "opengameart.net and Google Gemini"],
+                "pixabay.com, craftpix.net,", "opengameart.net and Google Gemini", "", "And thank you for beta testing!"],
                 options=["Go back"])
+controll_menu = Menu(message=["Controlls", "W,A,S,D: controll the ship", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile"],
+                options=["Item list","Go back"])
+items_menu1 = Menu(message=["Item list", "  upgrades your bullets", "  upgrades your ship", f"  gives back {settings.hp_plus} energy", f"  inverts controlls for {settings.invert_controlls_duration}s", "  attracts items to you", f"  score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"],
+                options=["More items", "Back to controlls","Back to menu"])
+h = items_menu1.line_height
+images = [Image.load(f"images/item/{item}.png").scale_by(h/settings.item_size) for item in ["bullets_buff","ship_buff","hp_plus","invert_controlls","magnet","score_buff"]]
+for i in range(6):
+    items_menu1.surface.blit(images[i].surface,items_menu1.line_position[i+1])
+
+items_menu2 = Menu(message=["Item list","    gives or takes a life", f"    increases or decreases ship size for {settings.size_change_duration}s", f"    increases or decreases ship speed {settings.speed_change_duration}s", f"    increases shield timer by {settings.shield_duration}s,", "    use it to reflect enemies and bullets.", "    gives an extra missile.", "    They are strong, use them wisely!"],
+                options=["Previous items", "Back to controlls","Back to menu"])
+h = items_menu1.line_height
+images = [Image.load(f"images/item/{item}.png").scale_by(h/settings.item_size) for item in ["life_plus","life_minus","size_plus","size_minus","speed_buff","speed_nerf","shield","missile"]]
+for i in range(3):
+    x,y = items_menu2.line_position[i+1]
+    items_menu2.surface.blit(images[2*i].surface,(x,y))
+    items_menu2.surface.blit(images[2*i+1].surface,(x+2*h,y))
+x,y = items_menu2.line_position[4]
+items_menu2.surface.blit(images[6].surface,(x+h,y))
+x,y = items_menu2.line_position[6]
+items_menu2.surface.blit(images[7].surface,(x+h,y))
+
+
