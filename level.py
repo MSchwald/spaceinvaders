@@ -1,7 +1,7 @@
 import pygame, settings
 from pygame.locals import *
 from ship import Ship
-from alien import Alien
+from alien import Alien, blob_images
 import sound
 from random import random
 from math import hypot
