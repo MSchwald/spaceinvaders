@@ -36,7 +36,7 @@ class Game:
         """Starts the main loop for the game."""
         self.running = True  # Is False when the player exits the game
         self.mode = "menu"  # possible modes: "game", "menu", "enter name" (for highscores)
-        self.active_menu = Menu.make_main_menu(self)
+        self.active_menu = Menu.create_main_menu(self)
         self.level.start()
 
         #main loop of the game
@@ -51,7 +51,7 @@ class Game:
             if self.mode == "game" or self.level.status == "start":
                 self.level.update(dt) # update all ingame objects
                 if self.level.status != "running" and self.level.status != "start":
-                    self.active_menu = Menu.open(self.level)
+                    self.active_menu = Menu.create_level_menu(self.level)
                     self.mode = "menu"
 
             # 3) show the new frame of the game on the screen 
@@ -76,7 +76,7 @@ class Game:
                     # RETURN pauses the game and opens the main menu
                     if event.key == K_RETURN:
                         self.mode = "menu"
-                        self.active_menu = Menu.make_main_menu(self)
+                        self.active_menu = Menu.create_main_menu(self)
                         break
                     # SPACE shoots bullets
                     elif event.key == K_SPACE:
@@ -91,18 +91,9 @@ class Game:
             #Enter the name into the high score table
             if self.mode == "enter name":
                 self.highscores.update_name(name=self.player_name, rank=self.score_rank)
-                self.active_menu = Menu.make_highscores_menu(message=["Congratulations!", f"Your score ranks on place {self.score_rank+1}.", "Please enter your name and press RETURN."], options=[f"Name: {self.player_name}"], highscores = self.highscores)
-                if event.type == KEYDOWN:
-                    if event.unicode in self.highscores.allowed_chars and len(self.player_name)<=10:
-                        self.player_name += event.unicode
-                    elif event.key == K_BACKSPACE:
-                        self.player_name = self.player_name[:-1]
-                    elif event.key == K_RETURN:
-                        self.highscores.save()
-                        self.active_menu = Menu.make_main_menu(self)
-                        self.mode = "menu"
-                        self.render_screen()
-                        continue
+                self.active_menu = Menu.create_enter_name_menu(self)
+                self.active_menu.handle_input(self, event)
+                continue
                     
             # Navigating the menu
             if self.mode == "menu":

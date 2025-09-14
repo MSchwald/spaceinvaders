@@ -2,6 +2,10 @@ import pygame
 from pygame.locals import *
 from screen import screen_w,screen_h
 
+color = {"white":(255, 255, 255), "blue": (0, 0, 200), "yellow": (255, 255, 0),
+    "light_grey": (200, 200, 255), "grey": (100, 100, 100), "red": (180, 0, 0),
+    "green": (100, 255, 100)}
+
 # Overall game settings
 
 # Screen settings get handled automatically from screen.py

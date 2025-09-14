@@ -1,10 +1,11 @@
 import pygame, sys
+from menu import Menu
 
 pygame.init()
 
 clock = pygame.time.Clock()
 
-screen = pygame.display.set_mode((1000,500)) 
+screen = pygame.display.set_mode((1900,1000)) 
 path = "images/alien/ufo.png"
 colorkey = (0,0,0)
 
@@ -23,10 +24,12 @@ cropped = pygame.Surface(bounding_rect.size, pygame.SRCALPHA)
 cropped.blit(raw_image,(0,0), bounding_rect)
 #surface.blit(cropped,(0,0),bounding_rect)
 
+menu = Menu.create(["Controlls", "W,A,S,D: controll the ship", "  and navigate the menu", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile", "RETURN: pause the game","Escape: end the game"],
+                                        ["Item list","Go back"])
+
 while True:
        
-    screen.fill((255,0,0))
-    screen.blit(cropped,(100,20))
+    menu.blit(screen)
     pygame.display.flip()
 
 

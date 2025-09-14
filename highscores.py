@@ -16,12 +16,18 @@ class Highscores:
         except FileNotFoundError:
             self.load_default_highscores()
         self.fill_list_with_zeros()
-        self.render_lines()
+
+    @property
+    def players(self):
+        return [x[0] for x in self.score_list]
+
+    @property
+    def scores(self):
+        return [str(x[1]) for x in self.score_list]
 
     def load_default_highscores(self):
         self.score_list = sorted(settings.default_highscores, key=lambda x: x[1], reverse=True)[:settings.max_number_of_highscores]
         self.fill_list_with_zeros()
-        self.render_lines()
         self.save()
 
     def fill_list_with_zeros(self):
@@ -31,23 +37,6 @@ class Highscores:
     def save(self):
         with open("highscores.json", "w", encoding="utf-8") as f:
             json.dump(self.score_list, f)
-
-    def render_lines(self):
-        #format the score list as a table with two columns       
-        self.players = [Menu.text_font.render(str(score[0])+" ", False, color["white"]) for score in self.score_list]
-        self.scores = [Menu.text_font.render(str(score[1]), False, color["white"]) for score in self.score_list]
-        self.player_w = max(player.get_width() for player in self.players)
-        self.player_h = max(player.get_height() for player in self.players)
-        self.score_w = max(score.get_width() for score in self.scores)
-        self.score_h = max(score.get_height() for score in self.scores)
-        self.line_length = self.player_w + self.score_w
-        self.line_height = max(self.player_h, self.score_h)
-        background = pygame.Surface((self.line_length, self.line_height))
-        background.fill(color["blue"])
-        self.lines = [background.copy() for i in range(settings.max_number_of_highscores)]
-        for i in range(settings.max_number_of_highscores):
-            self.lines[i].blit(self.players[i],(0,0))
-            self.lines[i].blit(self.scores[i],(self.line_length-self.scores[i].get_width(),0))
 
     def highscore_rank(self, score):
         beaten_scores = [i for i in range(settings.max_number_of_highscores) if score > self.score_list[i][1]]
@@ -61,4 +50,3 @@ class Highscores:
 
     def update_name(self, name, rank):
         self.score_list[rank][0] = name
-        self.render_lines()
