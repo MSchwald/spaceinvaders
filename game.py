@@ -11,7 +11,7 @@ from sprite import Sprite
 import sound
 from pathlib import Path
 import json,string
-from screen import display_size, screen, screen_rect
+from display import Display
 from highscores import Highscores
 
 
@@ -23,9 +23,8 @@ class Game:
 
         pygame.init()
 
-        # screen.py fixes the maximal screen on the display with 16:9 ratio
-        self.display = pygame.display.set_mode(display_size, pygame.FULLSCREEN)
-        self.screen = screen # The game's surface
+        self.display = Display()
+        self.screen = self.display.get_game_surface_with_ratio(settings.screen_width,settings.screen_height)
 
         self.player_name = "" # Gets entered when achieving a high score 
         self.level = Level(0)
@@ -55,7 +54,7 @@ class Game:
                     self.mode = "menu"
 
             # 3) show the new frame of the game on the screen 
-            self.render_screen()
+            self.render()
         pygame.quit()
 
     def handle_events(self):
@@ -108,15 +107,11 @@ class Game:
             keys = pygame.key.get_pressed()
             self.level.ship.control(keys)   
 
-    def render_screen(self):
+    def render(self):
         """Blit all stats, sprites, menu etc onto the display in the correct order"""
-        self.display.fill((50,50,50)) # grey padding visible if screen ratio is not 16:9
         self.screen.fill(settings.bg_color) # black background
-
         self.level.blit(self.screen) # statusbar, ship, enemies, items, bullets, crosshairs
-
         if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)
-
-        self.display.blit(self.screen,screen_rect)
-        pygame.display.flip()
+        
+        self.display.update(padding_color=settings.padding_color)

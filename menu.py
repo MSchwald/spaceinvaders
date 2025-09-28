@@ -95,19 +95,6 @@ class Menu():
                 m,o=[f"Welcome back, {game.player_name}!"],["Start game"]
         options = o + ["How to play","Highscores", "Buy Premium", "Credits", "Exit"]
         return Menu.create(m, options)
- 
-    @classmethod
-    def create_items_menu(cls, message, options, images):
-        """creates a menu with a images in front of each line.
-        "images" must be a list of (possibly empty)surface-lists.
-        message and images must have the same length""" 
-        text = Text(message, Menu.text_font, color["white"], color["blue"])
-        for i in range(len(message)):
-            if images[i]:
-                text.rendered_lines[i] = align_surfaces(images[i]+[text.rendered_lines[i]], "horizontal", rescale_to_surface = text.rendered_lines[i], spacing = Menu.line_distance, padding_color=color["blue"])
-        header_surface = align_surfaces(text.rendered_lines[1:], "vertical", alignment="left", spacing=Menu.line_distance, padding_color=color["blue"])
-        header_surface = align_surfaces([text.rendered_lines[0], header_surface], "vertical", alignment="center",spacing=Menu.title_distance, padding_color=color["blue"])
-        return Menu(header_surface, options)
 
     @classmethod
     def create_level_menu(cls, level):
@@ -162,20 +149,24 @@ class Menu():
                 game.active_menu = Menu.create(["Controlls", "W,A,S,D: controll the ship", "  and navigate the menu", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile", "RETURN: pause the game","Escape: end the game"],
                                         ["Item list","Go back"])
             case "Item list" | "Previous items":
-                game.active_menu = Menu.create_items_menu(["Item list", "upgrades your bullets", "upgrades your ship", f"gives back {settings.hp_plus} energy", f"inverts controlls for {settings.invert_controlls_duration}s", "attracts items to you", f"score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"],
-                                    ["More items", "Back to controlls","Back to menu"],
-                                    [[]] + [[Image.load(f"images/item/{item}.png", scaling_width=settings.item_size).surface] for item in ["bullets_buff","ship_buff","hp_plus","invert_controlls","magnet","score_buff"]])
+                game.active_menu = Menu.create(["Item list",
+                                    [Image.load("images/item/bullets_buff.png", scaling_width=settings.item_size).surface, " upgrades your bullets"],
+                                    [Image.load("images/item/ship_buff.png", scaling_width=settings.item_size).surface, " upgrades your ship"],
+                                    [Image.load("images/item/hp_plus.png", scaling_width=settings.item_size).surface, f" gives back {settings.hp_plus} energy"],
+                                    [Image.load("images/item/invert_controlls.png", scaling_width=settings.item_size).surface, f" inverts controlls for {settings.invert_controlls_duration}s"],
+                                    [Image.load("images/item/magnet.png", scaling_width=settings.item_size).surface, " attracts items to you"],
+                                    [Image.load("images/item/score_buff.png", scaling_width=settings.item_size).surface, f" score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"]],
+                                    ["More items", "Back to controlls","Back to menu"])
             case "More items":
-                game.active_menu = Menu.create_items_menu(["Item list","gives or takes a life", f"increases or decreases ship size for {settings.size_change_duration}s", f"increases or decreases ship speed {settings.speed_change_duration}s", f"increases shield timer by {settings.shield_duration}s,", "use it to reflect enemies and bullets.", "gives an extra missile.", "They are strong, use them wisely!"],
-                                    ["Previous items", "Back to controlls","Back to menu"],
-                                    [[],
-                                    [Image.load(f"images/item/{item}.png", scaling_width=settings.item_size).surface for item in ["life_plus","life_minus"]],
-                                    [Image.load(f"images/item/{item}.png", scaling_width=settings.item_size).surface for item in ["size_plus","size_minus"]],
-                                    [Image.load(f"images/item/{item}.png", scaling_width=settings.item_size).surface for item in ["speed_buff","speed_nerf"]],
-                                    [Image.load(f"images/item/shield.png", scaling_width=settings.item_size).surface],
-                                    [],
-                                    [Image.load(f"images/item/missile.png", scaling_width=settings.item_size).surface],
-                                    []])
+                game.active_menu = Menu.create(["Item list",
+                                    [Image.load(f"images/item/life_plus.png", scaling_width=settings.item_size).surface, " ", Image.load(f"images/item/life_minus.png", scaling_width=settings.item_size).surface, " gives or takes a life"],
+                                    [Image.load(f"images/item/size_plus.png", scaling_width=settings.item_size).surface, " ", Image.load(f"images/item/size_minus.png", scaling_width=settings.item_size).surface, f" increases or decreases ship size for {settings.size_change_duration}s"],
+                                    [Image.load(f"images/item/speed_buff.png", scaling_width=settings.item_size).surface, " ", Image.load(f"images/item/speed_nerf.png", scaling_width=settings.item_size).surface, f" increases or decreases ship speed {settings.speed_change_duration}s"],
+                                    [Image.load(f"images/item/shield.png", scaling_width=settings.item_size).surface, f" increases shield timer by {settings.shield_duration}s,"],
+                                    "use it to reflect enemies and bullets.",
+                                    [Image.load(f"images/item/missile.png", scaling_width=settings.item_size).surface, " gives an extra missile."],
+                                    "They are strong, use them wisely!"],
+                                    ["Previous items", "Back to controlls","Back to menu"])
             case "Highscores":
                 game.active_menu = Menu.create(["Highscores", "Do you think you can beat them?"],
                                                             ["Go back", "Delete high scores"],

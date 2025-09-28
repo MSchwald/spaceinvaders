@@ -1,17 +1,18 @@
 import pygame
 from pygame.locals import *
-from screen import screen_w,screen_h
 
 color = {"white":(255, 255, 255), "blue": (0, 0, 200), "yellow": (255, 255, 0),
     "light_grey": (200, 200, 255), "grey": (100, 100, 100), "red": (180, 0, 0),
-    "green": (100, 255, 100)}
+    "green": (100, 255, 100), "dark_grey": (50,50,50), "black": (0,0,0)}
 
 # Overall game settings
 
 # Screen settings get handled automatically from screen.py
-screen_width, screen_height = screen_w, screen_h
+screen_width, screen_height = 1920,1080
+screen_ratio = (16,9)
 grid_width = screen_width//16 #default: 100
-bg_color = (0, 0, 0)
+padding_color = color["dark_grey"]
+bg_color = color["black"]
 
 # Game settings
 game_starting_level = 1
