@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from display import Display
 
 color = {"white":(255, 255, 255), "blue": (0, 0, 200), "yellow": (255, 255, 0),
     "light_grey": (200, 200, 255), "grey": (100, 100, 100), "red": (180, 0, 0),
@@ -8,14 +9,14 @@ color = {"white":(255, 255, 255), "blue": (0, 0, 200), "yellow": (255, 255, 0),
 # Overall game settings
 
 # Standard screen settings (screen.py handles rescaling)
-screen_width, screen_height = 1920,1080
-screen_ratio = (16,9)
-grid_width = screen_width//16 #default: 120
+screen_width, screen_height = 1600, 900
+grid = (16,9)
+standard_grid_width = 100 # = 1600 / 16
 padding_color = color["dark_grey"]
 bg_color = color["black"]
 
 # Game settings
-game_starting_level = 1
+game_starting_level = 5
 starting_score = 0
 
 # Ship settings
@@ -39,19 +40,13 @@ alien_width["small_asteroid"]=alien_width["big_asteroid"]*asteroid_pieces**(-1/3
 alien_colorkey = {"big_asteroid": (0,0,0), "small_asteroid": (0,0,0),
                 "purple": (254,254,254), "ufo": (0,0,0), "blob": (0,0,0)}
 
-# boundaries for the movement of the sprites
-# [left, top, width, height]
-ship_constraints = [0, 5/9*screen_height, screen_width, 4/9*screen_height]
-alien_constraints = [0, 0, screen_width, screen_height]
-item_constraints = [0, 0, screen_width, screen_height]
-
 # Bullet settings
 max_bullets = 3
 starting_missiles = 1
 missile_explosion_size = 150
 missile_duration = 0.5
 missile_damage = 15
-bullet_width = {1:14, 2:18, 3:22, 4:26, "missile":missile_explosion_size, "g":26, "blubber": 150}
+bullet_width = {"1":14, "2":18, "3":22, "4":26, "explosion":missile_explosion_size, "aim":missile_explosion_size, "g":26, "blubber": 150}
 bullet_damage = {1:1,2:2,3:3,4:4,"missile":missile_damage, "g":3, "blubber":16}
 bullet_owner = {1:"player",2:"player",3:"player",4:"player","missile":"player", "g":"enemy", "blubber": "enemy"}
 bullet_speed = {1:1,2:1,3:1,4:1,"missile":0, "g":0.2, "blubber":0.4}

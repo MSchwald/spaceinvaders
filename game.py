@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 import settings
-from alien import Alien,blob_images
+from alien import Alien
 from level import Level
 from menu import *
 from image import Image
@@ -35,6 +35,7 @@ class Game:
         """Starts the main loop for the game."""
         self.running = True  # Is False when the player exits the game
         self.mode = "menu"  # possible modes: "game", "menu", "enter name" (for highscores)
+        Menu.init_settings()
         self.active_menu = Menu.create_main_menu(self)
         self.level.start()
 

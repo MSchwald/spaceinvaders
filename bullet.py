@@ -2,22 +2,18 @@ import pygame
 from pygame.locals import *
 import settings
 import image
+from display import Display
 from sprite import Sprite
 from image import Image
 import sound
 from math import ceil
-
-w,N=settings.bullet_width["blubber"],settings.alien_energy["blob"]
-blubber_image = Image.load(f'images/bullet/blubber.png', scaling_width = w)
-blubber_images = [blubber_image.scale_by((N/n)**(-1/3)) for n in range(1,N+1)]
-reflected_blubber_images = [Image.reflect(image, flip_x=True, flip_y=True) for image in blubber_images]
 
 class Bullet(Sprite):
     """A class to manage the bullets shot by the player or enemies"""
 
     def __init__(self, type, size=None, owner=None, damage=None, effect_time = None, image=None,
             v=None, grid=None, center=None, x=0, y=0, direction=None,
-            constraints=pygame.Rect(0, 0, settings.screen_width, settings.screen_height),
+            constraints=None,
             boundary_behaviour="vanish",
             animation_type=None, frames=None, fps=None, animation_time=None):
         self.type = type
@@ -30,24 +26,26 @@ class Bullet(Sprite):
         if effect_time is None:
             effect_time = settings.bullet_effect_time[type]
         self.effect_time = effect_time
+        if constraints is None:
+            constraints = pygame.Rect([0, 0, Display.screen_width, Display.screen_height])
         if type in [1,2,3]:
             if image is None:
-                image = Image.load(f'images/bullet/{type}.png', scaling_width = settings.bullet_width[type])
+                image = Image.load(f'images/bullet/{type}.png')
         elif type == "blubber":
             sound.blubber.play()
             if size is None:
                 size = settings.alien_energy["blob"]
             self.size = size
-            image = blubber_images[size-1]
+            image = Image.blubber[size-1]
             self.damage = ceil(size/settings.alien_energy["blob"]*settings.bullet_damage[type])
         elif type == "missile":
-            frames = [Image.load(f"images/bullet/explosion{n}.png", scaling_factor=settings.missile_explosion_size/810) for n in range(6)]
+            frames = Image.load(f"images/bullet/explosion")
             animation_type = "vanish"
             animation_time = settings.missile_duration
             self.hit_enemies = pygame.sprite.Group()
         elif type == "g":
             sound.alienshoot1.play()
-            frames = [Image.load(f"images/bullet/g{n}.png", scaling_width = settings.bullet_width[type]) for n in range(4)]
+            frames = Image.load(f"images/bullet/g")
             animation_type = "once"
             animation_time = 0.5
         if v is None:
@@ -73,6 +71,6 @@ class Bullet(Sprite):
         sound.shield_reflect.play()
         if self.type == "blubber":
             self.direction = (-self.direction[0],-self.direction[1])
-            self.change_image(reflected_blubber_images[self.size-1])
+            self.change_image(Image.reflected_blubber[self.size-1])
         else:
             super().reflect(flip_x=True, flip_y=True)

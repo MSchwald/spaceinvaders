@@ -2,6 +2,7 @@ import pygame, settings
 from math import sin, cos, pi
 from random import random
 from image import Image
+from display import Display
 #from numpy.linalg import norm
 from math import hypot as norm
 from random import choice
@@ -9,7 +10,11 @@ from math import sqrt
 
 class Sprite(pygame.sprite.Sprite):
     # class for all sprites
-    def __init__(self, image=None, grid=None, center=None, x=0, y=0, v=0, a=None, direction=(0, 0), constraints=None, boundary_behaviour="clamp", animation_type=None, frames=None, fps=None, animation_time=None, starting_frame=0):
+    def __init__(self, image=None,
+                grid=None, center=None, x=0, y=0,
+                v=0, a=None, direction=(0, 0),
+                constraints=None, boundary_behaviour="clamp",
+                animation_type=None, frames=None, fps=None, animation_time=None, starting_frame=0):
         #Non-animated sprites should have an Image-object as 'image',
         #   animated sprites only need a list 'frames' of Image-objects and start on frame 0
         # possible boundary behaviours:
@@ -49,7 +54,7 @@ class Sprite(pygame.sprite.Sprite):
             self.x = self.rect.x
             self.y = self.rect.y
         elif grid:
-            self.rect.center = ((grid[0]+1/2)*settings.grid_width,(grid[1]+1/2)*settings.grid_width)
+            self.rect.center = ((grid[0]+1/2)*Display.grid_width,(grid[1]+1/2)*Display.grid_width)
             self.x = self.rect.x
             self.y = self.rect.y
         self.v = v
@@ -157,7 +162,7 @@ class Sprite(pygame.sprite.Sprite):
         self.update_frame(dt)
 
     def update_position(self, dt):
-        self.change_position(self.x+dt*self.vx*settings.grid_width/100, self.y+dt*self.vy*settings.grid_width/100)
+        self.change_position(self.x+dt*self.vx*Display.grid_width/100, self.y+dt*self.vy*Display.grid_width/100)
     
     def update_velocity(self, dt):
         self.direction = (self.vx+self.a[0]*dt,self.vy+self.a[1]*dt)

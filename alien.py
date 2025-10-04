@@ -7,6 +7,7 @@ from sprite import Sprite
 from bullet import Bullet
 from random import random,choice,randint
 import sound
+from display import Display
 from item import Item
 from math import pi, sqrt, sin, cos
 from math import hypot
@@ -22,18 +23,12 @@ def normalize(v):
         return (0,0)
     return (v[0]/norm_v,v[1]/norm_v)
 
-w,N=settings.alien_width["blob"],settings.alien_energy["blob"]
-big_blob_image = Image.load("images/alien/blob0.png", colorkey=settings.alien_colorkey["blob"], scaling_width=w)
-medium_blob_image = Image.load("images/alien/blob1.png", colorkey=settings.alien_colorkey["blob"], scaling_width=w)
-small_blob_image = Image.load("images/alien/blob2.png", colorkey=settings.alien_colorkey["blob"], scaling_width=w)
-blob_images = [small_blob_image.scale_by((N/n)**(-1/3)) for n in range(1,N//8)]+[medium_blob_image.scale_by((N/n)**(-1/3)) for n in range(N//8,N//4+1)]+[big_blob_image.scale_by((N/n)**(-1/3)) for n in range(N//4+1, N+1)]
-
 class Alien(Sprite):
     """A class to manage the enemies"""
 
     def __init__(self, type, level, cycle_time=None, random_cycle_time=(800,1500),
-                grid=None, center=None, x=0, y=0, v=None, direction=None, constraints=pygame.Rect(settings.alien_constraints), boundary_behaviour="reflect",
-                scaling_width=settings.grid_width, starting_frame=0, energy=None):
+                grid=None, center=None, x=0, y=0, v=None, direction=None, constraints=None, boundary_behaviour="reflect",
+                starting_frame=0, energy=None):
         #level: needs access to the level object from the game file
         #cycle_time: Alien periodically does actions after given time (in ms)
         #random_cycle_time is a tuple of floats: cycle times vary randomly between given lower and upper bound (in ms)
@@ -41,16 +36,20 @@ class Alien(Sprite):
             energy = settings.alien_energy[type]
         if v is None:
             v = settings.alien_speed[type]
+        if constraints is None:
+            constraints = pygame.Rect([0, 0, Display.screen_width, Display.screen_height])
         #Load frames and images
         if type in ["big_asteroid", "small_asteroid"]:
-            super().__init__(frames = [Image.load(f"images/{type}/{str(n+1)}.png", colorkey=settings.alien_colorkey[type], scaling_width=settings.alien_width[type]) for n in range(14)], animation_type="loop", fps=10, grid=grid, center=center, x=x, y=y, v=v, direction=direction,
-                         constraints=constraints, boundary_behaviour=boundary_behaviour)
+            super().__init__(frames = Image.load(f"images/alien/{type}", colorkey=settings.alien_colorkey[type]),
+                        animation_type="loop", fps=10,
+                        grid=grid, center=center, x=x, y=y, v=v, direction=direction,
+                        constraints=constraints, boundary_behaviour=boundary_behaviour)
             #mass is so far only relevant for collisions between the asteroids and blobs
-            self.m = (self.w/settings.grid_width)**3
+            self.m = (self.w/Display.grid_width)**3
         elif type == "blob":
-            super().__init__(image=blob_images[energy-1],
-                grid=grid, center=center, x=x, y=y, v=v, direction=direction,
-                         constraints=constraints, boundary_behaviour=boundary_behaviour)
+            super().__init__(image=Image.blob[energy-1],
+                        grid=grid, center=center, x=x, y=y, v=v, direction=direction,
+                        constraints=constraints, boundary_behaviour=boundary_behaviour)
             #mass of blobs is proportional to their energy points
             self.m = energy
             #blobs gravitate towards the place they got split the last time
@@ -58,8 +57,9 @@ class Alien(Sprite):
             self.a = None
 
         else:
-            super().__init__(Image.load(f'images/alien/{str(type)}.png',colorkey=settings.alien_colorkey[type], scaling_width=settings.alien_width[type]), grid=grid, center=center, x=x, y=y, v=v, direction=direction,
-                             constraints=constraints, boundary_behaviour=boundary_behaviour)
+            super().__init__(Image.load(f'images/alien/{str(type)}.png',colorkey=settings.alien_colorkey[type]),
+                            grid=grid, center=center, x=x, y=y, v=v, direction=direction,
+                            constraints=constraints, boundary_behaviour=boundary_behaviour)
         if type == "purple" and level.status != "start":
             sound.alien_spawn.play()
         self.type = type

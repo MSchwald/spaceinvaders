@@ -1,7 +1,7 @@
 import pygame, settings
 from pygame.locals import *
 from ship import Ship
-from alien import Alien, blob_images
+from alien import Alien
 import sound
 from random import random
 from math import hypot
@@ -10,6 +10,7 @@ from random import randint
 from sprite import Sprite
 from image import Image
 from statusbar import Statusbar
+from display import Display
 
 class Level:
     """A class to manage the game levels"""
@@ -28,7 +29,8 @@ class Level:
         self.aliens = pygame.sprite.Group()
         self.blobs = pygame.sprite.Group()
         self.statusbar = Statusbar(self)
-        self.crosshairs = Sprite(Image.load('images/bullet/aim.png', scaling_width = settings.missile_explosion_size))
+        self.crosshairs = Sprite(Image.load('images/bullet/aim.png'))
+        Image.load_blob()
 
     def blit(self, screen):
         """blit the current state of the level"""
@@ -95,17 +97,17 @@ class Level:
             case 2:
                 self.events.append(Event("asteroid_hail", self, random_cycle_time=(800,1200)))
                 for n in range(2,10,2):
-                    self.aliens.add(Alien(type="purple", level=self, grid=(n,1), direction=(1,1), constraints=pygame.Rect([0,0,settings.screen_width,3*settings.grid_width])))
+                    self.aliens.add(Alien(type="purple", level=self, grid=(n,1), direction=(1,1), constraints=pygame.Rect([0,0,Display.screen_width,3*Display.grid_width])))
                 for n in range(14,6,-2):
-                    self.aliens.add(Alien(type="purple", level=self, grid=(n,5), direction=(-1,-1), constraints=pygame.Rect([0,3*settings.grid_width,settings.screen_width,3*settings.grid_width])))
+                    self.aliens.add(Alien(type="purple", level=self, grid=(n,5), direction=(-1,-1), constraints=pygame.Rect([0,3*Display.grid_width,Display.screen_width,3*Display.grid_width])))
             case 3:
                 self.events.append(Event("asteroid_hail", self, random_cycle_time=(800,1000)))
                 self.ufo = Alien(type="ufo", level=self, grid=(1,1), direction=(1,0))
                 self.aliens.add(self.ufo)
                 for n in [2,6]:
-                    self.aliens.add(Alien(type="purple", level=self, grid=(n,1), direction=(1,0), constraints=pygame.Rect([0,0,settings.screen_width,3*settings.grid_width])))
+                    self.aliens.add(Alien(type="purple", level=self, grid=(n,1), direction=(1,0), constraints=pygame.Rect([0,0,Display.screen_width,3*Display.grid_width])))
                 for n in [10,14]:
-                    self.aliens.add(Alien(type="purple", level=self, grid=(n,5), direction=(-1,0), constraints=pygame.Rect([0,3*settings.grid_width,settings.screen_width,3*settings.grid_width]),random_cycle_time=(1200,2000)))
+                    self.aliens.add(Alien(type="purple", level=self, grid=(n,5), direction=(-1,0), constraints=pygame.Rect([0,3*Display.grid_width,Display.screen_width,3*Display.grid_width]),random_cycle_time=(1200,2000)))
             case 4:
                 self.events.append(Event("asteroid_hail", self, random_cycle_time=(1000,1500)))            
                 self.alien_random_entrance("blob",boundary_behaviour="reflect")
@@ -223,7 +225,7 @@ class Level:
                                 else:
                                     sound.slime_hit.play()
                                     alien.energy = alien.energy//2
-                                    alien.change_image(blob_images[alien.energy-1])
+                                    alien.change_image(Image.blob[alien.energy-1])
                             else:
                                 alien.get_damage(bullet.damage)
                             bullet.hit_enemies.add(alien)
@@ -308,7 +310,9 @@ class Level:
                             sound.blob_merge.play()
                             break
 
-    def alien_random_entrance(self, type, amount=1, energy=None, v=None, constraints = pygame.Rect(0, 0, settings.screen_width, settings.screen_height), boundary_behaviour = "vanish"):
+    def alien_random_entrance(self, type, amount=1, energy=None, v=None, constraints = None, boundary_behaviour = "vanish"):
+            if constraints is None:
+                constraints = pygame.Rect(0, 0, Display.screen_width, Display.screen_height)
             if v is None or v == 0:
                 v = settings.alien_speed[type]
             for i in range(amount):

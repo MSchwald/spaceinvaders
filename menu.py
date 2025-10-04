@@ -6,19 +6,24 @@ from image import Image
 from level import Level
 from settings import color
 from text import *
+from display import Display
 
 #Fonts and menu formatting automatically rescale with the screen width
 
 class Menu():
     """Class to create menus with a given title message and a given list of options"""
-    pygame.font.init()
-    menu_font_size = int(settings.menu_font_size*settings.screen_width/1600)
-    text_font_size = int(settings.text_font_size*settings.screen_width/1600)
-    menu_font = pygame.font.Font(settings.menu_font, menu_font_size)
-    text_font = pygame.font.Font(settings.text_font, text_font_size)
-    boundary_size = int(settings.menu_boundary*settings.screen_width/1600)
-    title_distance = int(settings.title_menu_distance*settings.screen_width/1600)
-    line_distance = int(settings.line_distance*settings.screen_width/1600)
+    
+    @classmethod
+    def init_settings(cls):
+        '''scales menu formating to user's display setting'''
+        pygame.font.init()
+        cls.menu_font_size = int(settings.menu_font_size*Display.screen_width/1600)
+        cls.text_font_size = int(settings.text_font_size*Display.screen_width/1600)
+        cls.menu_font = pygame.font.Font(settings.menu_font, cls.menu_font_size)
+        cls.text_font = pygame.font.Font(settings.text_font, cls.text_font_size)
+        cls.boundary_size = int(settings.menu_boundary*Display.screen_width/1600)
+        cls.title_distance = int(settings.title_menu_distance*Display.screen_width/1600)
+        cls.line_distance = int(settings.line_distance*Display.screen_width/1600)
 
     def __init__(self, header_surface, options, current_selection=0):
         self.header_surface = header_surface
@@ -150,21 +155,21 @@ class Menu():
                                         ["Item list","Go back"])
             case "Item list" | "Previous items":
                 game.active_menu = Menu.create(["Item list",
-                                    [Image.load("images/item/bullets_buff.png", scaling_width=settings.item_size).surface, " upgrades your bullets"],
-                                    [Image.load("images/item/ship_buff.png", scaling_width=settings.item_size).surface, " upgrades your ship"],
-                                    [Image.load("images/item/hp_plus.png", scaling_width=settings.item_size).surface, f" gives back {settings.hp_plus} energy"],
-                                    [Image.load("images/item/invert_controlls.png", scaling_width=settings.item_size).surface, f" inverts controlls for {settings.invert_controlls_duration}s"],
-                                    [Image.load("images/item/magnet.png", scaling_width=settings.item_size).surface, " attracts items to you"],
-                                    [Image.load("images/item/score_buff.png", scaling_width=settings.item_size).surface, f" score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"]],
+                                    [pygame.image.load("images/item/bullets_buff.png"), " upgrades your bullets"],
+                                    [pygame.image.load("images/item/ship_buff.png"), " upgrades your ship"],
+                                    [pygame.image.load("images/item/hp_plus.png"), f" gives back {settings.hp_plus} energy"],
+                                    [pygame.image.load("images/item/invert_controlls.png"), f" inverts controlls for {settings.invert_controlls_duration}s"],
+                                    [pygame.image.load("images/item/magnet.png"), " attracts items to you"],
+                                    [pygame.image.load("images/item/score_buff.png"), f" score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"]],
                                     ["More items", "Back to controlls","Back to menu"])
             case "More items":
                 game.active_menu = Menu.create(["Item list",
-                                    [Image.load(f"images/item/life_plus.png", scaling_width=settings.item_size).surface, " ", Image.load(f"images/item/life_minus.png", scaling_width=settings.item_size).surface, " gives or takes a life"],
-                                    [Image.load(f"images/item/size_plus.png", scaling_width=settings.item_size).surface, " ", Image.load(f"images/item/size_minus.png", scaling_width=settings.item_size).surface, f" increases or decreases ship size for {settings.size_change_duration}s"],
-                                    [Image.load(f"images/item/speed_buff.png", scaling_width=settings.item_size).surface, " ", Image.load(f"images/item/speed_nerf.png", scaling_width=settings.item_size).surface, f" increases or decreases ship speed {settings.speed_change_duration}s"],
-                                    [Image.load(f"images/item/shield.png", scaling_width=settings.item_size).surface, f" increases shield timer by {settings.shield_duration}s,"],
+                                    [pygame.image.load(f"images/item/life_plus.png"), " ", pygame.image.load(f"images/item/life_minus.png"), " gives or takes a life"],
+                                    [pygame.image.load(f"images/item/size_plus.png"), " ", pygame.image.load(f"images/item/size_minus.png"), f" increases or decreases ship size for {settings.size_change_duration}s"],
+                                    [pygame.image.load(f"images/item/speed_buff.png"), " ", pygame.image.load(f"images/item/speed_nerf.png"), f" increases or decreases ship speed {settings.speed_change_duration}s"],
+                                    [pygame.image.load(f"images/item/shield.png"), f" increases shield timer by {settings.shield_duration}s,"],
                                     "use it to reflect enemies and bullets.",
-                                    [Image.load(f"images/item/missile.png", scaling_width=settings.item_size).surface, " gives an extra missile."],
+                                    [pygame.image.load(f"images/item/missile.png"), " gives an extra missile."],
                                     "They are strong, use them wisely!"],
                                     ["Previous items", "Back to controlls","Back to menu"])
             case "Highscores":

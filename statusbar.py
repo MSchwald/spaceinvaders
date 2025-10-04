@@ -3,6 +3,7 @@ from image import Image
 import settings
 from text import *
 from settings import color
+from display import Display
 
 class Statusbar:
     '''Class to format a two lined status bar
@@ -12,20 +13,20 @@ class Statusbar:
             self.level = level
             self.rescaling = rescaling
 
-            self.empty_bar = Image.load("images/statusbar/empty_bar.png").surface
+            self.empty_bar = pygame.image.load("images/statusbar/empty_bar.png").convert_alpha()
             
             self.h = self.empty_bar.get_height()
-            self.health = Image.load("images/statusbar/health_bar.png").surface
-            self.shield_timer = Image.load("images/statusbar/shield_bar.png").surface
+            self.health = pygame.image.load("images/statusbar/health_bar.png").convert_alpha()
+            self.shield_timer = pygame.image.load("images/statusbar/shield_bar.png").convert_alpha()
 
             self.font_size = self.h*7//8
             self.font = pygame.font.Font(settings.stats_font, self.font_size)
             self.stats_padding = (self.h-self.font_size)//2
             
-            self.lives_icon = Image.load("images/statusbar/lives_icon.png").surface
-            self.energy_icon = Image.load("images/statusbar/energy_icon.png").surface
-            self.shield_icon = Image.load("images/statusbar/shield_icon.png").surface        
-            self.missiles_icon = Image.load("images/statusbar/missiles_icon.png").surface
+            self.lives_icon = pygame.image.load("images/statusbar/lives_icon.png").convert_alpha()
+            self.energy_icon = pygame.image.load("images/statusbar/energy_icon.png").convert_alpha()
+            self.shield_icon = pygame.image.load("images/statusbar/shield_icon.png").convert_alpha()     
+            self.missiles_icon = pygame.image.load("images/statusbar/missiles_icon.png").convert_alpha()
 
             self.score_font_size = self.font_size//2
             self.score_font = pygame.font.Font(settings.stats_font, self.score_font_size)
@@ -52,5 +53,5 @@ class Statusbar:
         self.second_row.blit(self.progress,(self.first_row.get_width()-self.progress.get_width(),0))
         self.both_rows = align_surfaces([self.first_row,self.second_row], "vertical", spacing=self.h/32)
         if self.rescaling:
-            self.both_rows = pygame.transform.scale_by(self.both_rows, settings.screen_width/self.first_row.get_width())
+            self.both_rows = pygame.transform.scale_by(self.both_rows, Display.screen_width/self.first_row.get_width())
         screen.blit(self.both_rows,(0,0))

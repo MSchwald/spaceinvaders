@@ -5,6 +5,7 @@ from image import Image
 from sprite import Sprite
 from bullet import Bullet
 import sound
+from display import Display
 
 
 class Ship(Sprite):
@@ -12,8 +13,8 @@ class Ship(Sprite):
 
     def __init__(self, level, x=0, y=0, ship_lives=settings.ship_lives, rank=settings.ship_starting_rank):
         #level: needs access to the level object from the game file
-        super().__init__(Image.load(f"images/ship/a-{rank}.png", scaling_width=settings.ship_width[rank]), x=0, y=0, constraints=pygame.Rect(
-            settings.ship_constraints), boundary_behaviour="clamp")
+        super().__init__(Image.load(f"images/ship/a-{rank}.png"), x=0, y=0, constraints=pygame.Rect(
+            [0, 5/9*Display.screen_height, Display.screen_width, 4/9*Display.screen_height]), boundary_behaviour="clamp")
         self.level = level
         self.start_new_game(ship_lives, rank)
 
@@ -106,7 +107,7 @@ class Ship(Sprite):
 
     def update_image(self):
         letter = {"normal":"a", "inverse_controlls":"g", "shield":"h", "magnetic":"e"}[self.status]
-        self.change_image(Image.load(f'images/ship/{letter}-{self.rank}.png', scaling_width=settings.ship_width[self.rank]).scale_by(self.size_factor))
+        self.change_image(Image.load(f'images/ship/{letter}-{self.rank}.png').scale_by(self.size_factor))
         self.reset_firepoints()
 
     def collect_item(self, type):
