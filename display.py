@@ -19,11 +19,11 @@ class Display:
             self.padding_w, self.padding_h = (0,0)  
         elif ratio > 0:
             # display is too wide
-            screen_w, screen_h = w * self.height // h, self.H
+            screen_w, screen_h = w * self.height // h, self.height
             self.padding_w, self.padding_h = (self.width - screen_w) // 2, 0
         else:
             # display is too high
-            screen_w, screen_h = self.width, self.height * h // w
+            screen_w, screen_h = self.width, self.width * h // w
             self.padding_w, self.padding_h = 0, (self.height - screen_h) // 2
 
         self.screen = pygame.Surface((screen_w,screen_h))

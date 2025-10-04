@@ -25,8 +25,6 @@ class Image:
     def h(self):
         return self.rect.h
 
-        
-
     def scale_by(self, factor):
         '''Rescale image and its mask by a given factor'''
         return Image(pygame.transform.scale(self.surface, (factor*self.w, factor*self.h)).convert_alpha(),
@@ -143,7 +141,7 @@ class Image:
                 return flipped_image
         else:
             return image
-        
+
     def blit(self, screen):
         screen.blit(self.surface, self.rect, colorkey=self.surface.get_colorkey())
 
