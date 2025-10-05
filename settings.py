@@ -13,7 +13,7 @@ padding_color = color["dark_grey"]
 bg_color = color["black"]
 
 # Game and ship settings
-game_starting_level = 1
+game_starting_level = 4
 starting_score = 0
 ship_lives = 3
 shield_starting_timer = 3
@@ -25,6 +25,7 @@ ship_width = {1:100, 2:100, 3:120}
 
 # Alien settings
 asteroid_pieces = 4
+blob_pieces = 2
 alien_speed = {"big_asteroid": 0.3, "small_asteroid": 0.6, "purple": 0.4, "ufo": 1, "blob": 0.5}
 alien_energy = {"big_asteroid": 4, "small_asteroid": 1, "purple": 10, "ufo": 20, "blob": 32}
 alien_points = {"big_asteroid": 20,"small_asteroid": 10,

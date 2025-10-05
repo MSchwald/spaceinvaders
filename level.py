@@ -298,11 +298,11 @@ class Level:
                 alien = Alien(type, self, energy=energy, v=v, constraints=constraints, boundary_behaviour = boundary_behaviour)
                 alien.change_direction(random()*(constraints.w-alien.w)+constraints.x-alien.x, constraints.bottom-alien.rect.bottom)
                 alien.change_position(x=random()*(constraints.w-alien.w)+constraints.x, y=constraints.y-alien.h)           
+                if self.status != "start":
+                    alien.play_spawing_sound()
                 if type in ["big_asteroid","small_asteroid"]:
                     self.asteroids.add(alien)
                 elif type == "blob":
-                    if self.status != "start":
-                        sound.blob_spawns.play()
                     self.blobs.add(alien)
                     self.aliens.add(alien)
                 else:

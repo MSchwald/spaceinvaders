@@ -12,7 +12,7 @@ class Ship(Sprite):
     def __init__(self, level, x=0, y=0, ship_lives=settings.ship_lives, rank=settings.ship_starting_rank):
         #level: needs access to the level object from the game file
         super().__init__(Image.load(f"images/ship/a-{rank}.png"), x=0, y=0,
-            constraints=pygame.Rect([0, 5/9*Display.screen_height, Display.screen_width, 4/9*Display.screen_height]),
+            constraints=pygame.Rect(0, 5/9*Display.screen_height, Display.screen_width, 4/9*Display.screen_height),
             boundary_behaviour="clamp")
         self.level = level
         self.start_new_game(ship_lives, rank)

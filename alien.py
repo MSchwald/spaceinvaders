@@ -4,7 +4,7 @@ from sprite import Sprite
 from bullet import Bullet
 from display import Display
 from item import Item
-from random import random, choice, randint
+from random import random, choice, randint, sample
 from math import pi, sqrt, sin, cos
 from math import hypot
 
@@ -27,34 +27,25 @@ class Alien(Sprite):
         #level: needs access to the level object from the game file
         #cycle_time: Alien periodically does actions after given time (in ms)
         #random_cycle_time is a tuple of floats: cycle times vary randomly between given lower and upper bound (in ms)
+        v = v if v is not None else settings.alien_speed[type]
+        constraints = constraints or pygame.Rect(0, 0, Display.screen_width, Display.screen_height)
         self.energy = energy or settings.alien_energy[type]
-        if v is None:
-            v = settings.alien_speed[type]
-        constraints = constraints or pygame.Rect([0, 0, Display.screen_width, Display.screen_height])
         #Load frames and images
-        if type in ["big_asteroid", "small_asteroid"]:
-            super().__init__(frames = Image.load(f"images/alien/{type}", colorkey=settings.alien_colorkey[type]),
-                        animation_type="loop", fps=10,
-                        grid=grid, center=center, x=x, y=y, v=v, direction=direction,
-                        constraints=constraints, boundary_behaviour=boundary_behaviour)
-            #mass is so far only relevant for collisions between the asteroids and blobs
-            self.m = (self.w/Display.grid_width)**3
-        elif type == "blob":
-            super().__init__(image=Image.blob[self.energy-1],
-                        grid=grid, center=center, x=x, y=y, v=v, direction=direction,
-                        constraints=constraints, boundary_behaviour=boundary_behaviour)
-            #mass of blobs is proportional to their energy points
-            self.m = self.energy
-            #blobs gravitate towards the place they got split the last time
-            self.parent_center = None
-            self.a = None
-
-        else:
-            super().__init__(Image.load(f'images/alien/{str(type)}.png',colorkey=settings.alien_colorkey[type]),
+        match type:
+            case "big_asteroid" | "small_asteroid":
+                image = None
+                frames = Image.load(f"images/alien/{type}", colorkey=settings.alien_colorkey[type])
+                animation_type, fps = "loop", 10
+            case "blob":
+                image = Image.blob[self.energy-1]
+                frames, animation_type, fps = None, None, None
+            case _:
+                image = Image.load(f'images/alien/{type}.png',colorkey=settings.alien_colorkey[type])
+                frames, animation_type, fps = None, None, None
+        super().__init__(image=image,
                             grid=grid, center=center, x=x, y=y, v=v, direction=direction,
-                            constraints=constraints, boundary_behaviour=boundary_behaviour)
-        if type == "purple" and level.status != "start":
-            sound.alien_spawn.play()
+                            constraints=constraints, boundary_behaviour=boundary_behaviour,
+                            animation_type=animation_type, frames=frames, fps=fps)
         self.type = type
         self.level = level
         self.points = settings.alien_points[type]
@@ -64,6 +55,24 @@ class Alien(Sprite):
             self.cycle_time = randint(random_cycle_time[0],random_cycle_time[1])
         if self.cycle_time:
             self.action_timer = 0
+        #blobs gravitate towards the place they got split the last time
+        if type == "blob":
+            self.parent_center = None
+
+    def play_spawing_sound(self):
+        match self.type:
+            case "purple": sound.alien_spawn.play()
+            case "blob": sound.blob_spawns.play()
+
+    @property
+    def m(self):
+        """mass of an enemy, relevant for collisions between asteroids and blobs"""
+        match self.type:
+            case "blob": return self.energy
+            case "big_asteroid" | "small_asteroid":
+                return (self.w/Display.grid_width)**3
+            case _:
+                return None
 
     def update(self, dt):
         #asteroids can collide (elastic collision of 2d balls)
@@ -109,7 +118,7 @@ class Alien(Sprite):
                 x2,y2 = self.parent_center
                 n = normalize((x2-x1,y2-y1))
                 vr = self.vx*n[0]+self.vy*n[1]
-                ar = -0.2/32*(vr-self.u)*abs(vr+self.u)
+                ar = -1/160*(vr-self.splitting_speed)*abs(vr+self.splitting_speed)
                 self.a = (ar*n[0],ar*n[1])
             #timer, movement and animation get handled in the Sprite class
             super().update(dt)
@@ -126,7 +135,7 @@ class Alien(Sprite):
 
         if self.type == "blob":
             #blobs shoot bubbles
-            self.shoot("blubber",size=self.energy)
+            self.shoot("blubber", size=self.energy)
 
     # types of alien actions
     def shoot(self, bullet_type, size=None):
@@ -143,9 +152,38 @@ class Alien(Sprite):
         else:
             self.energy = max(self.energy-damage,0)
             if self.energy > 0 and self.type not in ["big_asteroid", "small_asteroid"]:
-                {"purple": sound.enemy_hit,"ufo": sound.metal_hit}[self.type].play()
+                {"purple": sound.enemy_hit, "ufo": sound.metal_hit}[self.type].play()
             else:
                 self.kill()
+
+    def split(self, new_type, amount):
+        if self.direction==(0,0):
+            phi = random()
+            w=(cos(2*pi*phi),sin(2*pi*phi))
+        else:
+            w=(self.direction[0]/self.norm, self.direction[1]/self.norm)
+        
+        if new_type == "blob":
+            #blobs split into smaller blobs with integer mass
+            m = self.m // amount
+            diff = self.m - amount * m
+            masses = [m + 1 if i < diff else m for i in sample(range(amount), amount)]
+        
+        pieces = []
+        for i in range(amount):
+            if new_type == "blob":
+                if masses[i] == 0:
+                    continue
+                speed_factor = masses[i]**(-1/2)
+            else:
+                speed_factor = 1
+            phi_i=(2*i+1)*pi/amount
+            dir_i = (self.vx+settings.alien_speed[new_type]*speed_factor*(w[0]*cos(phi_i)-w[1]*sin(phi_i)),
+                self.vy+settings.alien_speed[new_type]*speed_factor*(w[0]*sin(phi_i)+w[1]*cos(phi_i)))
+            energy = masses[i] if new_type == "blob" else None
+            pieces.append(Alien(new_type, self.level, energy=energy, direction=dir_i, v=norm(dir_i), center=self.rect.center,
+                constraints=self.constraints, boundary_behaviour=self.boundary_behaviour))
+        return(pieces)
 
     def kill(self):
         if self.energy <= 0:
@@ -155,41 +193,16 @@ class Alien(Sprite):
                 self.level.items.add(Item(choice(settings.item_types), self.level, center=self.rect.center))
         if self.type == "big_asteroid":
             # big asteroids split into smaller asteroids when hit
-            if self.direction==(0,0):
-                phi = random()
-                w=(cos(2*pi*phi),sin(2*pi*phi))
-            else:
-                w=(self.direction[0]/self.norm,self.direction[1]/self.norm)
-            for i in range(settings.asteroid_pieces):
-                phi=(2*i+1)*pi/settings.asteroid_pieces
-                new_dir = (self.vx+settings.alien_speed["small_asteroid"]*(w[0]*cos(phi)-w[1]*sin(phi)), self.vy+settings.alien_speed["small_asteroid"]*(w[0]*sin(phi)+w[1]*cos(phi)))
-                self.level.asteroids.add(Alien("small_asteroid", self.level, direction=new_dir, v=norm(new_dir), center=self.rect.center, constraints=self.constraints, boundary_behaviour=self.boundary_behaviour))
+            for piece in self.split("small_asteroid", settings.asteroid_pieces):
+                self.level.asteroids.add(piece)
         if self.type == "blob":
-            #blobs split into two smaller halfs
-            # big asteroids split into smaller asteroids when hit
             if self.energy > 1:
                 sound.slime_hit.play()
-                if self.direction==(0,0):
-                    phi = random()
-                    w=(cos(2*pi*phi),sin(2*pi*phi))
-                else:
-                    w=(self.direction[0]/self.norm,self.direction[1]/self.norm)
-                m1 = self.m//2
-                m2 = self.m-m1
-                phi=pi/2 #(2*i+1)*pi/2
-                new_dir = (self.vx+settings.alien_speed["blob"]*m1**(-1/2)*(w[0]*cos(phi)-w[1]*sin(phi)), self.vy+settings.alien_speed["blob"]*m1**(-1/2)*(w[0]*sin(phi)+w[1]*cos(phi)))
-                u = norm(new_dir)
-                alien_1 = Alien("blob", self.level, energy=m1, direction=new_dir, v=u, center=self.rect.center, constraints=self.constraints, boundary_behaviour=self.boundary_behaviour)
-                alien_1.u = u
-                phi=3*pi/2
-                new_dir = (self.vx+settings.alien_speed["blob"]*m2**(-1/2)*(w[0]*cos(phi)-w[1]*sin(phi)), self.vy+settings.alien_speed["blob"]*m2**(-1/2)*(w[0]*sin(phi)+w[1]*cos(phi)))
-                u = norm(new_dir)
-                alien_2 = Alien("blob", self.level, energy=m2,direction=new_dir, v=u, center=self.rect.center, constraints=self.constraints, boundary_behaviour=self.boundary_behaviour)
-                alien_2.u = u
-                self.level.aliens.add(alien_1,alien_2)
-                self.level.blobs.add(alien_1,alien_2)
-                alien_1.parent_center = self.rect.center
-                alien_2.parent_center = self.rect.center
+                for blob in self.split("blob", settings.blob_pieces):
+                    blob.splitting_speed = blob.v # needed later to calculate the gravitation towards the parent center
+                    blob.parent_center = self.rect.center
+                    self.level.aliens.add(blob)
+                    self.level.blobs.add(blob)
             elif self.energy == 1:
                 sound.alienblob.play()
                 self.level.ship.get_points(self.points)

@@ -16,7 +16,7 @@ class Bullet(Sprite):
         self.owner = owner or settings.bullet_owner[type]
         self.damage = damage or settings.bullet_damage[type]
         self.effect_time = effect_time or settings.bullet_effect_time[type]
-        constraints = constraints or pygame.Rect([0, 0, Display.screen_width, Display.screen_height])
+        constraints = constraints or pygame.Rect(0, 0, Display.screen_width, Display.screen_height)
         v = v if v is not None else settings.bullet_speed[type]
         if direction is None:
             if self.owner == "player":
