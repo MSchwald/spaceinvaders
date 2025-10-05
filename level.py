@@ -270,20 +270,7 @@ class Level:
                         dpdv = (x1-x2)*(vx1-vx2)+(y1-y2)*(vy1-vy2)
                         if dpdv < 0:
                             merge_occured = True            
-                            m1,m2 = blob1.m,blob2.m
-                            # blobs merge at their center of gravity
-                            new_x = (m1 * x1 + m2 * x2) / (m1 + m2)
-                            new_y = (m1 * y1 + m2 * y2) / (m1 + m2)
-                            new_center = (new_x, new_y)
-                            # Conservation of momentum (inelastic collision)
-                            vx_new = (m1 * vx1 + m2 * vx2) / (m1 + m2)
-                            vy_new = (m1 * vy1 + m2 * vy2) / (m1 + m2)
-                            new_v = hypot(vx_new, vy_new)
-                            if new_v != 0:
-                                new_dir = (vx_new / new_v, vy_new / new_v)
-                            else:
-                                new_dir = (0, 0)
-                            merged_blob = Alien("blob",self,energy=blob1.energy+blob2.energy,center=new_center,direction=new_dir,v=new_v)
+                            merged_blob = Alien.merge(blob1, blob2)
                             self.aliens.add(merged_blob)
                             self.blobs.add(merged_blob)
                             blob1.hard_kill()

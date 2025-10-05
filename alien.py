@@ -162,13 +162,11 @@ class Alien(Sprite):
             w=(cos(2*pi*phi),sin(2*pi*phi))
         else:
             w=(self.direction[0]/self.norm, self.direction[1]/self.norm)
-        
         if new_type == "blob":
             #blobs split into smaller blobs with integer mass
             m = self.m // amount
             diff = self.m - amount * m
             masses = [m + 1 if i < diff else m for i in sample(range(amount), amount)]
-        
         pieces = []
         for i in range(amount):
             if new_type == "blob":
@@ -185,7 +183,30 @@ class Alien(Sprite):
                 constraints=self.constraints, boundary_behaviour=self.boundary_behaviour))
         return(pieces)
 
+    @classmethod
+    def merge(cls, blob1, blob2):
+        """merges two blobs, but can be generalized to other aliens"""
+        x1,y1 = blob1.rect.center
+        x2,y2 = blob2.rect.center
+        vx1, vy1 = blob1.vx, blob1.vy
+        vx2, vy2 = blob2.vx, blob2.vy
+        m1, m2 = blob1.m, blob2.m
+        # blobs merge at their center of gravity
+        new_x = (m1 * x1 + m2 * x2) / (m1 + m2)
+        new_y = (m1 * y1 + m2 * y2) / (m1 + m2)
+        new_center = (new_x, new_y)
+        # Conservation of momentum (inelastic collision)
+        vx_new = (m1 * vx1 + m2 * vx2) / (m1 + m2)
+        vy_new = (m1 * vy1 + m2 * vy2) / (m1 + m2)
+        new_v = hypot(vx_new, vy_new)
+        if new_v != 0:
+            new_dir = (vx_new / new_v, vy_new / new_v)
+        else:
+            new_dir = (0, 0)
+        return Alien("blob", blob1.level, energy=blob1.energy+blob2.energy,center=new_center,direction=new_dir,v=new_v)
+
     def kill(self):
+        """removes an enemy, triggers splitting for asteroids and blobs""" 
         if self.energy <= 0:
             {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob, "blob":sound.alienblob}[self.type].play()
             self.level.ship.get_points(self.points)
@@ -210,6 +231,7 @@ class Alien(Sprite):
         super().kill()
 
     def hard_kill(self):
+        """removes an enemy without further splitting"""
         self.level.aliens.remove(self)
         self.level.blobs.remove(self)
         super(Alien, self).kill()
