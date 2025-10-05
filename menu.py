@@ -15,13 +15,13 @@ class Menu():
     def init_settings(cls):
         '''scales menu formating to user's display setting'''
         pygame.font.init()
-        cls.menu_font_size = int(settings.menu_font_size*Display.screen_width/1600)
-        cls.text_font_size = int(settings.text_font_size*Display.screen_width/1600)
+        cls.menu_font_size = int(settings.menu_font_size*Display.screen_width/settings.screen_width)
+        cls.text_font_size = int(settings.text_font_size*Display.screen_width/settings.screen_width)
         cls.menu_font = pygame.font.Font(settings.menu_font, cls.menu_font_size)
         cls.text_font = pygame.font.Font(settings.text_font, cls.text_font_size)
-        cls.boundary_size = int(settings.menu_boundary*Display.screen_width/1600)
-        cls.title_distance = int(settings.title_menu_distance*Display.screen_width/1600)
-        cls.line_distance = int(settings.line_distance*Display.screen_width/1600)
+        cls.boundary_size = int(settings.menu_boundary*Display.screen_width/settings.screen_width)
+        cls.title_distance = int(settings.title_menu_distance*Display.screen_width/settings.screen_width)
+        cls.line_distance = int(settings.line_distance*Display.screen_width/settings.screen_width)
 
     def __init__(self, header_surface, options, current_selection=0):
         self.header_surface = header_surface

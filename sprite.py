@@ -160,7 +160,7 @@ class Sprite(pygame.sprite.Sprite):
         self.update_frame(dt)
 
     def update_position(self, dt):
-        self.change_position(self.x+dt*self.vx*Display.grid_width/100, self.y+dt*self.vy*Display.grid_width/100)
+        self.change_position(self.x+dt*self.vx*Display.grid_width/settings.standard_grid_width, self.y+dt*self.vy*Display.grid_width/settings.standard_grid_width)
     
     def update_velocity(self, dt):
         self.direction = (self.vx+self.a[0]*dt,self.vy+self.a[1]*dt)

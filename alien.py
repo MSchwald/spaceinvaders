@@ -118,7 +118,7 @@ class Alien(Sprite):
                 x2,y2 = self.parent_center
                 n = normalize((x2-x1,y2-y1))
                 vr = self.vx*n[0]+self.vy*n[1]
-                ar = -1/160*(vr-self.splitting_speed)*abs(vr+self.splitting_speed)
+                ar = -settings.blob_acceleration*(vr-self.splitting_speed)*abs(vr+self.splitting_speed)
                 self.a = (ar*n[0],ar*n[1])
             #timer, movement and animation get handled in the Sprite class
             super().update(dt)
@@ -185,7 +185,7 @@ class Alien(Sprite):
 
     @classmethod
     def merge(cls, blob1, blob2):
-        """merges two blobs, but can be generalized to other aliens"""
+        """merges two blobs, but could be generalized to other aliens"""
         x1,y1 = blob1.rect.center
         x2,y2 = blob2.rect.center
         vx1, vy1 = blob1.vx, blob1.vy

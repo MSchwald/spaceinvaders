@@ -78,8 +78,6 @@ def render_line(line, font, text_color, bg_color):
             else:
                 rendered_line_parts.append(pygame.transform.scale_by(part,h/part.get_height()))
         return align_surfaces(rendered_line_parts, "horizontal", padding_color = bg_color)
-
-
     if rescale_to_size is not None:
         if orientation == "horizontal":
             h=rescale_to_size
@@ -87,7 +85,6 @@ def render_line(line, font, text_color, bg_color):
         elif orientation == "vertical":
             w=rescale_to_size
             surfaces = [pygame.transform.scale_by(surface,w/surface.get_width()) for surface in surfaces]
-
 
 class Text:
     """class to render text with a given layout"""

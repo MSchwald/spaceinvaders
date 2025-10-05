@@ -33,9 +33,9 @@ class Image:
         '''Allows rescaling images either to a given width, height or by a factor'''
         factor = None
         if scaling_width:
-            factor = Display.grid_width/100 * scaling_width / self.w
+            factor = Display.grid_width/settings.standard_grid_width * scaling_width / self.w
         elif scaling_height:
-            factor = Display.grid_width/100 * scaling_height / self.h
+            factor = Display.grid_width/settings.standard_grid_width * scaling_height / self.h
         elif scaling_factor:
             factor = scaling_factor
         if factor is None:
@@ -60,7 +60,7 @@ class Image:
                     ship_rank = int(parts[2][2])
                     return settings.ship_width[ship_rank]
                 case "statusbar":
-                    return 72 #default height of the empty health bar
+                    return 72 #height of the empty health bar picture
                 case _:
                     raise ValueError(f"No scaling rule for path {path}")
         raise ValueError(f"image path should start with 'images'")

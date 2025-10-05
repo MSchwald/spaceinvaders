@@ -41,7 +41,7 @@ class Item(Sprite):
             temp = [self.level.ship.rect.center[i]-self.rect.center[i] for i in [0,1]]
             norm_temp = norm(temp[0],temp[1])
             if norm_temp!=0:
-                temp = [settings.item_speed*temp[i]/norm_temp/30 for i in [0,1]]
+                temp = [settings.magnet_strength*settings.item_speed*temp[i]/norm_temp for i in [0,1]]
             self.change_direction(self.vx+temp[0],self.vy)
             self.v = norm(self.direction[0],self.direction[1])
         super().update(dt)
