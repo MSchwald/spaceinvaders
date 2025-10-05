@@ -249,7 +249,6 @@ class Level:
                     item.change_direction(-item.direction[0],-item.direction[1])
                 else:
                     self.ship.collect_item(item)
-                    item.play_collecting_sound()
                     item.kill()
 
     def blobs_collide(self):

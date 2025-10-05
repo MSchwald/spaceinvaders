@@ -104,7 +104,6 @@ class Ship(Sprite):
     def shoot_bullets(self):
         # if there aren't too many bullets from the ship on the screen yet
         if len(self.level.ship_bullets) < settings.max_bullets*(2*self.rank-1) and self.status != "shield":
-            sound.bullet.play()
             # Takes Doppler effect into account to calculate the bullets' speed
             doppler = self.vy
             # Fires bullets
@@ -130,6 +129,7 @@ class Ship(Sprite):
         self.change_image(Image.load(f'images/ship/{letter}-{self.rank}.png').scale_by(self.size_factor))
 
     def collect_item(self, item):
+        item.play_collecting_sound()
         match item.type:
             case "bullets_buff": self.bullets_buff += 1
             case "hp_plus": self.energy = min(self.max_energy, self.energy+settings.hp_plus)
@@ -196,7 +196,6 @@ class Ship(Sprite):
     def shoot_missile(self, position):
         """shoots missile to position = (x,y)"""
         if self.missiles > 0:
-            sound.explosion.play()
             self.missiles -= 1
             self.level.bullets.add(Bullet("missile", center=position))
 

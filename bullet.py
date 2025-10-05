@@ -17,43 +17,49 @@ class Bullet(Sprite):
         self.damage = damage or settings.bullet_damage[type]
         self.effect_time = effect_time or settings.bullet_effect_time[type]
         constraints = constraints or pygame.Rect([0, 0, Display.screen_width, Display.screen_height])
-        if type in [1,2,3]:
-            if image is None:
-                image = Image.load(f'images/bullet/{type}.png')
-        elif type == "blubber":
-            sound.blubber.play()
-            if size is None:
-                size = settings.alien_energy["blob"]
-            self.size = size
-            image = Image.blubber[size-1]
-            self.damage = ceil(size/settings.alien_energy["blob"]*settings.bullet_damage[type])
-        elif type == "missile":
-            frames = Image.load(f"images/bullet/explosion")
-            animation_type = "vanish"
-            animation_time = settings.missile_duration
-            self.hit_enemies = pygame.sprite.Group()
-        elif type == "g":
-            sound.alienshoot1.play()
-            frames = Image.load(f"images/bullet/g")
-            animation_type = "once"
-            animation_time = 0.5
-        if v is None:
-            v = settings.bullet_speed[type]
+        v = v if v is not None else settings.bullet_speed[type]
         if direction is None:
             if self.owner == "player":
                 direction = (0,-1)
             else:
                 direction = (0,1)
+        match type:
+            case 1 | 2 | 3:
+                if image is None:
+                    image = Image.load(f'images/bullet/{type}.png')
+            case "blubber":
+                self.size = size or settings.alien_energy["blob"]
+                image = Image.blubber[size-1]
+                self.damage = ceil(size/settings.alien_energy["blob"]*settings.bullet_damage[type])
+            case "missile":
+                frames = Image.load(f"images/bullet/explosion")
+                animation_type, animation_time = "vanish", settings.missile_duration
+                self.hit_enemies = pygame.sprite.Group()
+            case "g":
+                frames = Image.load(f"images/bullet/g")
+                animation_type, animation_time = "once", 0.5
+        self.play_firing_sound()
         super().__init__(image, grid=grid, center=center, x=x, y=y, v=v, direction=direction,
             constraints=constraints, boundary_behaviour=boundary_behaviour,
             animation_type=animation_type, frames=frames, animation_time=animation_time)
+
+    def play_firing_sound(self):
+        match self.type:
+            case 1 | 2 | 3:
+                sound.bullet.play()
+            case "blubber":
+                sound.blubber.play()
+            case "g":
+                sound.alienshoot1.play()
+            case "missile":
+                sound.explosion.play()
 
     def update(self, dt):
         #timer, movement and animation get handled in the Sprite class
         super().update(dt)
         # explosions by missiles need to get deleted manually after their duration
-        if self.effect_time and self.timer > self.effect_time:
-                self.kill()
+        if self.effect_time is not None and self.timer > self.effect_time:
+            self.kill()
 
     def reflect(self):
         sound.shield.stop()
