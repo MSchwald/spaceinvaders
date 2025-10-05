@@ -35,6 +35,7 @@ alien_width = {"big_asteroid": 100, "small_asteroid": None,
 alien_width["small_asteroid"] = alien_width["big_asteroid"] * asteroid_pieces ** (-1/3)
 alien_colorkey = {"big_asteroid": (0,0,0), "small_asteroid": (0,0,0),
                 "purple": (254,254,254), "ufo": (0,0,0), "blob": (0,0,0)}
+blob_acceleration = 1/160
 
 # Bullet settings
 max_bullets = 3
@@ -70,6 +71,7 @@ speed_nerf = 1/speed_buff
 item_score_buff = 1.5
 item_size_plus = 1.5
 item_size_minus = 1/item_size_plus
+magnet_strength = 1/30
 
 # Fonts and menu formatting
 stats_font = "fonts/ARCADE_I.ttf"
