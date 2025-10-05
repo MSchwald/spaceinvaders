@@ -3,7 +3,7 @@ from image import Image
 from sprite import Sprite
 from display import Display
 from math import hypot as norm
-
+import sound
 
 class Item(Sprite):
     """A class to manage the items"""
@@ -13,6 +13,23 @@ class Item(Sprite):
                          constraints=pygame.Rect([0, 0, Display.screen_width, Display.screen_height]), boundary_behaviour="vanish")
         self.type = type
         self.level = level
+
+    def play_collecting_sound(self):
+        match self.type:
+            case "bullets_buff" | "magnet" | "score_buff" | "speed_buff":
+                sound.item_collect.play()
+            case "hp_plus" | "shield":
+                sound.good_item.play()
+            case "life_plus":
+                sound.extra_life.play()
+            case "missile":
+                sound.collect_missile.play()
+            case "ship_buff":
+                sound.ship_level_up.play()
+            case "size_minus":
+                sound.shrink.play()
+            case "speed_nerf":
+                sound.bad_item.play()
 
     def update(self, dt):
         if self.level.ship.magnet:

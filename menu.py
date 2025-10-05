@@ -156,7 +156,7 @@ class Menu():
                                     [pygame.image.load("images/item/bullets_buff.png"), " upgrades your bullets"],
                                     [pygame.image.load("images/item/ship_buff.png"), " upgrades your ship"],
                                     [pygame.image.load("images/item/hp_plus.png"), f" gives back {settings.hp_plus} energy"],
-                                    [pygame.image.load("images/item/invert_controlls.png"), f" inverts controls for {settings.invert_controlls_duration}s"],
+                                    [pygame.image.load("images/item/invert_controls.png"), f" inverts controls for {settings.invert_controls_duration}s"],
                                     [pygame.image.load("images/item/magnet.png"), " attracts items to you"],
                                     [pygame.image.load("images/item/score_buff.png"), f" score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"]],
                                     ["More items", "Back to controls","Back to menu"])

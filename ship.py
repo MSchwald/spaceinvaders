@@ -123,29 +123,27 @@ class Ship(Sprite):
         else:
             if self.status == "shield":
                 self.deactivate_shield()
-            if self.status == "inverse_controlls":
+            if self.status == "inverse_controls":
                 self.change_direction(-keys[K_d]+keys[K_a], -keys[K_s]+keys[K_w])
             else:
                 self.change_direction(keys[K_d]-keys[K_a], keys[K_s]-keys[K_w])
 
     def update_image(self):
-        letter = {"normal":"a", "inverse_controlls":"g", "shield":"h", "magnetic":"e"}[self.status]
+        letter = {"normal":"a", "inverse_controls":"g", "shield":"h", "magnetic":"e"}[self.status]
         self.change_image(Image.load(f'images/ship/{letter}-{self.rank}.png').scale_by(self.size_factor))
 
-    def collect_item(self, type):
-        match type:
+    def collect_item(self, item):
+        match item.type:
             case "bullets_buff":
                 self.bullets_buff += 1
-                sound.item_collect.play()
             case "hp_plus":
                 self.energy = min(self.max_energy, self.energy+settings.hp_plus)
-                sound.good_item.play()
-            case "invert_controlls":
-                if self.status == "inverse_controlls":
+            case "invert_controls":
+                if self.status == "inverse_controls":
                     self.status = "normal"
                 else:
-                    self.status = "inverse_controlls"
-                    self.controlls_timer = 1000*settings.invert_controlls_duration
+                    self.status = "inverse_controls"
+                    self.controls_timer = 1000*settings.invert_controls_duration
                     sound.bad_item.play()
                 self.update_image()
             case "life_minus":
@@ -154,28 +152,21 @@ class Ship(Sprite):
                     sound.lose_life.play()
             case "life_plus":
                 self.lives += 1
-                sound.extra_life.play()
             case "magnet":
                 self.magnet = True
                 self.status = "magnetic"
                 self.update_image()
-                sound.item_collect.play()
             case "missile":
                 self.missiles += 1
-                sound.collect_missile.play()
             case "score_buff":
                 if self.score_factor == 1:
                     self.score_buff_timer = 1000*settings.score_buff_duration
                 self.score_factor *= settings.item_score_buff
-                sound.item_collect.play()
             case "shield":
                 self.shield_timer = min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
-                sound.good_item.play()
             case "ship_buff":
                 self.gain_rank()
-                sound.ship_level_up.play()
             case "size_minus":
-                sound.shrink.play()
                 if self.size_factor*settings.item_size_minus>=0.3:
                     self.size_factor *= settings.item_size_minus
                     self.update_image()
@@ -189,14 +180,12 @@ class Ship(Sprite):
                     if self.size_factor != 1:
                         self.size_change_timer = 1000*settings.size_change_duration
             case "speed_buff":
-                sound.item_collect.play()
                 if self.v*settings.speed_buff < settings.bullet_speed[1]:
                     self.speed_factor = settings.speed_buff
                     self.v = self.speed_factor*settings.rank_speed[self.rank]
                     if self.speed_factor != 1:
                         self.speed_change_timer = 1000*settings.speed_change_duration
             case "speed_nerf":
-                sound.bad_item.play()
                 self.speed_factor = settings.speed_nerf
                 self.v = self.speed_factor*settings.rank_speed[self.rank]
                 if self.speed_factor != 1:
@@ -254,9 +243,9 @@ class Ship(Sprite):
             if self.size_change_timer <= 0:
                 self.size_factor = 1
                 self.update_image()
-        if self.status == "inverse_controlls":
-            self.controlls_timer -= dt
-            if self.controlls_timer <= 0:
+        if self.status == "inverse_controls":
+            self.controls_timer -= dt
+            if self.controls_timer <= 0:
                 self.status = "normal"
                 self.update_image()
         super().update(dt)
