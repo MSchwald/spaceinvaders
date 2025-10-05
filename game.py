@@ -77,10 +77,6 @@ class Game:
                     # SPACE shoots bullets
                     elif event.key == K_SPACE:
                         self.level.ship.shoot_bullets()
-                    elif event.key == K_LSHIFT:
-                        self.level.ship.activate_shield()
-                if event.type == KEYUP and event.key == K_LSHIFT:
-                    self.level.ship.deactivate_shield()
                 if event.type == MOUSEBUTTONDOWN and event.button == 1:
                     self.level.ship.shoot_missile(event.pos)
 
@@ -99,8 +95,8 @@ class Game:
                     if event.key == K_RETURN:
                         Menu.choose_current_selection(self)
 
-        # set the direction of the ship according to keyboard input
-        if self.level.status != "start":
+        # Control ship direction and shield according to keyboard input
+        if self.mode == "game":
             keys = pygame.key.get_pressed()
             self.level.ship.control(keys)   
 

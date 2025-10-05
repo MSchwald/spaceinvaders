@@ -148,18 +148,18 @@ class Menu():
             case "Next level":
                 game.mode = "game"
                 game.level.next()
-            case "How to play" | "Back to controlls":
-                game.active_menu = Menu.create(["Controlls", "W,A,S,D: controll the ship", "  and navigate the menu", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile", "RETURN: pause the game","Escape: end the game"],
+            case "How to play" | "Back to controls":
+                game.active_menu = Menu.create(["Controls", "W,A,S,D: control the ship", "  and navigate the menu", "SPACE: shoot bullets", "LEFT SHIFT: activate shield", "Left click: drop missile", "RETURN: pause the game","Escape: end the game"],
                                         ["Item list","Go back"])
             case "Item list" | "Previous items":
                 game.active_menu = Menu.create(["Item list",
                                     [pygame.image.load("images/item/bullets_buff.png"), " upgrades your bullets"],
                                     [pygame.image.load("images/item/ship_buff.png"), " upgrades your ship"],
                                     [pygame.image.load("images/item/hp_plus.png"), f" gives back {settings.hp_plus} energy"],
-                                    [pygame.image.load("images/item/invert_controlls.png"), f" inverts controlls for {settings.invert_controlls_duration}s"],
+                                    [pygame.image.load("images/item/invert_controlls.png"), f" inverts controls for {settings.invert_controlls_duration}s"],
                                     [pygame.image.load("images/item/magnet.png"), " attracts items to you"],
                                     [pygame.image.load("images/item/score_buff.png"), f" score multiplier {settings.item_score_buff} for {settings.score_buff_duration}s"]],
-                                    ["More items", "Back to controlls","Back to menu"])
+                                    ["More items", "Back to controls","Back to menu"])
             case "More items":
                 game.active_menu = Menu.create(["Item list",
                                     [pygame.image.load(f"images/item/life_plus.png"), " ", pygame.image.load(f"images/item/life_minus.png"), " gives or takes a life"],
@@ -169,7 +169,7 @@ class Menu():
                                     "use it to reflect enemies and bullets.",
                                     [pygame.image.load(f"images/item/missile.png"), " gives an extra missile."],
                                     "They are strong, use them wisely!"],
-                                    ["Previous items", "Back to controlls","Back to menu"])
+                                    ["Previous items", "Back to controls","Back to menu"])
             case "Highscores":
                 game.active_menu = Menu.create(["Highscores", "Do you think you can beat them?"],
                                                             ["Go back", "Delete high scores"],

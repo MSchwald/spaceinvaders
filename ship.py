@@ -96,12 +96,18 @@ class Ship(Sprite):
                 self.level.ship_bullets.add(bullet)
 
     def control(self, keys):
-        if self.status == "shield":
-            self.change_direction(0,0)
-        elif self.status == "inverse_controlls":
-            self.change_direction(-keys[K_d]+keys[K_a], -keys[K_s]+keys[K_w])
+        if keys[K_LSHIFT]:
+            if self.status != "shield":
+                self.activate_shield()
+                self.change_direction(0,0)
         else:
-            self.change_direction(keys[K_d]-keys[K_a], keys[K_s]-keys[K_w])
+            if self.status == "shield":
+                self.deactivate_shield()
+            if self.status == "inverse_controlls":
+                self.change_direction(-keys[K_d]+keys[K_a], -keys[K_s]+keys[K_w])
+            else:
+                self.change_direction(keys[K_d]-keys[K_a], keys[K_s]-keys[K_w])
+
 
     def update_image(self):
         letter = {"normal":"a", "inverse_controlls":"g", "shield":"h", "magnetic":"e"}[self.status]
@@ -182,8 +188,7 @@ class Ship(Sprite):
     def activate_shield(self):
         if self.shield_timer > 0:
             sound.shield.play()
-            self.last_status = self.status
-            self.status = "shield"
+            self.last_status, self.status = self.status, "shield"
             self.update_image()
 
     def deactivate_shield(self):
