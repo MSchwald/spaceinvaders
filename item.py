@@ -13,6 +13,9 @@ class Item(Sprite):
                          constraints=pygame.Rect([0, 0, Display.screen_width, Display.screen_height]), boundary_behaviour="vanish")
         self.type = type
         self.level = level
+        self.effect_duration = settings.item_effect_duration[type]
+        if self.effect_duration:
+            self.effect_duration *= 1000
 
     def play_collecting_sound(self):
         match self.type:
@@ -26,6 +29,8 @@ class Item(Sprite):
                 sound.collect_missile.play()
             case "ship_buff":
                 sound.ship_level_up.play()
+            case "size_plus":
+                sound.grow.play()
             case "size_minus":
                 sound.shrink.play()
             case "speed_nerf":

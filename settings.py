@@ -53,12 +53,15 @@ item_types = ["size_plus","size_minus", "score_buff", "bullets_buff",
             "magnet", "missile", "shield", "ship_buff",
             "speed_buff", "speed_nerf"]
 item_size = 50
-invert_controls_duration = 5
-size_change_duration = 10
-speed_change_duration = 5
-score_buff_duration = 10
+item_effect_duration = {"size_plus":10,"size_minus":10,
+            "score_buff":10, "bullets_buff":None,
+            "hp_plus":None, "invert_controls":5,
+            "life_plus":None,"life_minus":None,
+            "magnet":None, "missile":None,
+            "shield":None, "ship_buff":None,
+            "speed_buff":5, "speed_nerf":5}
 shield_duration = 3
-item_probability = 1#0.3
+item_probability = 0.3
 item_speed = 0.3
 hp_plus = 5
 speed_buff = 1.8

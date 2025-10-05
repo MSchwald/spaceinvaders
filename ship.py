@@ -19,7 +19,7 @@ class Ship(Sprite):
 
     def start_new_game(self, ship_lives=settings.ship_lives, rank=settings.ship_starting_rank):
         """Start new game"""
-        self.reset_items()
+        self.reset_item_effects()
         self.reset_stats(ship_lives, rank)
         self.reset_position()
 
@@ -48,7 +48,7 @@ class Ship(Sprite):
 
     def lose_rank(self):
         if self.rank > 1:
-            self.reset_items()
+            self.reset_item_effects()
             self.set_rank(self.rank-1)
         else:
             self.lose_life()
@@ -57,7 +57,7 @@ class Ship(Sprite):
         self.lives -= 1
         if self.lives > 0:
             self.set_rank(1)
-            self.reset_items()
+            self.reset_item_effects()
             self.level.start_current()
             sound.lose_life.play()
 
@@ -108,12 +108,9 @@ class Ship(Sprite):
             # Takes Doppler effect into account to calculate the bullets' speed
             doppler = self.vy
             # Fires bullets
-            for i in range(len(self.fire_points)):
-                type = self.bullet_sizes[i]
-                bullet = Bullet(type, v=settings.bullet_speed[type]-doppler,
-                                        center=(self.x+self.fire_points[i][0],self.y+self.fire_points[i][1]))
-                self.level.bullets.add(bullet)
-                self.level.ship_bullets.add(bullet)
+            for (fp_x,fp_y), size in zip(self.fire_points, self.bullet_sizes):
+                self.level.bullets.add(Bullet(size, v=settings.bullet_speed[size]-doppler,
+                                        center=(self.x+fp_x,self.y+fp_y)))
 
     def control(self, keys):
         if keys[K_LSHIFT]:
@@ -134,62 +131,56 @@ class Ship(Sprite):
 
     def collect_item(self, item):
         match item.type:
-            case "bullets_buff":
-                self.bullets_buff += 1
-            case "hp_plus":
-                self.energy = min(self.max_energy, self.energy+settings.hp_plus)
+            case "bullets_buff": self.bullets_buff += 1
+            case "hp_plus": self.energy = min(self.max_energy, self.energy+settings.hp_plus)
             case "invert_controls":
                 if self.status == "inverse_controls":
                     self.status = "normal"
                 else:
                     self.status = "inverse_controls"
-                    self.controls_timer = 1000*settings.invert_controls_duration
+                    self.controls_timer = item.effect_duration
                     sound.bad_item.play()
                 self.update_image()
             case "life_minus":
                 self.lives -= 1
                 if self.lives > 0:
                     sound.lose_life.play()
-            case "life_plus":
-                self.lives += 1
+            case "life_plus": self.lives += 1
             case "magnet":
                 self.magnet = True
                 self.status = "magnetic"
                 self.update_image()
-            case "missile":
-                self.missiles += 1
+            case "missile": self.missiles += 1
             case "score_buff":
                 if self.score_factor == 1:
-                    self.score_buff_timer = 1000*settings.score_buff_duration
+                    self.score_buff_timer = item.effect_duration
                 self.score_factor *= settings.item_score_buff
             case "shield":
                 self.shield_timer = min(1000*settings.max_shield_duration, self.shield_timer+1000*settings.shield_duration)
-            case "ship_buff":
-                self.gain_rank()
+            case "ship_buff": self.gain_rank()
             case "size_minus":
                 if self.size_factor*settings.item_size_minus>=0.3:
                     self.size_factor *= settings.item_size_minus
                     self.update_image()
                     if self.size_factor != 1:
-                        self.size_change_timer = 1000*settings.size_change_duration
+                        self.size_change_timer = item.effect_duration
             case "size_plus":
-                sound.grow.play()
                 if self.size_factor*settings.item_size_plus<=1/0.3:
                     self.size_factor *= settings.item_size_plus
                     self.update_image()
                     if self.size_factor != 1:
-                        self.size_change_timer = 1000*settings.size_change_duration
+                        self.size_change_timer = item.effect_duration
             case "speed_buff":
                 if self.v*settings.speed_buff < settings.bullet_speed[1]:
                     self.speed_factor = settings.speed_buff
                     self.v = self.speed_factor*settings.rank_speed[self.rank]
                     if self.speed_factor != 1:
-                        self.speed_change_timer = 1000*settings.speed_change_duration
+                        self.speed_change_timer = item.effect_duration
             case "speed_nerf":
                 self.speed_factor = settings.speed_nerf
                 self.v = self.speed_factor*settings.rank_speed[self.rank]
                 if self.speed_factor != 1:
-                    self.speed_change_timer = 1000*settings.speed_change_duration
+                    self.speed_change_timer = item.effect_duration
 
     def activate_shield(self):
         if self.shield_timer > 0:
@@ -212,7 +203,7 @@ class Ship(Sprite):
     def get_points(self, points):
         self.score += int(self.score_factor*points)
 
-    def reset_items(self):
+    def reset_item_effects(self):
         self.bullets_buff = 0
         self.speed_factor = 1
         self.magnet = False
