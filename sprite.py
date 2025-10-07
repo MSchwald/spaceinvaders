@@ -5,6 +5,7 @@ from display import Display
 from math import hypot as norm
 from math import sqrt, sin, cos, pi
 from random import random, choice
+from physics import Ball
 
 class Sprite(pygame.sprite.Sprite):
     """Manage movement, boundary collision and animation of ingame objects"""
@@ -194,3 +195,9 @@ class Sprite(pygame.sprite.Sprite):
 
     def blit(self, screen):
         screen.blit(self.surface, self.rect)
+
+    @property
+    def ball(self):
+        """aproximates Sprite with a ball of the same width"""
+        x,y = self.rect.center
+        return Ball(x, y, self.vx, self.vy, self.w/2)

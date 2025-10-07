@@ -5,18 +5,9 @@ from bullet import Bullet
 from display import Display
 from item import Item
 from random import random, choice, randint, sample
-from math import pi, sqrt, sin, cos, hypot
+from math import pi, sqrt, sin, cos
 from settings import AlienType, ALIEN, BULLET, ITEM
-
-def norm(v):
-    return hypot(v[0],v[1])
-def norm2(v):
-    return v[0]*v[0]+v[1]*v[1]
-def normalize(v):
-    norm_v = norm(v)
-    if norm_v == 0:
-        return (0,0)
-    return (v[0]/norm_v,v[1]/norm_v)
+from physics import Vector, norm, normalize, inelastic_collision, ball_collision_data
 
 class Alien(Sprite):
     """Manage sprites, spawning and actions of enemies"""
@@ -69,28 +60,15 @@ class Alien(Sprite):
         #asteroids can collide (elastic collision of 2d balls)
         if self.type.name in ["big_asteroid","small_asteroid"]:
             for ast in self.level.asteroids:
-                dp = (self.rect.center[0]-ast.rect.center[0],self.rect.center[1]-ast.rect.center[1])
-                n2dp = norm2(dp)
-                dv = (self.vx-ast.vx,self.vy-ast.vy)
-                d2 =(self.w+ast.w)**2/4
-                n2dv = norm2(dv)
-                dpdv = dp[0]*dv[0]+dp[1]*dv[1]
-                if n2dv>1e-8 and n2dp < d2 and dpdv < 0:
-                    t = (-dpdv-sqrt(dpdv**2-n2dv*(n2dp-d2)))/n2dv
-                    super().update_position(t)
-                    Sprite.update_position(ast,t)
-                    n = normalize((self.rect.center[0]-ast.rect.center[0],self.rect.center[1]-ast.rect.center[1]))
-                    dv = (self.vx-ast.vx,self.vy-ast.vy)
-                    dvn = dv[0]*n[0]+dv[1]*n[1]
-                    f = 2/(self.mass+ast.mass)*dvn
-                    f1 = -ast.mass*f
-                    f2 = self.mass*f
-                    self.direction = (self.vx+f1*n[0],self.vy+f1*n[1])
-                    ast.direction = (ast.vx+f2*n[0],ast.vy+f2*n[1])
-                    self.v = norm(self.direction)
-                    ast.v = norm(ast.direction)
-                    super().update_position(-t)
-                    Sprite.update_position(ast,-t)
+                ball1, ball2 = self.ball, ast.ball
+                collision_time, new_v1, new_v2 = ball_collision_data(ball1, ball2)
+                if collision_time is not None:
+                    super().update_position(collision_time)
+                    Sprite.update_position(ast, collision_time)
+                    self.direction, ast.direction = tuple(new_v1), tuple(new_v2)
+                    self.v, ast.v = norm(new_v1), norm(new_v2)                   
+                    super().update_position(-collision_time)
+                    Sprite.update_position(ast,-collision_time)
             super().update(dt)
 
         # aliens move without collisions
@@ -105,12 +83,12 @@ class Alien(Sprite):
                     self.do_action()
             #blobs gravitate towards their parent center where they split last
             if self.type.name == "blob" and self.parent_center:
-                x1,y1 = self.rect.center
-                x2,y2 = self.parent_center
-                n = normalize((x2-x1,y2-y1))
-                vr = self.vx*n[0]+self.vy*n[1]
-                ar = -ALIEN.BLOB.acceleration*(vr-self.splitting_speed)*abs(vr+self.splitting_speed)
-                self.a = (ar*n[0],ar*n[1])
+                x1, y1 = self.parent_center
+                x2, y2 = self.rect.center
+                n = normalize(Vector(x1, y1) - Vector(x2, y2))
+                vr = Vector(self.vx, self.vy) * n
+                ar = - ALIEN.BLOB.acceleration * (vr - self.splitting_speed) * abs(vr + self.splitting_speed)
+                self.a = tuple(ar * n)
             #timer, movement and animation get handled in the Sprite class
             super().update(dt)
 
@@ -144,9 +122,9 @@ class Alien(Sprite):
     def split(self, new_type: AlienType, amount):
         if self.direction==(0,0):
             phi = random()
-            w=(cos(2*pi*phi),sin(2*pi*phi))
+            w = (cos(2*pi*phi),sin(2*pi*phi))
         else:
-            w=(self.direction[0]/self.norm, self.direction[1]/self.norm)
+            w = (self.direction[0] / self.norm, self.direction[1] / self.norm) 
         if new_type.name == "blob":
             #blobs split into smaller blobs with integer mass
             m = self.mass // amount
@@ -157,38 +135,27 @@ class Alien(Sprite):
             if new_type.name == "blob":
                 if masses[i] == 0:
                     continue
-                speed_factor = masses[i]**(-1/2)
+                speed_factor = masses[i] ** (-1/2)
             else:
                 speed_factor = 1
-            phi_i=(2*i+1)*pi/amount
-            dir_i = (self.vx+new_type.speed*speed_factor*(w[0]*cos(phi_i)-w[1]*sin(phi_i)),
-                self.vy+new_type.speed*speed_factor*(w[0]*sin(phi_i)+w[1]*cos(phi_i)))
+            phi_i = (2*i+1) * pi / amount
+            dir_i = Vector(self.vx, self.vy) + new_type.speed * speed_factor * Vector(w[0]*cos(phi_i)-w[1]*sin(phi_i), w[0]*sin(phi_i)+w[1]*cos(phi_i))
             energy = masses[i] if new_type.name == "blob" else None
-            pieces.append(Alien(new_type, self.level, energy=energy, direction=dir_i, v=norm(dir_i), center=self.rect.center,
+            pieces.append(Alien(new_type, self.level, energy=energy, direction=tuple(dir_i), v=norm(dir_i), center=self.rect.center,
                 constraints=self.constraints, boundary_behaviour=self.boundary_behaviour))
         return(pieces)
 
     @classmethod
     def merge(cls, blob1, blob2):
         """merges two blobs, but could be generalized to other aliens"""
-        x1,y1 = blob1.rect.center
-        x2,y2 = blob2.rect.center
-        vx1, vy1 = blob1.vx, blob1.vy
-        vx2, vy2 = blob2.vx, blob2.vy
+        x1, y1 = blob1.rect.center
+        x2, y2 = blob2.rect.center
+        p1, p2 = Vector(x1, y1), Vector(x2, y2)
+        v1, v2 = Vector(blob1.vx, blob1.vy), Vector(blob2.vx, blob2.vy)
         m1, m2 = blob1.mass, blob2.mass
-        # blobs merge at their center of gravity
-        new_x = (m1 * x1 + m2 * x2) / (m1 + m2)
-        new_y = (m1 * y1 + m2 * y2) / (m1 + m2)
-        new_center = (new_x, new_y)
-        # Conservation of momentum (inelastic collision)
-        vx_new = (m1 * vx1 + m2 * vx2) / (m1 + m2)
-        vy_new = (m1 * vy1 + m2 * vy2) / (m1 + m2)
-        new_v = hypot(vx_new, vy_new)
-        if new_v != 0:
-            new_dir = (vx_new / new_v, vy_new / new_v)
-        else:
-            new_dir = (0, 0)
-        return Alien(ALIEN.BLOB, blob1.level, energy=blob1.energy+blob2.energy,center=new_center,direction=new_dir,v=new_v)
+        new_center, new_v = inelastic_collision(p1, p2, v1, v2, m1, m2)
+        return Alien(ALIEN.BLOB, blob1.level, energy = blob1.energy + blob2.energy,
+                center = tuple(new_center), direction = tuple(new_v), v = norm(new_v))
 
     def kill(self):
         """removes an enemy, triggers splitting for asteroids and blobs""" 
