@@ -142,8 +142,8 @@ class GraphicData:
     starting_frame: int = 0
 
     def __post_init__(self):
-        if not any([self.path, self.image, self.frames]):
-            raise ValueError("GraphicData requires either path, image or frames.")
+        if sum(arg is not None for arg in (self.path, self.image, self.frames)) != 1:
+            raise ValueError("Provide exactly one of path, image or frames.")
         if self.path is not None:
             # load image or frames, calculate remaining parameters
             path_obj = Path(self.path)
@@ -171,3 +171,7 @@ class GraphicData:
             elif self.frame_duration_ms:
                 self.animation_time = len(self.frames) * self.frame_duration_ms / 1000
                 self.fps = len(self.frames) / self.animation_time
+
+    def reflect(self, flip_x, flip_y):
+        self. image = Image.reflect(self.image, flip_x, flip_y)
+        self.frames = [Image.reflect(frame, flip_x, flip_y) for frame in self.frames]

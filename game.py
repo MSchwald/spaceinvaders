@@ -5,6 +5,7 @@ from menu import Menu
 from random import random, choice
 from display import Display
 from highscores import Highscores
+from physics import Vector
 
 class Game:
     """Manage the game's logic, user input, menu and rendering loop"""
@@ -73,7 +74,7 @@ class Game:
                     elif event.key == KEY.SHOOT:
                         self.level.ship.shoot_bullets()
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.level.ship.shoot_missile(event.pos)
+                    self.level.ship.shoot_missile(Vector(event.pos[0],event.pos[1]))
 
             #Enter the name into the high score table
             if self.mode == "enter name":

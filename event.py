@@ -1,18 +1,18 @@
+from __future__ import annotations
 import pygame
 from random import randint, random
 from settings import ALIEN
 
 class Event:
     """Create and manage cyclic level events like repeated enemy spawns"""
-    def __init__(self, type, level, cycle_time=None, random_cycle_time=None):
-        self.type=type
+    def __init__(self, template: str,
+                level: Level,
+                random_cycle_time: tuple[int, int] | None = None):
+        self.template=template
         self.level=level
-        self.cycle_time = cycle_time
         self.random_cycle_time = random_cycle_time
-        if random_cycle_time:
-            self.cycle_time = randint(random_cycle_time[0],random_cycle_time[1])
-        if self.cycle_time:
-            self.action_timer = 0
+        self.cycle_time = randint(random_cycle_time[0], random_cycle_time[1])
+        self.action_timer = 0
         self.timer_on_hold = False
 
     def update(self,dt):
@@ -21,13 +21,13 @@ class Event:
             if self.action_timer >= self.cycle_time:
                 self.action_timer -= self.cycle_time
                 if self.random_cycle_time:
-                    self.cycle_time = randint(self.random_cycle_time[0],self.random_cycle_time[1])
+                    self.cycle_time = randint(self.random_cycle_time[0], self.random_cycle_time[1])
                 self.do_action()
 
     def do_action(self):
-        if self.type == "asteroid_hail":
-            self.level.alien_random_entrance(ALIEN.BIG_ASTEROID)
-        if self.type == "alien_attack":
+        if self.template == "asteroid_hail":
+            self.level.alien_random_entrance(ALIEN.BIG_ASTEROID, boundary_behaviour="vanish")
+        if self.template == "alien_attack":
             if random() > 0.5:
                 self.level.alien_random_entrance(ALIEN.PURPLE, boundary_behaviour="reflect")
             else:

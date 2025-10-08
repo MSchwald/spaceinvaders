@@ -1,56 +1,63 @@
+from __future__ import annotations
 import pygame, sound
 from settings import KEY, BULLET, SHIP
 from image import Image, GraphicData
 from sprite import Sprite
 from bullet import Bullet
 from display import Display
-
+from physics import Vector, normalize
 
 class Ship(Sprite):
     """Manage the ship's position and status properties"""
 
-    def __init__(self, level, ship_lives=SHIP.LIVES, rank=SHIP.RANK):
-        # level: needs access to the level object from the game file
+    def __init__(self, level: Level, lives: int = SHIP.LIVES, rank: int = SHIP.RANK):
+        self.level = level
+        self.lives = lives
+        self.rank = rank
+        self.score = SHIP.SCORE
+        self.energy = self.max_energy
+        self.reset_item_effects()
         graphic = GraphicData(path = f"images/ship/a-{rank}.png", scaling_width = SHIP.WIDTH[rank])
         super().__init__(graphic = graphic,
-            constraints=pygame.Rect(0, 5/9*Display.screen_height, Display.screen_width, 4/9*Display.screen_height),
-            boundary_behaviour="clamp")
-        self.level = level
-        self.start_new_game(ship_lives, rank)
+            constraints = pygame.Rect(0, 5/9*Display.screen_height, Display.screen_width, 4/9*Display.screen_height),
+            boundary_behaviour = "clamp")
+        self.reset_pos()
 
-    def start_new_game(self, ship_lives=SHIP.LIVES, rank=SHIP.RANK):
+    def start_new_game(self, lives=SHIP.LIVES, rank=SHIP.RANK):
         """Start new game"""
         self.reset_item_effects()
-        self.reset_stats(ship_lives, rank)
-        self.reset_position()
+        self.reset_stats(lives, rank)
+        self.reset_pos()
 
-    def reset_position(self):
+    def reset_pos(self):
         """Ship starts each level at the midbottom"""
-        self.rect.midbottom = self.constraints.midbottom
-        self.x, self.y = self.rect.x, self.rect.y
+        self.spawn(pos = Vector(self.constraints.centerx - self.w / 2,
+                                    self.constraints.bottom - self.h))
 
-    def reset_stats(self, ship_lives=SHIP.LIVES, rank=SHIP.RANK):
+    def reset_stats(self, lives=SHIP.LIVES, rank=SHIP.RANK):
         """Ship starts the game with given stats"""
         self.score = SHIP.SCORE
         self.set_rank(rank)
-        self.lives = ship_lives
+        self.lives = lives
 
     def set_rank(self, rank):
         """Updates the rank and dependend variables of the ship"""
         self.rank = rank
-        self.v = self.speed_factor*SHIP.SPEED[rank]
         self.update_graphic()
-        self.max_energy = SHIP.ENERGY[rank]
         self.energy = self.max_energy
+
+    @property
+    def max_energy(self):
+        return SHIP.ENERGY[self.rank]
 
     def gain_rank(self):
         if self.rank < 3:
-            self.set_rank(self.rank+1)
+            self.set_rank(self.rank + 1)
 
     def lose_rank(self):
         if self.rank > 1:
             self.reset_item_effects()
-            self.set_rank(self.rank-1)
+            self.set_rank(self.rank - 1)
         else:
             self.lose_life()
 
@@ -63,7 +70,7 @@ class Ship(Sprite):
             sound.lose_life.play()
 
     def get_damage(self, damage):
-        self.energy = max(0,self.energy-damage)
+        self.energy = max(0, self.energy - damage)
         if self.energy == 0:
             self.lose_rank()
 
@@ -92,7 +99,7 @@ class Ship(Sprite):
     @property
     def fire_points(self):
         """Rescale where the ship shoots bullets, consistent with size changes of the ship"""
-        return [(x*self.w/self.default_width,y*self.h/self.default_height) for (x,y) in self.default_fire_points]
+        return [self.pos + Vector(x*self.w/self.default_width, y*self.h/self.default_height) for (x,y) in self.default_fire_points]
         
     @property
     def bullet_sizes(self):
@@ -104,13 +111,14 @@ class Ship(Sprite):
 
     def shoot_bullets(self):
         # if there aren't too many bullets from the ship on the screen yet
-        if len(self.level.ship_bullets) < SHIP.MAX_BULLETS*(2*self.rank-1) and self.status != "shield":
+        if len(self.level.ship_bullets) < SHIP.MAX_BULLETS * (2*self.rank-1) and self.status != "shield":
             # Takes Doppler effect into account to calculate the bullets' speed
-            doppler = self.vy
+            doppler = self.vel.y
             # Fires bullets
-            for (fp_x,fp_y), size in zip(self.fire_points, self.bullet_sizes):
-                bullet = Bullet.from_size(size, center=(self.x+fp_x,self.y+fp_y))
-                bullet.v -= doppler
+            for fp, size in zip(self.fire_points, self.bullet_sizes):
+                bullet = Bullet.from_size(size)
+                bullet.spawn(center = fp)
+                bullet.vel.y -= doppler
                 self.level.bullets.add(bullet)
             bullet.play_firing_sound()
 
@@ -118,14 +126,14 @@ class Ship(Sprite):
         if keys[KEY.SHIELD]:
             if self.status != "shield":
                 self.activate_shield()
-                self.direction = (0,0)
+                self.vel = Vector(0,0)
         else:
             if self.status == "shield":
                 self.deactivate_shield()
+            direction = Vector(keys[KEY.RIGHT]-keys[KEY.LEFT], keys[KEY.DOWN]-keys[KEY.UP])
+            self.vel = self.speed_factor * SHIP.SPEED[self.rank] * normalize(direction)
             if self.status == "inverse_controls":
-                self.direction = (-keys[KEY.RIGHT]+keys[KEY.LEFT], -keys[KEY.DOWN]+keys[KEY.UP])
-            else:
-                self.direction = (keys[KEY.RIGHT]-keys[KEY.LEFT], keys[KEY.DOWN]-keys[KEY.UP])
+                self.vel *= -1
 
     def update_graphic(self):
         letter = {"normal":"a", "inverse_controls":"g", "shield":"h", "magnetic":"e"}[self.status]
@@ -134,9 +142,9 @@ class Ship(Sprite):
 
     def collect_item(self, item):
         item.play_collecting_sound()
-        match item.type.name:
+        match item.template.name:
             case "bullets_buff": self.bullets_buff += 1
-            case "hp_plus": self.energy = min(self.max_energy, self.energy+item.type.effect)
+            case "hp_plus": self.energy = min(self.max_energy, self.energy + item.template.effect)
             case "invert_controls":
                 if self.status == "inverse_controls":
                     self.status = "normal"
@@ -158,31 +166,29 @@ class Ship(Sprite):
             case "score_buff":
                 if self.score_factor == 1:
                     self.score_buff_timer = item.duration_ms
-                self.score_factor *= item.type.effect
+                self.score_factor *= item.template.effect
             case "shield":
-                self.shield_timer = min(1000*SHIP.MAX_SHIELD_DURATION, self.shield_timer+1000*item.type.effect)
+                self.shield_timer = min(1000 * SHIP.MAX_SHIELD_DURATION, self.shield_timer + 1000 *item.template.effect)
             case "ship_buff": self.gain_rank()
             case "size_minus":
-                if self.size_factor * item.type.effect >= 0.3:
-                    self.size_factor *= item.type.effect
+                if self.size_factor * item.template.effect >= 0.3:
+                    self.size_factor *= item.template.effect
                     self.update_graphic()
                     if self.size_factor != 1:
                         self.size_change_timer = item.duration_ms
             case "size_plus":
-                if self.size_factor * item.type.effect <= 1/0.3:
-                    self.size_factor *= item.type.effect
+                if self.size_factor * item.template.effect <= 1/0.3:
+                    self.size_factor *= item.template.effect
                     self.update_graphic()
                     if self.size_factor != 1:
                         self.size_change_timer = item.duration_ms
             case "speed_buff":
-                if self.v * item.type.effect < BULLET.BULLET1.speed:
-                    self.speed_factor *= item.type.effect
-                    self.v = self.speed_factor * SHIP.SPEED[self.rank]
+                if self.speed_factor * SHIP.SPEED[self.rank] * item.template.effect < BULLET.BULLET1.speed:
+                    self.speed_factor *= item.template.effect
                     if self.speed_factor != 1:
                         self.speed_change_timer = item.duration_ms
             case "speed_nerf":
-                self.speed_factor *= item.type.effect
-                self.v = self.speed_factor * SHIP.SPEED[self.rank]
+                self.speed_factor *= item.template.effect
                 if self.speed_factor != 1:
                     self.speed_change_timer = item.duration_ms
 
@@ -197,16 +203,17 @@ class Ship(Sprite):
             self.status = self.last_status
             self.update_graphic()
 
-    def shoot_missile(self, position):
+    def shoot_missile(self, pos):
         """shoots missile to position = (x,y)"""
         if self.missiles > 0:
             self.missiles -= 1
-            missile = Bullet(BULLET.MISSILE, center=position)
+            missile = Bullet(BULLET.MISSILE)
+            missile.spawn(center=pos)
             self.level.bullets.add(missile)
             missile.play_firing_sound()
 
     def get_points(self, points):
-        self.score += int(self.score_factor*points)
+        self.score += int(self.score_factor * points)
 
     def reset_item_effects(self):
         self.bullets_buff = 0
@@ -233,7 +240,6 @@ class Ship(Sprite):
             self.speed_change_timer -= dt
             if self.speed_change_timer <= 0:
                 self.speed_factor = 1
-                self.v = SHIP.SPEED[self.rank]
         if self.size_factor != 1:
             self.size_change_timer -= dt
             if self.size_change_timer <= 0:

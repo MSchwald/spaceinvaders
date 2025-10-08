@@ -31,6 +31,7 @@ class Display:
         Display.screen_width = self.screen.get_width()
         Display.screen_height = self.screen.get_height()
         Display.grid_width = Display.screen_width // SCREEN.GRID[0]
+        Display.screen_rect = pygame.Rect(0, 0, Display.screen_width, Display.screen_height)
         return self.screen
 
     def update(self, padding_color):

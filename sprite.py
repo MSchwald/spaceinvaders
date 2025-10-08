@@ -2,55 +2,94 @@ import pygame
 from settings import SCREEN
 from image import Image, GraphicData
 from display import Display
-from math import hypot as norm
 from math import sqrt, sin, cos, pi
 from random import random, choice
-from physics import Ball
+from physics import Vector, norm, Ball
 
 class Sprite(pygame.sprite.Sprite):
-    """Manage movement, boundary collision and animation of ingame objects"""
+    """
+    Manage movement, boundary collision, and animation of ingame objects.
+
+    Parameters
+    ----------
+    graphic : GraphicData
+        Visual representation of the sprite.
+        Supported animation modes:
+        - **None** – non-animated sprite
+        - **"loop"** – frames cycle periodically
+        - **"once"** – plays once, stops at last frame
+        - **"vanish"** – disappears after animation completes
+        - **"pingpong"** – alternates back and forth
+        - **"random"** – frame indices are chosen randomly
+        - **"manual"** – no automatic frame updates, handled externally
+    pos : Vector, optional
+        Initial position; can be set later.
+    vel : Vector, default=Vector(0, 0)
+        Initial velocity vector.
+    acc : Vector, default=Vector(0, 0)
+        Initial acceleration vector.
+    constraints : pygame.Rect, optional
+        Rectangle defining the allowed movement area.
+    boundary_behaviour : str, optional
+        Defines how the sprite interacts with the boundaries.
+        Supported behaviours:
+        - **None** - no boundary restriction
+        - **"clamp"** - stops at the boundary (the ship)
+        - **"reflect"** - bounces off the boundary (most enemies)
+        - **"vanish"** - is removed when leaving the boundary (bullets, items)
+        - **"wrap"** - reappears on the opposite side (used on starting screen)
+
+    Notes
+    -----
+    A sprite may exist before being placed; use `spawn()` to assign coordinates later.
+
+    """
     def __init__(self, graphic: GraphicData,
-                grid=None, center=None, x=0, y=0,
-                direction=(0, 0), v=0, a=None,
-                constraints=None, boundary_behaviour="clamp"):
-        # Implemented boundary behaviours:
-        #   clamp: sprite stops at the boundary (e.g. the ship)
-        #   reflect: sprite gets reflected from the boundary
-        #   vanish: sprite gets deleted when leaving the boundary (e.g. bullets)
-        #   wrap: sprite reappears on the other side when leaving the boundary
-        # Implemented animation types:
-        #   None: non-animated Sprite
-        #   loop: frames change periodically
-        #   once: Sprite stays on the last frame after the animation
-        #   vanish: Sprite gets removed after the animation
-        #   pingpong: Sprite animated periodically back and forth
-        #   random: frames get chosen randomly
-        #   manual: Unused, no automatic frame update
+                pos: Vector | None = None,
+                vel: Vector = Vector(0, 0),
+                acc: Vector = Vector(0, 0),
+                constraints: pygame.Rect | None = None,
+                boundary_behaviour: str | None = None):
         super().__init__()
-        self.x, self.y = x, y
+        self.pos, self.vel, self.acc = pos, vel, acc
         self.graphic = graphic
-        self.set_image(graphic.image)
         self.frame_number, self.frame_index = 0, graphic.starting_frame
         self.timer, self.timer_on_hold = 0, False
-        if center:
-            self.rect.center = center
-            self.x, self.y = self.rect.x, self.rect.y
-        elif grid:
-            self.rect.center = ((grid[0]+1/2)*Display.grid_width,
-                                (grid[1]+1/2)*Display.grid_width)
-            self.x, self.y = self.rect.x, self.rect.y
-        if direction == "random":
-            angle = 2*pi*random()
-            self.direction = (cos(angle),sin(angle))
-        else:
-            self.direction = direction
-        self.v, self.a = v, a
         self.constraints, self.boundary_behaviour = constraints, boundary_behaviour
-        
-    def set_image(self, image):
-        # initializes an image preserving (x,y) of the sprite
-        self.image, self.surface, self.mask = image, image.surface, image.mask
-        self.rect = pygame.Rect(int(self.x), int(self.y), image.w, image.h)
+        self.rect = self.graphic.image.surface.get_rect()
+        self.activated = False
+        if pos is not None:
+            self.spawn(pos = pos)
+
+    def spawn(self, pos: Vector | None = None,
+                    center: Vector | None = None,
+                    grid: tuple[int, int] | None = None):
+        """
+        Spawn and activate sprite at a specified location.
+        Only one of pos, center, or grid should be provided.
+        """
+        if sum(arg is not None for arg in (pos, center, grid)) != 1:
+            raise ValueError("Provide exactly one of pos, center or grid")
+        if grid is not None:
+            x, y = grid
+            center = Vector(x + 0.5, y + 0.5) * Display.grid_width
+        if center is not None:
+            pos = center - Vector(self.w, self.h) / 2   
+        self.activated = True    
+        self.pos = pos  
+        self.move_to(self.pos)
+
+    @property
+    def image(self):
+        return self.graphic.image
+
+    @property
+    def surface(self):
+        return self.graphic.image.surface
+
+    @property
+    def mask(self):
+        return self.graphic.image.mask
 
     @property
     def w(self):
@@ -61,89 +100,96 @@ class Sprite(pygame.sprite.Sprite):
         return self.image.h
 
     @property
-    def norm(self):
-        return norm(self.direction[0],self.direction[1])
+    def center(self):
+        if self.activated:
+            return self.pos + Vector(self.w, self.h) / 2
+        return Vector(self.rect.center)
+        
+    @property
+    def midbottom(self):
+        if self.activated:
+            return self.pos + Vector(self.w / 2, self.h)
+        return Vector(self.rect.midbottom)
 
     @property
-    def vx(self):
-        if self.norm == 0:
-            return 0
-        return self.v*self.direction[0]/self.norm
+    def speed(self):
+        return norm(self.vel)
+ 
+    def set_image(self, image: Image):
+        """initializes an image preserving pos of the sprite"""
+        self.graphic.image = image
+        self.update_rect_size()
 
-    @property
-    def vy(self):
-        if self.norm == 0:
-            return 0
-        return self.v*self.direction[1]/self.norm
+    def update_rect_pos(self):
+        self.rect.x, self.rect.y = int(self.pos.x), int(self.pos.y)
+
+    def update_rect_size(self):
+        self.rect.w, self.rect.h = int(self.w), int(self.h)
   
-    def change_image(self, image):
-        # changes the image preserving the center of the sprite
-        center = self.rect.center
+    def change_image(self, image: Image):
+        """changes the image preserving the center of the sprite"""
+        center = Vector(self.rect.centerx, self.rect.centery)
         self.set_image(image)
-        self.rect.center = center
-        self.change_position(self.rect.x, self.rect.y)
+        self.move_to(center - Vector(self.w, self.h) / 2)
 
-    def scale_image_by(self, factor):
-        # rescales the image preserving the center of the sprite
+    def scale_image_by(self, factor: float):
+        """rescales the image preserving the center of the sprite"""
         self.change_image(self.image.scale_by(factor))
 
-    def change_position(self, x, y):
+    def move_to(self, pos: Vector):
+        """respects boundary behaviour and updates rectangle"""
         if self.constraints is None or self.boundary_behaviour == "vanish":
-            self.x, self.y = x, y
+            self.pos = pos
         elif self.boundary_behaviour in ["clamp", "reflect"]:
-            x_clamp = min(max(x, self.constraints.x),
-                          self.constraints.right-self.w)
-            y_clamp = min(max(y, self.constraints.y),
-                          self.constraints.bottom-self.h)
+            min_bound = Vector(self.constraints.x, self.constraints.y)
+            max_bound = Vector(self.constraints.right - self.w,
+                        self.constraints.bottom - self.h)
+            pos_clamp = pos.clamp(min_bound, max_bound)
+            diff = pos - pos_clamp
             if self.boundary_behaviour == "reflect":
                 #reflection only prevents exiting, not entering the constraints
-                if (x - x_clamp) * self.direction[0] > 0:
-                    self.x = 2*x_clamp - x
-                    self.direction = (-self.direction[0], self.direction[1])
-                else:
-                    self.x = x_clamp
-                if (y - y_clamp) * self.direction[1] > 0:
-                    self.y = 2*y_clamp-y
-                    self.direction = (self.direction[0],-self.direction[1])
-                else:
-                    self.y = y_clamp
+                reflect_x = diff.x * self.vel.x > 0
+                reflect_y = diff.y * self.vel.y > 0
+
+                self.pos.x = 2 * pos_clamp.x - pos.x if reflect_x else pos_clamp.x
+                self.pos.y = 2 * pos_clamp.y - pos.y if reflect_y else pos_clamp.y
+
+                self.vel.x *= -1 if reflect_x else 1
+                self.vel.y *= -1 if reflect_y else 1
             else:
-                self.x, self.y = x_clamp, y_clamp
+                self.pos = pos_clamp
         elif self.boundary_behaviour == "wrap":
-            x_clamp = min(max(x, self.constraints.x-self.w),
-                          self.constraints.right)
-            y_clamp = min(max(y, self.constraints.y-self.h),
-                          self.constraints.bottom)
-            if x != x_clamp:
-                self.x = self.constraints.right+self.constraints.x-self.w-x
-            else:
-                self.x = x_clamp
-            if y != y_clamp:
-                self.y = self.constraints.bottom+self.constraints.y-self.h-y
-            else:
-                self.y = y_clamp
-        self.rect.x, self.rect.y = int(self.x), int(self.y)
+            # wrapping happens when leaving the the constraints entirely
+            min_bound = Vector(self.constraints.x - self.w,
+                        self.constraints.y - self.h)
+            max_bound = Vector(self.constraints.right, self.constraints.bottom)
+            pos_clamp = pos.clamp(min_bound, max_bound)
+            wrap_x = pos.x != pos_clamp.x
+            wrap_y = pos.y != pos_clamp.y
+
+            self.pos.x = self.constraints.right + self.constraints.x - self.w - pos.x if wrap_x else pos_clamp.x
+            self.pos.y = self.constraints.bottom + self.constraints.y - self.h - pos.y if wrap_y else pos_clamp.y
+        self.update_rect_pos()
         if self.boundary_behaviour == "vanish" and not self.rect.colliderect(self.constraints):
             self.kill()
 
     def update(self, dt):
         """Calculate the state of the sprite after dt passed ms"""
-        self.update_position(dt) # respects display settings, velocity and boundary behaviour 
-        self.update_velocity(dt) # respects acceleration if available
-        self.update_timer(dt) # respects possible timer pauses
-        self.update_frame(dt) # respects animation if available
+        if self.activated:
+            self.update_vel(dt)
+            self.update_pos(dt)
+            self.update_timer(dt)
+            self.update_frame(dt)    
 
-    def update_position(self, dt):
-        self.change_position(self.x+dt*self.vx*Display.grid_width/SCREEN.GRID_WIDTH,
-                            self.y+dt*self.vy*Display.grid_width/SCREEN.GRID_WIDTH)
-    
-    def update_velocity(self, dt):
-        if self.a:
-            self.direction = (self.vx+self.a[0]*dt,self.vy+self.a[1]*dt)
-            self.v = norm(self.direction[0],self.direction[1])
+    def update_vel(self, dt):
+        self.vel += dt * self.acc
+
+    def update_pos(self, dt):
+        self.move_to(self.pos + dt * self.vel * Display.grid_width / SCREEN.GRID_WIDTH)
 
     def update_timer(self, dt):
-        if self.timer_on_hold == True:
+        """Timer update respecting pauses"""
+        if self.timer_on_hold:
             if self.pause_duration:
                 self.pause_timer += dt
                 if self.pause_timer > self.pause_duration:
@@ -152,52 +198,49 @@ class Sprite(pygame.sprite.Sprite):
             self.timer += dt
     
     def update_frame(self, dt):
-        if self.timer_on_hold == False and self.graphic.animation_type not in (None, "manual"):
-                new_index = self.new_frame_index()
-                if new_index != self.frame_index:
-                    self.frame_index = new_index
-                    self.change_image(self.graphic.frames[self.frame_index])
+        """Calculate animation if available"""
+        if not self.timer_on_hold and self.graphic.animation_type not in (None, "manual"):
+            new_index = self.get_new_frame_index()
+            if new_index is None:
+                self.activated = False
+                self.kill()
+            elif new_index != self.frame_index:
+                self.change_image(self.graphic.frames[new_index])
+                self.frame_index = new_index
 
-    def new_frame_index(self):
-        frame_number = self.timer // self.graphic.frame_duration_ms 
-        if self.graphic.animation_type == "random":
-            if frame_number > self.frame_number:
-                self.frame_number = frame_number
-                return choice(range(len(self.graphic.frames)))
-            else:
-                return self.frame_index
-        else:
-            self.frame_number = frame_number
-            if self.graphic.animation_type == "vanish":
+    def get_new_frame_index(self):
+        if self.graphic.animation_type is None:
+            return 0
+        frame_number = self.timer // self.graphic.frame_duration_ms
+        match self.graphic.animation_type:
+            case "random": return choice(range(len(self.graphic.frames)))
+            case "vanish":
                 if frame_number >= len(self.graphic.frames):
-                    self.kill()
-                    return self.frame_index
-                else:
-                    return frame_number
-            elif self.graphic.animation_type == "pingpong":
+                    return None
+                return frame_number
+            case "pingpong":
                 new_index = frame_number % (2*len(self.graphic.frames)-2)
                 if new_index >= len(self.graphic.frames):
                     new_index = 2*(len(self.graphic.frames)-1) - new_index
                 return new_index
-            else:
-                return {"loop": frame_number%len(self.graphic.frames),
-                                    "once": min(frame_number, len(self.graphic.frames)-1)}[self.graphic.animation_type]
+            case "loop": return frame_number % len(self.graphic.frames)
+            case "once": return min(frame_number, len(self.graphic.frames)-1)
 
-    def pause_for_ms(self, duration=None):
+    def pause_for_ms(self, duration: int | None = None):
         self.timer_on_hold = True
         self.pause_timer = 0
         self.pause_duration = duration
 
-    def reflect(self, flip_x=True, flip_y=True):
-        self.direction = (-self.direction[0],-self.direction[1])
-        self.graphic.frames = [Image.reflect(image, flip_x, flip_y) for image in self.graphic.frames]
-        self.change_image(self.graphic.frames[self.frame_index])  
+    def reflect(self, flip_x, flip_y):
+        self.vel *= -1
+        self.graphic.reflect(flip_x, flip_y)
+        #self.update_frame(0)
 
-    def blit(self, screen):
-        screen.blit(self.surface, self.rect)
+    def blit(self, screen: pygame.Surface):
+        if self.activated:
+            screen.blit(self.surface, self.rect)
 
     @property
     def ball(self):
         """aproximates Sprite with a ball of the same width"""
-        x,y = self.rect.center
-        return Ball(x, y, self.vx, self.vy, self.w/2)
+        return Ball(self.center, self.vel, self.w / 2)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import pygame.locals
 
 # Structured collection of all ingame parameters for comfortable adjustment
-# and creation of new types of aliens, bullets or items
+# and creation of new templates of aliens, bullets or items
 
 # Color and key names
 class COLOR(tuple):
@@ -40,7 +40,7 @@ class SCREEN:
 class SHIP:
     SCORE = 0
     LIVES = 3
-    GAME_LEVEL = 4
+    GAME_LEVEL = 1
     SHIELD_STARTING_TIMER = 3
     MAX_SHIELD_DURATION = 15
     MAX_BULLETS = 3
@@ -50,9 +50,9 @@ class SHIP:
     ENERGY = {1: 15, 2: 30, 3: 45}
     WIDTH = {1:100, 2:100, 3:120}
 
-# Alien settings and types in the game
+# Alien settings and templates in the game
 @dataclass
-class AlienType:
+class AlienTemplate:
     name: str
     speed: float
     energy: int
@@ -62,21 +62,21 @@ class AlienType:
     fps: int | None = None
     colorkey: tuple = COLOR.BLACK
     pieces: int | None = None
-    acceleration: float | None = None
+    acc: float | None = None
     # Alien periodically does actions after given time (in ms)
     # cycle times vary randomly between given lower and upper bound (in ms)
     random_cycle_time: tuple[int,int] | None = None
 
 class ALIEN:
-    BIG_ASTEROID = AlienType("big_asteroid", 0.3, 4, 20, 100, animation_type = "loop", fps = 10, pieces = 4)
-    SMALL_ASTEROID = AlienType("small_asteroid",0.6, 1, 10, BIG_ASTEROID.width * BIG_ASTEROID.pieces ** (-1/3), animation_type = "loop", fps = 10)
-    PURPLE = AlienType("purple", 0.4, 10, 100, 150, colorkey = (254, 254, 254), random_cycle_time = (800,1500))
-    UFO = AlienType("ufo", 1, 20, 500, 100, random_cycle_time = (800,1500))
-    BLOB = AlienType("blob", 0.5, 32, 30, 300, pieces = 2, acceleration = 1/160, random_cycle_time = (800,1500))
+    BIG_ASTEROID = AlienTemplate("big_asteroid", 0.3, 4, 20, 100, animation_type = "loop", fps = 10, pieces = 4)
+    SMALL_ASTEROID = AlienTemplate("small_asteroid",0.6, 1, 10, BIG_ASTEROID.width * BIG_ASTEROID.pieces ** (-1/3), animation_type = "loop", fps = 10)
+    PURPLE = AlienTemplate("purple", 0.4, 10, 100, 150, colorkey = (254, 254, 254), random_cycle_time = (800,1500))
+    UFO = AlienTemplate("ufo", 1, 20, 500, 100, random_cycle_time = (800,1500))
+    BLOB = AlienTemplate("blob", 0.5, 32, 30, 300, pieces = 2, acc = 1/160, random_cycle_time = (800,1500))
 
-# Bullet settings and types in the game
+# Bullet settings and templates in the game
 @dataclass
-class BulletType:
+class BulletTemplate:
     name: str
     width: int
     damage: int
@@ -86,16 +86,16 @@ class BulletType:
     animation_time: float | None = None
 
 class BULLET:
-    BULLET1 = BulletType("1", 14, 1, "player", 1)
-    BULLET2 = BulletType("2", 18, 2, "player", 1)
-    BULLET3 = BulletType("3", 22, 3, "player", 1)
-    MISSILE = BulletType("explosion", 150, 15, "player", 0, animation_type = "vanish", animation_time = 0.5)
-    GREEN = BulletType("g", 26, 3, "enemy", 0.2, animation_type = "once", animation_time = 0.5)
-    BLUBBER = BulletType("blubber", 150, 16, "enemy", 0.4)
+    BULLET1 = BulletTemplate("1", 14, 1, "player", 1)
+    BULLET2 = BulletTemplate("2", 18, 2, "player", 1)
+    BULLET3 = BulletTemplate("3", 22, 3, "player", 1)
+    MISSILE = BulletTemplate("explosion", 150, 15, "player", 0, animation_type = "vanish", animation_time = 0.5)
+    GREEN = BulletTemplate("g", 26, 3, "enemy", 0.2, animation_type = "once", animation_time = 0.5)
+    BLUBBER = BulletTemplate("blubber", 150, 16, "enemy", 0.4)
 
-# Item settings and types in the game
+# Item settings and templates in the game
 @dataclass
-class ItemType:
+class ItemTemplate:
     name: str
     size: int = 50
     speed: int = 0.3
@@ -105,30 +105,30 @@ class ItemType:
 class ITEM:
     PROBABILITY = 0.3
     #ship size *= effect
-    SIZE_PLUS = ItemType("size_plus", effect = 1.5, duration = 10)
-    SIZE_MINUS = ItemType("size_minus", effect = 1/SIZE_PLUS.effect, duration = SIZE_PLUS.duration)
+    SIZE_PLUS = ItemTemplate("size_plus", effect = 1.5, duration = 10)
+    SIZE_MINUS = ItemTemplate("size_minus", effect = 1/SIZE_PLUS.effect, duration = SIZE_PLUS.duration)
     #scored points *= effect
-    SCORE_BUFF = ItemType("score_buff", effect = 1.5, duration = 10)
+    SCORE_BUFF = ItemTemplate("score_buff", effect = 1.5, duration = 10)
     # bullet sizes += 1
-    BULLETS_BUFF = ItemType("bullets_buff")
+    BULLETS_BUFF = ItemTemplate("bullets_buff")
     # health += effect
-    HP_PLUS = ItemType("hp_plus", effect = 5)
+    HP_PLUS = ItemTemplate("hp_plus", effect = 5)
     # invert ship controls
-    INVERT_CONTROLS = ItemType("invert_controls", duration = 5)
+    INVERT_CONTROLS = ItemTemplate("invert_controls", duration = 5)
     # ship lives += or -= 1
-    LIFE_PLUS = ItemType("life_plus")
-    LIFE_MINUS = ItemType("life_minus")
+    LIFE_PLUS = ItemTemplate("life_plus")
+    LIFE_MINUS = ItemTemplate("life_minus")
     # gravitational acceleration of items to ship = effect
-    MAGNET = ItemType("magnet", effect = 1/30)
+    MAGNET = ItemTemplate("magnet", effect = 1/200)
     # missiles += 1
-    MISSILE = ItemType("missile")
+    MISSILE = ItemTemplate("missile")
     # shield timer += effect seconds
-    SHIELD = ItemType("shield", effect = 3)
+    SHIELD = ItemTemplate("shield", effect = 3)
     # ship rank += 1
-    SHIP_BUFF = ItemType("ship_buff")
+    SHIP_BUFF = ItemTemplate("ship_buff")
     # ship speed *= effect
-    SPEED_BUFF = ItemType("speed_buff", effect = 1.8, duration = 5)
-    SPEED_NERF = ItemType("speed_nerf", effect = 1/SPEED_BUFF.effect, duration = SPEED_BUFF.duration)
+    SPEED_BUFF = ItemTemplate("speed_buff", effect = 1.8, duration = 5)
+    SPEED_NERF = ItemTemplate("speed_nerf", effect = 1/SPEED_BUFF.effect, duration = SPEED_BUFF.duration)
     LIST = [SIZE_PLUS, SIZE_MINUS, SCORE_BUFF, BULLETS_BUFF, HP_PLUS, INVERT_CONTROLS,
         LIFE_PLUS, LIFE_MINUS, MAGNET, MISSILE, SHIELD, SHIP_BUFF, SPEED_BUFF, SPEED_NERF]
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pygame, settings, sound
 from image import Image, GraphicData
 from sprite import Sprite
@@ -6,72 +7,79 @@ from display import Display
 from item import Item
 from random import random, choice, randint, sample
 from math import pi, sqrt, sin, cos
-from settings import AlienType, ALIEN, BULLET, ITEM
-from physics import Vector, norm, normalize, inelastic_collision, ball_collision_data
+from settings import AlienTemplate, ALIEN, BULLET, ITEM
+from physics import Vector, norm, normalize, random_direction, turn_by_angle, inelastic_collision, ball_collision_data
 
 class Alien(Sprite):
     """Manage sprites, spawning and actions of enemies"""
 
-    def __init__(self, type: AlienType, level, energy=None, v=None,
-                constraints=None, boundary_behaviour="reflect",
-                **pos_kwargs):
-        # level: needs access to the level object from the game file
-        # energy and v allow overwriting their standard settings for given AlienType        
-        self.type = type
-        v = v if v is not None else type.speed
-        constraints = constraints or pygame.Rect(0, 0, Display.screen_width, Display.screen_height)
-        self.energy = energy or type.energy
+    def __init__(self, template: AlienTemplate,
+                level: Level,
+                energy: int | None = None,
+                speed: float | None = None,
+                direction: Vector | None = None,
+                pos: Vector | None = None,
+                vel: Vector | None = None,
+                acc: Vector = Vector(0, 0),
+                constraints: pygame.Rect | None = None,
+                boundary_behaviour: str | None = "reflect"):
+        # energy and speed allow overwriting their standard settings for given template        
+        self.template = template
         self.level = level
-        self.random_cycle_time = type.random_cycle_time
+        self.energy = energy or template.energy
+        speed = speed or template.speed
+        if vel is None:
+            direction = direction or random_direction()
+            vel = speed * direction
+        constraints = constraints or Display.screen_rect
+        self.random_cycle_time = template.random_cycle_time
         if self.random_cycle_time:
-            self.cycle_time = randint(self.random_cycle_time[0],self.random_cycle_time[1])
+            self.cycle_time = randint(self.random_cycle_time[0], self.random_cycle_time[1])
             self.action_timer = 0
         else:
             self.cycle_time, self.action_timer = None, None
 
         # Load alien graphics
-        if type.name == "blob":
+        if template.name == "blob":
             self.parent_center = None
             graphic = GraphicData(image = Image.blob[self.energy-1])
         else:
-            graphic = GraphicData(path = f"images/alien/{type.name}", scaling_width = type.width, colorkey = type.colorkey,
-                    animation_type = type.animation_type, fps = type.fps)
+            graphic = GraphicData(path = f"images/alien/{template.name}", scaling_width = template.width, colorkey = template.colorkey,
+                    animation_type = template.animation_type, fps = template.fps)
                 
-        super().__init__(graphic = graphic,
-                v=v, constraints=constraints, boundary_behaviour=boundary_behaviour, **pos_kwargs)
+        super().__init__(graphic = graphic, pos = pos, vel = vel, acc = acc,
+                    constraints = constraints, boundary_behaviour = boundary_behaviour)
             
 
     def play_spawing_sound(self):
-        match self.type.name:
+        match self.template.name:
             case "purple": sound.alien_spawn.play()
             case "blob": sound.blob_spawns.play()
 
     @property
     def mass(self):
         """mass of an enemy, relevant for collisions between asteroids and blobs"""
-        match self.type.name:
+        match self.template.name:
             case "blob": return self.energy
             case "big_asteroid" | "small_asteroid":
-                return (self.w/Display.grid_width)**3
+                """make mass independent of display settings"""
+                return (self.w / Display.grid_width) ** 3
             case _:
                 return None
 
     def update(self, dt):
-        #asteroids can collide (elastic collision of 2d balls)
-        if self.type.name in ["big_asteroid","small_asteroid"]:
+        #asteroids collide elastically like 3d balls
+        if self.template.name in ("big_asteroid","small_asteroid"):
             for ast in self.level.asteroids:
-                ball1, ball2 = self.ball, ast.ball
-                collision_time, new_v1, new_v2 = ball_collision_data(ball1, ball2)
+                ball1, ball2, m1, m2 = self.ball, ast.ball, self.mass, ast.mass
+                collision_time, new_v1, new_v2 = ball_collision_data(ball1, ball2, m1, m2)
                 if collision_time is not None:
-                    super().update_position(collision_time)
-                    Sprite.update_position(ast, collision_time)
-                    self.direction, ast.direction = tuple(new_v1), tuple(new_v2)
-                    self.v, ast.v = norm(new_v1), norm(new_v2)                   
-                    super().update_position(-collision_time)
-                    Sprite.update_position(ast,-collision_time)
+                    super().update_pos(collision_time)
+                    Sprite.update_pos(ast, collision_time)
+                    self.vel, ast.vel = new_v1, new_v2                  
+                    super().update_pos(-collision_time)
+                    Sprite.update_pos(ast, -collision_time)
             super().update(dt)
-
-        # aliens move without collisions
         else:
             #checks if it is time for the alien to do an action
             if self.cycle_time and not self.timer_on_hold and self.level.status != "start":
@@ -79,106 +87,108 @@ class Alien(Sprite):
                 if self.action_timer >= self.cycle_time:
                     self.action_timer -= self.cycle_time
                     if self.random_cycle_time:
-                        self.cycle_time = randint(self.random_cycle_time[0],self.random_cycle_time[1])
+                        self.cycle_time = randint(self.random_cycle_time[0], self.random_cycle_time[1])
                     self.do_action()
             #blobs gravitate towards their parent center where they split last
-            if self.type.name == "blob" and self.parent_center:
-                x1, y1 = self.parent_center
-                x2, y2 = self.rect.center
-                n = normalize(Vector(x1, y1) - Vector(x2, y2))
-                vr = Vector(self.vx, self.vy) * n
-                ar = - ALIEN.BLOB.acceleration * (vr - self.splitting_speed) * abs(vr + self.splitting_speed)
-                self.a = tuple(ar * n)
+            if self.template.name == "blob" and self.parent_center:
+                n = normalize(self.parent_center - self.center)
+                vr = self.vel * n
+                self.acc = - ALIEN.BLOB.acc * (vr - self.splitting_speed) * abs(vr + self.splitting_speed) * n
             #timer, movement and animation get handled in the Sprite class
             super().update(dt)
 
     def do_action(self):
-        match self.type.name:
+        match self.template.name:
             case "purple": self.shoot(BULLET.GREEN)
             case "ufo": self.throw_alien(ALIEN.PURPLE)
             case "blob": self.shoot(BULLET.BLUBBER, size=self.energy)
 
-    # types of alien actions
-    def shoot(self, bullet_type, size=None):
-        bullet = Bullet(bullet_type,size=size,center=self.rect.midbottom)
+    # templates of alien actions
+    def shoot(self, bullet_template, size=None):
+        bullet = Bullet(bullet_template, size=size)
+        bullet.spawn(center = self.midbottom)
         self.level.bullets.add(bullet)
         bullet.play_firing_sound()
 
-    def throw_alien(self, alien_type):
-        self.level.aliens.add(Alien(ALIEN.PURPLE,self.level,center=self.rect.midbottom, direction=(2*random()-1,1)))
+    def throw_alien(self, alien_template=ALIEN.PURPLE):
+        alien = Alien(alien_template, self.level, direction = random_direction(5/4 * pi, 7/4 * pi))
+        alien.spawn(center = self.midbottom)
+        self.level.aliens.add(alien)
 
     def get_damage(self, damage):
-        if self.type.name == "big_asteroid":
+        if self.template.name == "big_asteroid":
             self.energy = 0
-        elif self.type.name == "blob":
+        elif self.template.name == "blob":
             self.kill()
         else:
-            self.energy = max(self.energy-damage,0)
-            if self.energy > 0 and self.type.name not in ["big_asteroid", "small_asteroid"]:
-                {"purple": sound.enemy_hit, "ufo": sound.metal_hit}[self.type.name].play()
+            self.energy = max(self.energy - damage, 0)
+            if self.energy > 0 and self.template.name not in ("big_asteroid", "small_asteroid"):
+                {"purple": sound.enemy_hit, "ufo": sound.metal_hit}[self.template.name].play()
             else:
                 self.kill()
 
-    def split(self, new_type: AlienType, amount):
-        if self.direction==(0,0):
-            phi = random()
-            w = (cos(2*pi*phi),sin(2*pi*phi))
+    def split(self, piece_template: AlienTemplate, amount):
+        if self.speed == 0:
+            w = random_direction()
         else:
-            w = (self.direction[0] / self.norm, self.direction[1] / self.norm) 
-        if new_type.name == "blob":
+            w = normalize(self.vel)
+        if piece_template.name == "blob":
             #blobs split into smaller blobs with integer mass
             m = self.mass // amount
             diff = self.mass - amount * m
             masses = [m + 1 if i < diff else m for i in sample(range(amount), amount)]
         pieces = []
         for i in range(amount):
-            if new_type.name == "blob":
+            if piece_template.name == "blob":
                 if masses[i] == 0:
                     continue
                 speed_factor = masses[i] ** (-1/2)
             else:
                 speed_factor = 1
             phi_i = (2*i+1) * pi / amount
-            dir_i = Vector(self.vx, self.vy) + new_type.speed * speed_factor * Vector(w[0]*cos(phi_i)-w[1]*sin(phi_i), w[0]*sin(phi_i)+w[1]*cos(phi_i))
-            energy = masses[i] if new_type.name == "blob" else None
-            pieces.append(Alien(new_type, self.level, energy=energy, direction=tuple(dir_i), v=norm(dir_i), center=self.rect.center,
-                constraints=self.constraints, boundary_behaviour=self.boundary_behaviour))
-        return(pieces)
+            vel_i = self.vel + speed_factor * piece_template.speed * turn_by_angle(w, phi_i)
+            energy = masses[i] if piece_template.name == "blob" else None
+            piece = Alien(piece_template, self.level, energy=energy, vel=vel_i,
+                constraints=self.constraints, boundary_behaviour=self.boundary_behaviour)
+            piece.spawn(center = self.center)
+            pieces.append(piece)
+        return pieces
 
     @classmethod
     def merge(cls, blob1, blob2):
         """merges two blobs, but could be generalized to other aliens"""
-        x1, y1 = blob1.rect.center
-        x2, y2 = blob2.rect.center
-        p1, p2 = Vector(x1, y1), Vector(x2, y2)
-        v1, v2 = Vector(blob1.vx, blob1.vy), Vector(blob2.vx, blob2.vy)
+        p1, p2 = blob1.center, blob2.center
+        v1, v2 = blob1.vel, blob2.vel
         m1, m2 = blob1.mass, blob2.mass
-        new_center, new_v = inelastic_collision(p1, p2, v1, v2, m1, m2)
-        return Alien(ALIEN.BLOB, blob1.level, energy = blob1.energy + blob2.energy,
-                center = tuple(new_center), direction = tuple(new_v), v = norm(new_v))
+        new_center, new_vel = inelastic_collision(p1, p2, v1, v2, m1, m2)
+        blob = Alien(ALIEN.BLOB, blob1.level, energy = blob1.energy + blob2.energy, vel = new_vel)
+        blob.spawn(center = new_center)
+        return blob
 
     def kill(self):
         """removes an enemy, triggers splitting for asteroids and blobs""" 
         if self.energy <= 0:
-            {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob, "blob":sound.alienblob}[self.type.name].play()
-            self.level.ship.get_points(self.type.points)
+            {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob, "blob":sound.alienblob}[self.template.name].play()
+            self.level.ship.get_points(self.template.points)
             if random() <= ITEM.PROBABILITY:
-                self.level.items.add(Item(choice(ITEM.LIST), self.level, center=self.rect.center))
-        if self.type.name == "big_asteroid":
+                item = Item(choice(ITEM.LIST), self.level)
+                item.spawn(center = self.center)
+                self.level.items.add(item)
+        if self.template.name == "big_asteroid":
             # big asteroids split into smaller asteroids when hit
-            for piece in self.split(ALIEN.SMALL_ASTEROID, self.type.pieces):
+            for piece in self.split(ALIEN.SMALL_ASTEROID, self.template.pieces):
                 self.level.asteroids.add(piece)
-        if self.type.name == "blob":
+        if self.template.name == "blob":
             if self.energy > 1:
                 sound.slime_hit.play()
-                for blob in self.split(ALIEN.BLOB, self.type.pieces):
-                    blob.splitting_speed = blob.v # needed later to calculate the gravitation towards the parent center
-                    blob.parent_center = self.rect.center
+                for blob in self.split(ALIEN.BLOB, self.template.pieces):
+                    blob.splitting_speed = blob.speed # needed later to calculate the gravitation towards the parent center
+                    blob.parent_center = self.center
                     self.level.aliens.add(blob)
                     self.level.blobs.add(blob)
             elif self.energy == 1:
                 sound.alienblob.play()
-                self.level.ship.get_points(self.type.points)
+                self.level.ship.get_points(self.template.points)
                 self.hard_kill()
         super().kill()
 

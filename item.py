@@ -1,24 +1,32 @@
+from __future__ import annotations
 import pygame, sound
 from image import Image, GraphicData
 from sprite import Sprite
 from display import Display
-from math import hypot as norm
-from settings import ItemType, ITEM
+from settings import ItemTemplate, ITEM
+from physics import Vector, norm
 
 class Item(Sprite):
     """A class to manage the items"""
 
-    def __init__(self, type: ItemType, level, **pos_kwargs):
-        self.type = type
+    def __init__(self, template: ItemTemplate,
+                level: Level,
+                pos: Vector | None = None,
+                vel: Vector | None = None,
+                acc: Vector = Vector(0, 0),
+                constraints: pygame.Rect | None = None,
+                boundary_behaviour: str | None = "vanish"):
+        self.template = template
         self.level = level
-        self.duration_ms = int(1000*type.duration) if type.duration is not None else None
-        graphic = GraphicData(path = f'images/item/{str(type.name)}', scaling_width = type.size)
-        super().__init__(graphic = graphic, direction=(0,1), v=type.speed,
-                constraints=pygame.Rect([0, 0, Display.screen_width, Display.screen_height]),
-                boundary_behaviour="vanish", **pos_kwargs)
+        vel = vel or Vector(0, template.speed)
+        constraints = constraints or Display.screen_rect
+        self.duration_ms = int(1000 * template.duration) if template.duration is not None else None
+        graphic = GraphicData(path = f'images/item/{str(template.name)}', scaling_width = template.size)
+        super().__init__(graphic = graphic, pos = pos, vel = vel, acc = acc,
+                constraints = constraints, boundary_behaviour = boundary_behaviour)
         
     def play_collecting_sound(self):
-        match self.type.name:
+        match self.template.name:
             case "bullets_buff" | "magnet" | "score_buff" | "speed_buff":
                 sound.item_collect.play()
             case "hp_plus" | "shield":
@@ -38,10 +46,9 @@ class Item(Sprite):
 
     def update(self, dt):
         if self.level.ship.magnet:
-            temp = [self.level.ship.rect.center[i]-self.rect.center[i] for i in [0,1]]
-            norm_temp = norm(temp[0],temp[1])
-            if norm_temp!=0:
-                temp = [ITEM.MAGNET.effect*self.type.speed*temp[i]/norm_temp for i in [0,1]]
-            self.direction = (self.vx+temp[0],self.vy)
-            self.v = norm(self.direction[0],self.direction[1])
+            dpos = self.level.ship.center-self.center
+            dist = norm(dpos)
+            if dist != 0:
+                acc = ITEM.MAGNET.effect * self.template.speed * dpos / dist
+                self.acc = Vector(acc.x, 0)
         super().update(dt)
