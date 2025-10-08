@@ -1,44 +1,57 @@
 import pygame
-from settings import SCREEN
 
 class Display:
     """Render game in fullscreen mode adapted to the player's display settings"""
-    def __init__(self):
-        pygame.display.init()
-        self.info = pygame.display.Info()
-        self.width, self.height = self.info.current_w, self.info.current_h
-        self.display = pygame.display.set_mode((self.width, self.height), pygame.FULLSCREEN)
+    display: pygame.Surface | None = None
+    screen: pygame.Surface | None = None
+    screen_rect: pygame.Rect | None = None
+    screen_width: int = 0
+    screen_height: int = 0
+    screen_size: tuple[int, int] = (0, 0)
+    grid_width: int = 0
+    padding_w: int = 0
+    padding_h: int = 0
 
-    def get_game_surface_with_ratio(self,w,h):
-        """Fix a maximal surface "screen" on the display with following width:height ratio"""
-        ratio = h*self.width-w*self.height
+    def __init__(self, screen_size, screen_grid):
+        """Init maximal surface "screen" on display with given width : height ratio"""
+        pygame.display.init()
+        info = pygame.display.Info()
+        max_width, max_height = info.current_w, info.current_h
+        Display.display = pygame.display.set_mode((max_width, max_height), pygame.FULLSCREEN)
+
+        w, h = screen_size
+        
+        ratio = h * max_width - w * max_height
 
         if ratio == 0:
             # display has the desired ratio, no padding necessary
-            screen_w,screen_h = (self.width,self.height)
-            Display.padding_w, Display.padding_h = (0,0)  
+            screen_w, screen_h = max_width, max_height
+            Display.padding_w, Display.padding_h =  0, 0  
         elif ratio > 0:
             # display is too wide
-            screen_w, screen_h = w * self.height // h, self.height
+            screen_w, screen_h = w * max_height // h, max_height
             Display.padding_w, Display.padding_h = (self.width - screen_w) // 2, 0
         else:
             # display is too high
-            screen_w, screen_h = self.width, self.width * h // w
-            Display.padding_w, Display.padding_h = 0, (self.height - screen_h) // 2
+            screen_w, screen_h = max_width, max_width * h // w
+            Display.padding_w, Display.padding_h = 0, (max_height - screen_h) // 2
 
-        self.screen = pygame.Surface((screen_w,screen_h))
-        self.screen_rect = pygame.Rect(Display.padding_w,Display.padding_h,screen_w,screen_h)
-        Display.screen_width = self.screen.get_width()
-        Display.screen_height = self.screen.get_height()
-        Display.grid_width = Display.screen_width // SCREEN.GRID[0]
-        Display.screen_rect = pygame.Rect(0, 0, Display.screen_width, Display.screen_height)
-        return self.screen
+        Display.screen = pygame.Surface((screen_w,screen_h))
+        Display.screen_rect = pygame.Rect(Display.padding_w, Display.padding_h, screen_w, screen_h)
+        Display.screen_width, Display.screen_height = screen_w, screen_h
+        Display.screen_size = (screen_w, screen_h)
+        Display.grid_width = Display.screen_width // screen_grid[0]
 
-    def update(self, padding_color):
-        """blits screen centered on display,
-        padding visible if screen ratio is not as fixed
-        in the settings"""
-        self.display.fill(padding_color)
-        self.display.blit(self.screen,self.screen_rect)
+    @classmethod
+    def init(cls, screen_size, screen_grid):
+        """Convenience classmethod for initialization instead of using Display()"""
+        cls(screen_size, screen_grid)
+        return cls.screen
+
+    @classmethod
+    def update(cls, padding_color):
+        """blits screen centered on display, padding visible if aspect ratio differs"""
+        cls.display.fill(padding_color)
+        cls.display.blit(cls.screen, cls.screen_rect)
         pygame.display.flip()
 

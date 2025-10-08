@@ -31,6 +31,7 @@ class KEY:
 # (display.py handles rescaling all sizes to user's display settings)
 class SCREEN:
     WIDTH, HEIGHT = 1600, 900
+    SIZE = (WIDTH, HEIGHT)
     GRID = (16,9)
     GRID_WIDTH = WIDTH // GRID[0] # 1600 / 16 = 100
     PADDING_COLOR = COLOR.DARK_GREY

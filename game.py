@@ -15,8 +15,7 @@ class Game:
 
         pygame.init()
 
-        self.display = Display()
-        self.screen = self.display.get_game_surface_with_ratio(SCREEN.WIDTH,SCREEN.HEIGHT)
+        self.screen = Display.init(SCREEN.SIZE, SCREEN.GRID)
 
         self.player_name = "" # Gets entered when achieving a high score 
         Menu.init_settings()
@@ -102,5 +101,4 @@ class Game:
         self.level.blit(self.screen) # statusbar, ship, enemies, items, bullets, crosshairs
         if self.mode == "menu" or self.mode == "enter name":
             self.active_menu.blit(self.screen)
-        
-        self.display.update(padding_color=SCREEN.PADDING_COLOR)
+        Display.update(padding_color = SCREEN.PADDING_COLOR)
