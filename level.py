@@ -31,7 +31,13 @@ class Level:
         self.items = pygame.sprite.Group()
         self.asteroids = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
+        self.ufos = pygame.sprite.Group()
         self.blobs = pygame.sprite.Group()
+
+        self.LIGHT_HAIL = Event("asteroid_hail", self, random_cycle_time = (1000,1500))
+        self.MEDIUM_HAIL = Event("asteroid_hail", self, random_cycle_time = (800,1000))
+        self.STRONG_HAIL = Event("asteroid_hail", self, random_cycle_time = (500,800))
+        self.ALIEN_HAIL = Event("alien_attack", self, random_cycle_time=(1000,1500))
         
 
     def blit(self, screen = None):
@@ -49,7 +55,7 @@ class Level:
         self.timer = 0
         self.goal = self.goals[self.number]
         self.events=[]
-        for group in [self.ship_bullets, self.bullets,
+        for group in [self.ship_bullets, self.bullets, self.ufos,
                     self.asteroids, self.aliens, self.blobs]:
             group.empty()
         self.load_level(self.number)
@@ -70,13 +76,17 @@ class Level:
 
     def alien_spawn(self, alien: Alien, **kwargs):
         alien.spawn(**kwargs)
-        if alien.template.name in ["big_asteroid","small_asteroid"]:
-            self.asteroids.add(alien)
-        elif alien.template.name == "blob":
-            self.blobs.add(alien)
-            self.aliens.add(alien)
-        else:
-            self.aliens.add(alien)
+        match alien.template.name:
+            case "big_asteroid" | "small_asteroid":
+                self.asteroids.add(alien)
+            case "blob":
+                self.blobs.add(alien)
+                self.aliens.add(alien)
+            case "ufo":
+                self.ufos.add(alien)
+                self.aliens.add(alien)
+            case "purple":
+                self.aliens.add(alien)
 
     def alien_random_entrance(self, alien: Alien):
             '''alien spawns at random point over the screen
@@ -115,6 +125,9 @@ class Level:
             else:
                 self.alien_random_entrance(alien)
 
+    def start_event(self, event):
+        self.events.append(event)
+
     def load_level(self, number):
         """load enemies and level events"""
         match number:
@@ -130,29 +143,27 @@ class Level:
                 self.encounter(ALIEN.BIG_ASTEROID, 5)
                 self.encounter(ALIEN.SMALL_ASTEROID, 5)
             case 2:
+                self.start_event(self.MEDIUM_HAIL)
                 self.boundary_behaviour = "reflect"
-                self.events.append(Event("asteroid_hail", self, random_cycle_time = (800,1200)))
                 for n in (2,4,6,8):
                     self.encounter(ALIEN.PURPLE, grid = (n,1), dir = (1,1), constraints = Display.grid_rect(0, 0, 16, 3))
                 for n in (8,10,12,14):
                     self.encounter(ALIEN.PURPLE, grid = (n,5), dir = (-1,-1), constraints = Display.grid_rect(0, 3, 16, 3))
             case 3:
+                self.start_event(self.MEDIUM_HAIL)
                 self.boundary_behaviour = "reflect"
-                self.events.append(Event("asteroid_hail", self, random_cycle_time=(800,1000)))
-                self.ufo = Alien(ALIEN.UFO, level = self, direction = Vector(1,0))
-                self.alien_spawn(self.ufo, grid = (1,1))
+                self.encounter(ALIEN.UFO, grid = (1,1), dir = (1,0))
                 self.encounter(ALIEN.PURPLE, grid = (2,1), dir = (1,0), constraints = Display.grid_rect(0, 0, 16, 3))
                 self.encounter(ALIEN.PURPLE, grid = (6,1), dir = (1,0), constraints = Display.grid_rect(0, 0, 16, 3))
                 self.encounter(ALIEN.PURPLE, grid = (10,5), dir = (-1,0), constraints = Display.grid_rect(0, 3, 16, 3))
                 self.encounter(ALIEN.PURPLE, grid = (14,5), dir = (-1,0), constraints = Display.grid_rect(0, 3, 16, 3))
             case 4:
-                self.boundary_behaviour = "reflect"
-                self.events.append(Event("asteroid_hail", self, random_cycle_time=(1000,1500)))            
+                self.start_event(self.LIGHT_HAIL)
+                self.boundary_behaviour = "reflect"           
                 self.encounter(ALIEN.BLOB)
             case 5:
-                self.boundary_behaviour = "reflect"
-                self.events.append(Event("asteroid_hail", self, random_cycle_time=(500,800)))
-                self.events.append(Event("alien_attack", self, random_cycle_time=(1000,1500)))        
+                self.start_event(self.STRONG_HAIL)
+                self.start_event(self.ALIEN_HAIL)    
 
     @property
     def progress(self):
@@ -160,7 +171,9 @@ class Level:
             case 0: return "Ready?"
             case 1: return f"{len(self.asteroids)} left"
             case 2: return f"{len(self.aliens)} left"
-            case 3: return f"Ufo health: {self.ufo.energy}"
+            case 3:
+                ufo = next(iter(self.ufos))
+                return f"Ufo health: {ufo.energy}"
             case 4: return f"Blob energy: {sum([blob.energy for blob in self.blobs])}"
             case 5: return f"Timer: {int(60-self.timer/1000)}"
             case _: return ""
@@ -171,7 +184,7 @@ class Level:
         match self.number:
             case 1: return not self.asteroids
             case 2: return not self.aliens
-            case 3: return self.ufo.energy == 0
+            case 3: return not self.ufos
             case 4: return not self.blobs
             case 5: return self.timer > 60000
             case _: return False
