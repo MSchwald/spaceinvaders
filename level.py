@@ -6,16 +6,35 @@ from math import hypot
 from sprite import Sprite
 from image import Image, GraphicData
 from display import Display
-from timer import ActionTimer, Timer
+from timer import ActionTimer
 from settings import AlienTemplate, ALIEN, SHIP, BULLET
 from physics import Vector, normalize
 from dataclasses import dataclass
 
 class Level:
-    """Manage loading and logic of game levels and their ingame objects"""
+    """
+    Manage game levels, loading enemies, timers, collisions, and player progress.
+
+    Attributes
+    ----------
+    ship : Ship
+        The player's ship.
+    crosshairs : Sprite
+        Visual crosshairs following the mouse to shoot missiles.
+    number : int
+        Current level number.
+    goals : list[str]
+        Descriptions of objectives for each level.
+    bullets, asteroids, aliens, ufos, blobs, items, ship_bullets : pygame.sprite.Group
+        Sprite groups for level objects.
+    timer, asteroid_hail, alien_hail : Timer / ActionTimer
+        Timers for recurring level events.
+    boundary_behaviour : str | None
+        Default behaviour for alien/asteroid movement at boundaries.
+    """
 
     def __init__(self, number):
-        """Initialize ingame objects and sprite groups"""
+        """Initialize the level, its sprite groups, and timers."""
         self.ship = Ship(self)
         self.crosshairs = Sprite(GraphicData(path = 'images/bullet/aim.png', scaling_width = BULLET.MISSILE.width))
         Image.load_blob()
@@ -33,14 +52,14 @@ class Level:
         self.ufos = pygame.sprite.Group()
         self.blobs = pygame.sprite.Group()
 
-        self.timer = Timer()
+        self.timer = ActionTimer()
         self.asteroid_hail = ActionTimer()
         self.alien_hail = ActionTimer()
 
         self.timers = (self.timer, self.asteroid_hail, self.alien_hail)
         
     def blit(self, screen = None):
-        """blit the current state of the level"""
+        """Draw all sprites onto the given screen."""
         screen = screen or Display.screen
         for group in [self.bullets, self.asteroids, self.aliens, self.items]:
             for sprite in group:
@@ -49,10 +68,10 @@ class Level:
         self.crosshairs.blit(screen)
 
     def start_current(self):
-        """(re)start current level"""
+        """(Re)start current level"""
         self.ship.reset_pos()
         for timer in self.timers:
-            timer.reset()
+            timer.pause()
         self.goal = self.goals[self.number]
 
         for group in [self.ship_bullets, self.bullets, self.ufos,
@@ -61,13 +80,13 @@ class Level:
         self.load_level(self.number)
 
     def start_next(self):
-        """start the next level"""
+        """Start the next level"""
         if self.number < self.max_level:
             self.number += 1
             self.start_current()
 
     def restart_game(self):
-        '''restart from starting level'''
+        """restart from starting level"""
         sound.level_solved.play()
         self.number = SHIP.GAME_LEVEL
         self.items.empty()
@@ -75,6 +94,7 @@ class Level:
         self.start_current()
 
     def alien_spawn(self, alien: Alien, **kwargs):
+        """Spawn alien sprites and play corresponding sound"""
         alien.spawn(**kwargs)
         match alien.template.name:
             case "big_asteroid" | "small_asteroid":
@@ -89,8 +109,7 @@ class Level:
                 self.aliens.add(alien)
 
     def alien_random_entrance(self, alien: Alien):
-            '''alien spawns at random point over the screen
-            and aims for a random point on the bottom'''
+            """Spawn an alien at a random top position, aiming towards a random bottom position."""
             constraints = alien.constraints
             spawning_pos = Vector(
                 constraints.x + random() * (constraints.w - alien.w),
@@ -111,6 +130,7 @@ class Level:
                     energy: int | None = None,
                     constraints: pygame.Rect | None = Display.screen,
                     boundary_behaviour: str | None = None):
+        """Spawn an amount of aliens. Missing position or direction get set randomly."""
         if dir is not None:
             direction = Vector(dir[0], dir[1])
         else:
@@ -126,7 +146,7 @@ class Level:
                 self.alien_random_entrance(alien)
 
     def load_level(self, number):
-        """load enemies and start action timers"""
+        """Load enemies and start action timers of the current level"""
         match number:
             case 0:
                 self.boundary_behaviour = "wrap"
@@ -140,14 +160,14 @@ class Level:
                 self.encounter(ALIEN.BIG_ASTEROID, 5)
                 self.encounter(ALIEN.SMALL_ASTEROID, 5)
             case 2:
-                self.asteroid_hail.reset(cycle_min = 800, cycle_max = 1000)
+                self.asteroid_hail.set_cyclic_alarm(800, 1000)
                 self.boundary_behaviour = "reflect"
                 for n in (2,4,6,8):
                     self.encounter(ALIEN.PURPLE, grid = (n,1), dir = (1,1), constraints = Display.grid_rect(0, 0, 16, 3))
                 for n in (8,10,12,14):
                     self.encounter(ALIEN.PURPLE, grid = (n,5), dir = (-1,-1), constraints = Display.grid_rect(0, 3, 16, 3))
             case 3:
-                self.asteroid_hail.reset(cycle_min = 800, cycle_max = 1000)
+                self.asteroid_hail.set_cyclic_alarm(800, 1000)
                 self.boundary_behaviour = "reflect"
                 self.encounter(ALIEN.UFO, grid = (1,1), dir = (1,0))
                 self.encounter(ALIEN.PURPLE, grid = (2,3), dir = (1,0))
@@ -155,15 +175,17 @@ class Level:
                 self.encounter(ALIEN.PURPLE, grid = (10,5), dir = (-1,0))
                 self.encounter(ALIEN.PURPLE, grid = (14,5), dir = (-1,0))
             case 4:
-                self.asteroid_hail.reset(cycle_min = 800, cycle_max = 1000)
+                self.asteroid_hail.set_cyclic_alarm(800, 1000)
                 self.boundary_behaviour = "reflect"           
                 self.encounter(ALIEN.BLOB)
             case 5:
-                self.asteroid_hail.reset(cycle_min = 500, cycle_max = 800)
-                self.alien_hail.reset(cycle_min = 1000, cycle_max = 1500)
+                self.timer.set_cyclic_alarm(60000)
+                self.asteroid_hail.set_cyclic_alarm(500, 800)
+                self.alien_hail.set_cyclic_alarm(1000, 1500)
 
     @property
     def progress(self):
+        """String, summarizes the player's progress to be rendered in the status bar."""
         match self.number:
             case 0: return "Ready?"
             case 1: return f"{len(self.asteroids)} left"
@@ -174,22 +196,23 @@ class Level:
                 ufo = next(iter(self.ufos))
                 return f"Ufo health: {ufo.energy}"
             case 4: return f"Blob energy: {sum([blob.energy for blob in self.blobs])}"
-            case 5: return f"Timer: {int(60-self.timer.total_time/1000)}"
+            case 5: return f"Timer: {int(self.timer.remaining_time/1000)}"
             case _: return ""
 
     @property
     def goal_fulfilled(self):
-        '''Return True or False if current goal is fulfilled'''
+        """Bool indicating whether the current level goal is fulfilled"""
         match self.number:
             case 1: return not self.asteroids
             case 2: return not self.aliens
             case 3: return not self.ufos
             case 4: return not self.blobs
-            case 5: return self.timer.total_time > 60000
+            case 5: return self.timer.check_alarm()
             case _: return False
 
     @property
     def status(self):
+        """Level status indicates when a level or the game have ended"""
         if self.number == 0:
             return "start"
         if self.ship.lives <= 0:         
@@ -212,7 +235,7 @@ class Level:
                 sound.game_won.play()
 
     def update(self, dt):
-        '''update level status according to passed time dt'''
+        """update level status according to passed time dt"""
         for timer in self.timers:
             timer.update(dt)
         if self.asteroid_hail.check_alarm():
@@ -234,6 +257,7 @@ class Level:
         self.collision_checks()
 
     def update_crosshairs(self):
+        """The crosshairs follow the player's mouse"""
         x,y = pygame.mouse.get_pos()
         self.crosshairs.spawn(center=Vector(x - Display.padding_w, y - Display.padding_h))
 
@@ -260,7 +284,7 @@ class Level:
                     asteroid.get_damage(bullet.damage)
                     asteroid.kill()
 
-        # bullets hitting aliens or the ship
+        # player's bullets hitting aliens or enemies' bullets hitting the ship
         for bullet in self.bullets:
             if bullet.owner == "player":
                 for alien in self.aliens:
@@ -290,7 +314,7 @@ class Level:
                     sound.player_hit.play()
             
     def enemies_hit_ship(self):
-        """Check if enemies hit the ship"""
+        """If enemies hit the ship, reflect with shield or inflict damage and kill the enemy"""
         for asteroid in self.asteroids:
             if pygame.sprite.collide_mask(self.ship, asteroid):
                 if self.ship.status == "shield" or self.status == "start":
@@ -312,7 +336,7 @@ class Level:
                         self.ship.get_damage(alien.energy)
         
     def ship_collects_item(self):
-        """Check if ship collects an item"""
+        """Check if ship collects an item and activate its effect"""
         for item in self.items:
             if pygame.sprite.collide_mask(self.ship, item):
                 if self.ship.status == "shield":
@@ -322,7 +346,7 @@ class Level:
                     item.kill()
 
     def blobs_collide(self):
-        """merge colliding blobs if not too big"""
+        """Merge colliding blobs if not too big, total impuls and mass are preserved"""
         merge_occured = False
         for blob1 in self.blobs:
                 if merge_occured:

@@ -58,13 +58,6 @@ class Bullet(Sprite):
             case "explosion":
                 sound.explosion.play()
 
-    def update(self, dt):
-        # timer, movement and animation get handled in the Sprite class
-        super().update(dt)
-        # explosions by missiles need to get deleted manually after their duration
-        if self.graphic.animation_type == "vanish" and self.animation_timer.total_time > int(1000 * self.graphic.animation_time):
-            self.kill()
-
     def reflect(self):
         sound.shield.stop()
         sound.shield_reflect.play()

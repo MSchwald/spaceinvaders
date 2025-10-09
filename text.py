@@ -3,6 +3,10 @@ import pygame
 # Layout utilities to align pygame surfaces and render texts
 
 def pad_surface(surface, padding_size, padding_color=None, vertical_padding=True, horizontal_padding=True):
+    """
+    Add padding of given color and numbers of pixel around a Pygame surface.
+    vertical_padding, horizontal_padding : bool - indicate if padding is desired from all sides
+    """
     x,y = 0,0
     if vertical_padding:
         y+=padding_size
@@ -15,10 +19,16 @@ def pad_surface(surface, padding_size, padding_color=None, vertical_padding=True
     return result
 
 def align_surfaces(surfaces, orientation, alignment = "center", rescale_to_surface = None, spacing = 0, padding_size = 0, padding_color = None):
-    """aligns a list of pygame surfaces, orientation can either be "horizontal" or "vertical",
-    alignment can either be "center" and "left","right" or "top","bottom" resp.
-    alternativeley, surfaces can also be rescaled to a given surface or size
-    to align perfectly"""
+    """
+    Align list of Pygame surfaces horizontally or vertically. Padding and spacing can be added.
+    orientation : str
+        "horizontal" or "vertical".
+    alignment : str
+        Alignment along the perpendicular axis
+        ("center", "left", "right" for vertical; "center", "top", "bottom" for horizontal).
+    rescale_to_surface : pygame.Surface | None
+        If provided, rescale surfaces to match its height or width.
+    """
     if surfaces == []:
         return pygame.Surface((0,0))
 
@@ -66,8 +76,7 @@ def align_surfaces(surfaces, orientation, alignment = "center", rescale_to_surfa
     return pad_surface(result,padding_size, padding_color)
 
 def render_line(line, font, text_color, bg_color):
-    """For line either a string or a list of strings and surfaces
-    render them as a single text line"""
+    """Render a line of text or a mix of text and surfaces as a single surface."""
     if isinstance(line, str):
         return font.render(line, False, text_color, bg_color)
     else:
@@ -88,9 +97,9 @@ def render_line(line, font, text_color, bg_color):
             surfaces = [pygame.transform.scale_by(surface,w/surface.get_width()) for surface in surfaces]
 
 class Text:
-    """class to render text with a given layout"""
+    """Render text with a given layout"""
     def __init__(self, lines, font, text_color, bg_color=None):
-        """for a list "lines" of strings (and surfaces) render its lines as surfaces
+        """For a list "lines" of strings (and surfaces) render its lines as surfaces
         that can be composed to a bigger surface with given alignment."""
         self.lines = lines
         self.font = font
@@ -101,6 +110,7 @@ class Text:
         self.title_length = self.rendered_lines[0].get_width()
 
     def render(self, alignment, line_distance, padding_size=0, padding_color=None, center_title=True, title_distance=None):
+        """Composes rendered lines to a text with desired alignment 'left' or 'right', title formating, padding"""
         if padding_color is None:
             padding_color = self.bg_color
         if title_distance is None:

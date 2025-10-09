@@ -27,9 +27,9 @@ class Ship(Sprite):
         self.score_buff_timer = ActionTimer()
         self.size_change_timer = ActionTimer()
         self.speed_change_timer = ActionTimer()
-        self.reset_item_effects()
         self.timers = (self.shield_timer, self.controls_timer, self.score_buff_timer,
                     self.size_change_timer, self.speed_change_timer)
+        self.reset_item_effects()
 
     def start_new_game(self, lives=SHIP.LIVES, rank=SHIP.RANK):
         """Start new game"""
@@ -60,9 +60,7 @@ class Ship(Sprite):
 
     @property
     def shield_time(self):
-        if self.shield_timer.cycle_time is None:
-            return 0
-        return max(self.shield_timer.cycle_time - self.shield_timer.time_since_action, 0)
+        return self.shield_timer.remaining_time
 
     def gain_rank(self):
         if self.rank < 3:
@@ -139,7 +137,7 @@ class Ship(Sprite):
 
     def control(self, keys):
         if keys[KEY.SHIELD]:
-            if self.status != "shield" and self.shield_timer.activated:
+            if self.status != "shield" and self.shield_time > 0:
                 self.activate_shield()
                 self.vel = Vector(0,0)
         else:
@@ -163,10 +161,10 @@ class Ship(Sprite):
             case "invert_controls":
                 if self.status == "inverse_controls":
                     self.status = "normal"
-                    self.controls_timer.reset()
+                    self.controls_timer.pause()
                 else:
                     self.status = "inverse_controls"
-                    self.controls_timer.reset(item.duration_ms)
+                    self.controls_timer.set_cyclic_alarm(item.duration_ms)
                     sound.bad_item.play()
                 self.update_graphic()
             case "life_minus":
@@ -181,35 +179,35 @@ class Ship(Sprite):
             case "missile": self.missiles += 1
             case "score_buff":
                 if self.score_factor == 1:
-                    self.score_buff_timer.reset(item.duration_ms)
+                    self.score_buff_timer.set_cyclic_alarm(item.duration_ms)
                 self.score_factor *= item.template.effect
             case "shield":
-                self.shield_timer.reset(min(self.shield_time + 1000 * item.template.effect, 1000 * SHIP.MAX_SHIELD_DURATION))
+                self.shield_timer.alarm_time = min(self.shield_time + 1000 * item.template.effect, 1000 * SHIP.MAX_SHIELD_DURATION)
             case "ship_buff": self.gain_rank()
             case "size_minus":
                 if self.size_factor * item.template.effect >= 0.3:
                     self.size_factor *= item.template.effect
                     self.update_graphic()
                     if self.size_factor != 1:
-                        self.size_change_timer.reset(item.duration_ms)
+                        self.size_change_timer.set_cyclic_alarm(item.duration_ms)
             case "size_plus":
                 if self.size_factor * item.template.effect <= 1/0.3:
                     self.size_factor *= item.template.effect
                     self.update_graphic()
                     if self.size_factor != 1:
-                        self.size_change_timer.reset(item.duration_ms)
+                        self.size_change_timer.set_cyclic_alarm(item.duration_ms)
             case "speed_buff":
                 if self.speed_factor * SHIP.SPEED[self.rank] * item.template.effect < BULLET.BULLET1.speed:
                     self.speed_factor *= item.template.effect
                     if self.speed_factor != 1:
-                        self.speed_change_timer.reset(item.duration_ms)
+                        self.speed_change_timer.set_cyclic_alarm(item.duration_ms)
             case "speed_nerf":
                 self.speed_factor *= item.template.effect
                 if self.speed_factor != 1:
-                    self.speed_change_timer.reset(item.duration_ms)
+                    self.speed_change_timer.set_cyclic_alarm(item.duration_ms)
 
     def activate_shield(self):
-        if self.shield_timer.activated:
+        if self.shield_time > 0:
             self.shield_timer.resume()
             sound.shield.play()
             self.last_status, self.status = self.status, "shield"
@@ -239,8 +237,7 @@ class Ship(Sprite):
         self.magnet = False
         self.missiles = SHIP.STARTING_MISSILES
         self.score_factor = 1
-        self.shield_timer.reset(1000*SHIP.SHIELD_STARTING_TIMER)
-        self.shield_timer.pause()
+        self.shield_timer.alarm_time = 1000*SHIP.SHIELD_STARTING_TIMER
         self.size_factor = 1
         self.status = "normal"
         self.last_status = "normal"
@@ -250,15 +247,20 @@ class Ship(Sprite):
             timer.update(dt)
         if self.shield_timer.check_alarm():
             self.deactivate_shield()
-            self.shield_timer.reset()
+            self.shield_timer.alarm_time = 0
+            self.shield_timer.pause()
         if self.score_buff_timer.check_alarm():
+            self.score_buff_timer.pause()
             self.score_factor = 1
         if self.speed_change_timer.check_alarm():
+            self.speed_change_timer.pause()
             self.speed_factor = 1
         if self.size_change_timer.check_alarm():
+            self.size_change_timer.pause()
             self.size_factor = 1
             self.update_graphic()
         if self.controls_timer.check_alarm():
+            self.controls_timer.pause()
             self.status = "normal"
             self.update_graphic()
         super().update(dt)

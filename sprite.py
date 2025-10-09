@@ -190,14 +190,15 @@ class Sprite(pygame.sprite.Sprite):
     
     def update_frame(self, dt):
         """Calculate animation if available"""
-        if self.animation_timer.activated:
-            while self.animation_timer.check_alarm():
-                self.next_frame()
-                if self.frame_index is None:
-                    self.activated = False
-                    self.kill()
-                else:
-                    self.change_image(self.graphic.frames[self.frame_index])
+        if self.animation_timer.on_hold:
+            return
+        while self.animation_timer.check_alarm():
+            self.next_frame()
+            if self.frame_index is None:
+                self.activated = False
+                self.kill()
+                return
+            self.change_image(self.graphic.frames[self.frame_index])
 
     def next_frame(self):
         self.frame_number += 1

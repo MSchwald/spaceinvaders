@@ -17,7 +17,6 @@ class Game:
         pygame.init()
 
         self.screen = Display.init(SCREEN.SIZE, SCREEN.GRID)
-
         self.player_name = "" # Gets entered when achieving a high score 
         Menu.init_settings()
         self.level = Level(0)
