@@ -306,8 +306,9 @@ class Level:
                             bullet.hit_enemies.add(alien)
             elif bullet.owner == "enemy" and pygame.sprite.collide_mask(bullet, self.ship):
                 if self.ship.status == "shield":
-                    bullet.reflect()
-                    bullet.owner = "player"
+                    if bullet.vel * (self.ship.pos - bullet.pos) > 0:
+                        bullet.reflect()
+                        bullet.owner = "player"
                 else:
                     self.ship.get_damage(bullet.damage)
                     bullet.kill()
@@ -318,7 +319,8 @@ class Level:
         for asteroid in self.asteroids:
             if pygame.sprite.collide_mask(self.ship, asteroid):
                 if self.ship.status == "shield" or self.status == "start":
-                    asteroid.reflect()
+                    if asteroid.vel * (self.ship.pos - asteroid.pos) > 0:
+                        asteroid.reflect()
                 else:
                     self.ship.get_damage(asteroid.energy)
                     asteroid.energy = 0
@@ -326,7 +328,8 @@ class Level:
         for alien in self.aliens:
             if pygame.sprite.collide_mask(self.ship, alien):
                 if self.ship.status == "shield" or self.status == "start":
-                    alien.reflect()
+                    if alien.vel * (self.ship.pos - alien.pos) > 0:
+                        alien.reflect()
                 else:
                     if self.ship.energy > alien.energy:
                         self.ship.get_damage(alien.energy)
