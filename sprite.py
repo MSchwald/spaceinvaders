@@ -102,9 +102,13 @@ class Sprite(pygame.sprite.Sprite):
         return self.image.h
 
     @property
+    def diag(self) -> Vector:
+        return Vector(self.w, self.h)
+
+    @property
     def center(self) -> Vector:
         if self.activated:
-            return self.pos + Vector(self.w, self.h) / 2
+            return self.pos + self.diag / 2
         return Vector(self.rect.center)
         
     @property
@@ -132,7 +136,7 @@ class Sprite(pygame.sprite.Sprite):
         """changes the image preserving the center of the sprite"""
         center = Vector(self.rect.centerx, self.rect.centery)
         self.set_image(image)
-        self.move_to(center - Vector(self.w, self.h) / 2)
+        self.move_to(center - self.diag / 2)
 
     def scale_image_by(self, factor: float):
         """rescales the image preserving the center of the sprite"""
@@ -146,13 +150,12 @@ class Sprite(pygame.sprite.Sprite):
             if self.boundary_behaviour == "vanish" and not self.rect.colliderect(self.constraints):
                 self.kill()
             return
-        diag = Vector(self.w, self.h)
         min_bound = Vector(self.constraints.x, self.constraints.y)
         max_bound = Vector(self.constraints.right, self.constraints.bottom)
         if self.boundary_behaviour == "clamp":
-            self.pos = pos.clamp(min_bound, max_bound - diag)
+            self.pos = pos.clamp(min_bound, max_bound - self.diag)
         elif self.boundary_behaviour == "reflect":
-            pos_clamp = pos.clamp(min_bound, max_bound - diag)
+            pos_clamp = pos.clamp(min_bound, max_bound - self.diag)
             diff = pos - pos_clamp
 
             #reflection only prevents exiting, not entering the constraints
@@ -167,7 +170,7 @@ class Sprite(pygame.sprite.Sprite):
                 
         elif self.boundary_behaviour == "wrap":
             # wrapping happens when leaving the the constraints entirely
-            pos_clamp = pos.clamp(min_bound - diag, max_bound)
+            pos_clamp = pos.clamp(min_bound - self.diag, max_bound)
             wrap_x = pos.x != pos_clamp.x
             wrap_y = pos.y != pos_clamp.y
 

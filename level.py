@@ -299,7 +299,7 @@ class Level:
                                 else:
                                     sound.slime_hit.play()
                                     alien.energy = alien.energy//2
-                                    alien.change_image(Image.blob[alien.energy-1])
+                                    alien.update_blob_image()
                             else:
                                 alien.get_damage(bullet.damage)
                             bullet.hit_enemies.add(alien)
