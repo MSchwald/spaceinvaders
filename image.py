@@ -1,3 +1,4 @@
+from __future__ import annotations
 import pygame
 from pathlib import Path
 from display import Display
@@ -6,7 +7,11 @@ from dataclasses import dataclass
 
 class Image:
     '''Manage lazy loading and transforming images and masks to be used for sprites'''
-    def __init__(self, surface, mask, colorkey = None, reflected = False, path = None):
+    def __init__(self, surface: pygame.Surface,
+                    mask: pygame.Mask,
+                    colorkey: tuple = None,
+                    reflected: bool = False,
+                    path: str | None = None):
         self.surface = surface
         self.mask = mask
         self.path = path
@@ -14,24 +19,26 @@ class Image:
             self.surface.set_colorkey(colorkey)
 
     @property
-    def rect(self):
+    def rect(self) -> pygame.Rect:
         return self.surface.get_rect()
     
     @property
-    def w(self):
+    def w(self) -> int:
         return self.rect.w
     
     @property
-    def h(self):
+    def h(self) -> int:
         return self.rect.h
 
-    def scale_by(self, factor):
+    def scale_by(self, factor: float) -> Image:
         '''Rescale image and its mask by a given factor'''
         return Image(pygame.transform.scale(self.surface, (factor*self.w, factor*self.h)).convert_alpha(),
             self.mask.scale((factor*self.w, factor*self.h)))
 
-    def rescale(self, scaling_width=None, scaling_height=None, scaling_factor=None):
-        '''Allows rescaling images either to a given width, height or by a factor'''
+    def rescale(self, scaling_width: float = None,
+                    scaling_height: float = None,
+                    scaling_factor: float = None):
+        '''Rescaling image either to a given width, height or by a factor'''
         factor = None
         if scaling_width:
             factor = Display.grid_width/SCREEN.GRID_WIDTH * scaling_width / self.w
@@ -45,7 +52,7 @@ class Image:
 
     cache = {}
     @classmethod
-    def load(cls, path, colorkey=COLOR.BLACK, scaling_width=None, scaling_height=None, scaling_factor=None):
+    def load(cls, path, colorkey=COLOR.BLACK, scaling_width=None, scaling_height=None, scaling_factor=None) -> Image:
         '''Loads image with given path (as a string with or without the png-suffix) lazily.
             Background of color 'colorkey' gets cropped and transparent.
             Rescales result either to desired width, height (in standard resolution)
@@ -67,11 +74,25 @@ class Image:
             cls.cache[str(path_obj)] = image
             return image.rescale(scaling_width=scaling_width, scaling_height=scaling_height, scaling_factor=scaling_factor)
 
-        # image gets loaded and preprocessed for the first (and only) time
-        raw_image = pygame.image.load(str(path_obj))
+        image = Image.preprocess(str(path_obj), colorkey=colorkey, scaling_width=scaling_width, scaling_height=scaling_height, scaling_factor=scaling_factor)
+        # cache the preprocessed image for quick access in the current game
+        cls.cache[str(path_obj)] = image
+        # and save it for the next execution of the game
+        newpath.parent.mkdir(parents = True, exist_ok = True)
+        pygame.image.save(image.surface, str(newpath))
+        
+        return image.rescale(scaling_width=scaling_width, scaling_height=scaling_height, scaling_factor=scaling_factor)
+
+    @classmethod
+    def preprocess(cls, path: str,
+                    colorkey: tuple = COLOR.BLACK,
+                    scaling_width: float | None = None,
+                    scaling_height: float | None = None,
+                    scaling_factor: float | None = None) -> Image:
+        raw_surface = pygame.image.load(path)
+        temp = raw_surface.copy()
         # If boundary is not black, remove it without losing pixels in the inside of the figure
         if colorkey != COLOR.BLACK: 
-            temp = raw_image.copy()
             temp.set_colorkey(colorkey)
             # temp has now transparent boundary, but possibly also transparent pixels in the inside
             temp_mask = pygame.mask.from_surface(temp)
@@ -80,30 +101,23 @@ class Image:
             temp_mask.invert() # its inverse is the mask of the actual figure on the image
             alpha_surf = temp_mask.to_surface(setcolor=(255,255,255,255),
                                                       unsetcolor=(0,0,0,0))
-            new_raw = pygame.Surface(raw_image.get_size(), pygame.SRCALPHA)
-            new_raw.blit(raw_image, (0,0))
+            new_raw = pygame.Surface(raw_surface.get_size(), pygame.SRCALPHA)
+            new_raw.blit(raw_surface, (0,0))
             new_raw.blit(alpha_surf, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
-            raw_image = new_raw # now its boundary is transparent
-        bounding_rect = raw_image.get_bounding_rect()
+            raw_surface = new_raw # now its boundary is transparent
+        bounding_rect = raw_surface.get_bounding_rect()
         surface = pygame.Surface(bounding_rect.size, pygame.SRCALPHA)
         # surface now has its boundary trimmed to the smallest rectangle
         # containing the complete figure
-        surface.blit(raw_image,(0,0),bounding_rect)
+        surface.blit(raw_surface,(0,0),bounding_rect)
         mask = pygame.mask.from_surface(surface)
                 
         # rescale image according to user's screen settings
-        image = Image(surface, mask, path = str(path_obj)).rescale(scaling_width=scaling_width, scaling_height=scaling_height, scaling_factor=scaling_factor)
-        # cache the result for quick access in the current game
-        cls.cache[str(path_obj)] = image
-        # and save it for the next execution of the game
-        newpath.parent.mkdir(parents=True, exist_ok=True)
-        pygame.image.save(image.surface, str(newpath))
-        
-        return image.rescale(scaling_width=scaling_width, scaling_height=scaling_height, scaling_factor=scaling_factor)
+        return Image(surface, mask, path = path).rescale(scaling_width=scaling_width, scaling_height=scaling_height, scaling_factor=scaling_factor)
 
     reflected_cache = {}
     @classmethod
-    def reflect(cls, image, flip_x, flip_y):
+    def reflect(cls, image: Image, flip_x: bool, flip_y: bool) -> Image:
         if not (flip_x or flip_y):
             return image
         if (image.path, image.w, image.h, flip_x, flip_y) in cls.reflected_cache.keys():
@@ -113,7 +127,7 @@ class Image:
         cls.reflected_cache[(image.path, image.w, image.h, flip_x, flip_y)] = flipped_image
         return flipped_image            
 
-    def blit(self, screen):
+    def blit(self, screen: pygame.Surface):
         screen.blit(self.surface, self.rect, colorkey=self.surface.get_colorkey())
 
     # blob and blubber images
@@ -172,6 +186,6 @@ class GraphicData:
                 self.animation_time = len(self.frames) * self.frame_duration_ms / 1000
                 self.fps = len(self.frames) / self.animation_time
 
-    def reflect(self, flip_x, flip_y):
+    def reflect(self, flip_x: bool, flip_y: bool):
         self. image = Image.reflect(self.image, flip_x, flip_y)
         self.frames = [Image.reflect(frame, flip_x, flip_y) for frame in self.frames]

@@ -32,28 +32,26 @@ class Game:
 
         #main loop of the game
         while self.running:
-            # 1) handle keyboard and mouse input
-            self.handle_events()
+            self.handle_user_input()
 
             # measure passed time and limit the frame rate to 60fps
             dt = self.clock.tick(60)
             
-            # 2) run the game for dt milliseconds (pause if in menu mode)
+            # run the game for dt milliseconds (pause if in menu mode)
             if self.mode == "game" or self.level.status == "start":
                 self.level.update(dt) # update all ingame objects
                 if self.level.status != "running" and self.level.status != "start":
                     self.active_menu = Menu.create_level_menu(self.level)
                     self.mode = "menu"
 
-            # 3) show the new frame of the game on the screen 
             self.render()
         pygame.quit()
 
-    def handle_events(self):
+    def handle_user_input(self):
         """handle keyboard and mouse events"""
         for event in pygame.event.get():
 
-            # The 'X' of the window and ESCAPE end the game
+            # ESCAPE ends the game
             if(
                 event.type == pygame.QUIT or
                 (event.type == pygame.KEYDOWN and event.key == KEY.EXIT)
@@ -75,7 +73,7 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.level.ship.shoot_missile(Vector(event.pos[0],event.pos[1]))
 
-            #Enter the name into the high score table
+            # Enter the name into the high score table
             if self.mode == "enter name":
                 self.highscores.update_name(name=self.player_name, rank=self.score_rank)
                 self.active_menu = Menu.create_enter_name_menu(self)
@@ -97,7 +95,7 @@ class Game:
 
     def render(self):
         """Blit all stats, sprites, menu etc onto the display in the correct order"""
-        self.screen.fill(SCREEN.BG_COLOR) # black background
+        self.screen.fill(SCREEN.BG_COLOR) # background
         Statusbar.blit(self.level)
         self.level.blit() # statusbar, ship, enemies, items, bullets, crosshairs
         if self.mode == "menu" or self.mode == "enter name":
