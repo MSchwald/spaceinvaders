@@ -3,7 +3,7 @@ import pygame
 # Sound library for convenient access from other modules
 class Sound:
     @classmethod
-    def init(self, name: str):
+    def init(cls):
         pygame.mixer.init()          
         
         # Enemy sounds
