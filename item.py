@@ -1,9 +1,10 @@
 from __future__ import annotations
-import pygame, sound
+import pygame
+from sound import Sound
 from display import Display
-from settings import ItemTemplate, ITEM
+from settings import ItemTemplate, ITEM, SHIP_STATUS
 from image import Image, GraphicData
-from sprite import Sprite
+from sprite import Sprite, BOUNDARY
 from physics import Vector, norm
 
 class Item(Sprite):
@@ -15,7 +16,7 @@ class Item(Sprite):
                 vel: Vector | None = None,
                 acc: Vector = Vector(0, 0),
                 constraints: pygame.Rect | None = None,
-                boundary_behaviour: str | None = "vanish"):
+                boundary_behaviour: str | None = BOUNDARY.VANISH):
         self.template = template
         self.level = level
         vel = vel or Vector(0, template.speed)
@@ -28,27 +29,27 @@ class Item(Sprite):
     def play_collecting_sound(self):
         match self.template.name:
             case "bullets_buff" | "magnet" | "score_buff" | "speed_buff":
-                sound.item_collect.play()
+                Sound.item_collect.play()
             case "hp_plus" | "shield":
-                sound.good_item.play()
+                Sound.good_item.play()
             case "life_plus":
-                sound.extra_life.play()
+                Sound.extra_life.play()
             case "missile":
-                sound.collect_missile.play()
+                Sound.collect_missile.play()
             case "ship_buff":
-                sound.ship_level_up.play()
+                Sound.ship_level_up.play()
             case "size_plus":
-                sound.grow.play()
+                Sound.grow.play()
             case "size_minus":
-                sound.shrink.play()
+                Sound.shrink.play()
             case "speed_nerf":
-                sound.bad_item.play()
+                Sound.bad_item.play()
 
     def update(self, dt: int):
         """Calculate the state of the item after dt passed ms.
         If the magnet effect is active, item's get horizontally
         accelerated towards the ship."""
-        if self.level.ship.magnet:
+        if self.level.ship.status == SHIP_STATUS.MAGNETIC:
             dpos = self.level.ship.center-self.center
             dist = norm(dpos)
             if dist != 0:

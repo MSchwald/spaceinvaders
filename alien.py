@@ -1,9 +1,10 @@
 from __future__ import annotations
-import pygame, sound
-from settings import AlienTemplate, ALIEN, BULLET, ITEM
+import pygame
+from sound import Sound
+from settings import AlienTemplate, ALIEN, BULLET, ITEM, LEVEL_STATUS
 from display import Display
 from image import Image, GraphicData
-from sprite import Sprite
+from sprite import Sprite, BOUNDARY
 from bullet import Bullet
 from item import Item
 from timer import ActionTimer
@@ -23,7 +24,7 @@ class Alien(Sprite):
                 vel: Vector | None = None,
                 acc: Vector = Vector(0, 0),
                 constraints: pygame.Rect | None = None,
-                boundary_behaviour: str | None = "reflect"):
+                boundary_behaviour: str | None = BOUNDARY.REFLECT):
         """energy, speed: allow for overwriting their default settings for given template."""       
         self.template = template
         self.level = level
@@ -65,8 +66,8 @@ class Alien(Sprite):
 
     def play_spawing_sound(self):
         match self.template.name:
-            case "purple": sound.alien_spawn.play()
-            case "blob": sound.blob_spawns.play()
+            case "purple": Sound.alien_spawn.play()
+            case "blob": Sound.blob_spawns.play()
 
     @property
     def mass(self) -> int | None:
@@ -84,7 +85,7 @@ class Alien(Sprite):
         """Calculate the state of the alien after dt passed ms"""
         super().update(dt)
         self.action_timer.update(dt)
-        while self.level.status != "start" and self.action_timer.check_alarm():
+        while self.level.status != LEVEL_STATUS.START and self.action_timer.check_alarm():
             self.do_action()
 
         # Asteroids collide elastically like 3d balls.
@@ -137,7 +138,7 @@ class Alien(Sprite):
         else:
             self.energy = max(self.energy - damage, 0)
             if self.energy > 0 and self.template.name not in ("big_asteroid", "small_asteroid"):
-                {"purple": sound.enemy_hit, "ufo": sound.metal_hit}[self.template.name].play()
+                {"purple": Sound.enemy_hit, "ufo": Sound.metal_hit}[self.template.name].play()
             else:
                 self.kill()
 
@@ -183,7 +184,7 @@ class Alien(Sprite):
     def kill(self):
         """Removes an enemy, trigger splitting for asteroids and blobs.""" 
         if self.energy <= 0:
-            {"big_asteroid": sound.asteroid, "small_asteroid": sound.small_asteroid, "purple": sound.alienblob, "ufo":sound.alienblob, "blob":sound.alienblob}[self.template.name].play()
+            {"big_asteroid": Sound.asteroid, "small_asteroid": Sound.small_asteroid, "purple": Sound.alienblob, "ufo":Sound.alienblob, "blob":Sound.alienblob}[self.template.name].play()
             self.level.ship.get_points(self.template.points)
             if random() <= ITEM.PROBABILITY:
                 item = Item(choice(ITEM.LIST), self.level)
@@ -195,7 +196,7 @@ class Alien(Sprite):
                 self.level.asteroids.add(piece)
         if self.template.name == "blob":
             if self.energy > 1:
-                sound.slime_hit.play()
+                Sound.slime_hit.play()
                 for blob in self.split(ALIEN.BLOB, self.template.pieces):
                     # The splitting data is saved for later to calculate
                     # the blob's gravitation towards it's parent center.
@@ -204,7 +205,7 @@ class Alien(Sprite):
                     self.level.aliens.add(blob)
                     self.level.blobs.add(blob)
             elif self.energy == 1:
-                sound.alienblob.play()
+                Sound.alienblob.play()
                 self.level.ship.get_points(self.template.points)
                 self.hard_kill()
         super().kill()
@@ -217,7 +218,7 @@ class Alien(Sprite):
 
     def reflect(self):
         """Reflecting enemies with shield sound effects."""
-        if self.level.status != "start":
-            sound.shield.stop()
-            sound.shield_reflect.play()
+        if self.level.status != LEVEL_STATUS.START:
+            Sound.shield.stop()
+            Sound.shield_reflect.play()
         super().reflect(flip_x = False, flip_y = False)

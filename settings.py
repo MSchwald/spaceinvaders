@@ -1,11 +1,12 @@
+from __future__ import annotations
 from dataclasses import dataclass
 import pygame.locals
 
 # Structured collection of all ingame parameters for comfortable adjustment
 # and creation of new templates of aliens, bullets or items
 
-# Color names
 class COLOR(tuple):
+    """Color names"""
     WHITE = (255, 255, 255)
     BLUE = (0, 0, 200)
     YELLOW = (255, 255, 0)
@@ -16,8 +17,8 @@ class COLOR(tuple):
     GREEN = (100, 255, 100)
     BLACK = (0,0,0)
 
-# Key names and settings
 class KEY:
+    """Key names and settings"""
     EXIT = pygame.K_ESCAPE
     UP = pygame.K_w
     DOWN = pygame.K_s
@@ -28,9 +29,8 @@ class KEY:
     START = pygame.K_RETURN
     BACK = pygame.K_BACKSPACE
 
-
-# Screen settings
 class SCREEN:
+    """Screen settings"""
     PADDING_COLOR = COLOR.DARK_GREY
     BG_COLOR = COLOR.BLACK
     # Default screen settings for the game's development
@@ -40,8 +40,32 @@ class SCREEN:
     GRID = (16, 9)
     GRID_WIDTH = WIDTH // GRID[0] # 1600 / 16 = 100
 
-# Game and ship settings
+class GAME_MODE:
+    """Possible modes of the game to respond to user's input"""
+    GAME = "game" # game is running normally
+    MENU = "menu" # menu is opened by player or ending a level
+    ENTER_NAME = "enter name" # entering name into high score table"
+    EXIT = "exit" # game exited by the player
+
+class LEVEL_STATUS:
+    """Possible status properties of the running game level to coordinate the player's progress"""
+    START = "start" # starting screen (level 0) is active, game.py opens main menu
+    RUNNING = "running" # a regular level is active, menus might  be active or not
+    GAME_OVER = "game_over" # player ran out of lives, game.py opens game over menu
+    LEVEL_SOLVED = "level_solved" # player solved a regular level and a level menu opens
+    GAME_WON = "game_won" # player solved the last level in the game, high score menu gets checked
+
+class ANIMATION_TYPE:
+    """Animation types of sprites implemented in sprite.py"""
+    LOOP = "loop" # frames cycle periodically
+    ONCE = "once" # plays once, stops at last frame
+    VANISH = "vanish" # disappears after animation completes
+    PINGPONG = "pingpong" # alternates back and forth
+    RANDOM = "random" # frame indices are chosen randomly
+    MANUAL = "manual" # no automatic frame updates, handled externally
+
 class SHIP:
+    """Game and ship settings"""
     # Settings upon starting the game
     SCORE = 0
     LIVES = 3
@@ -56,9 +80,16 @@ class SHIP:
     ENERGY = {1: 15, 2: 30, 3: 45}
     WIDTH = {1: 100, 2: 100, 3:120}
 
-# Alien settings and templates in the game
+class SHIP_STATUS:
+    """Possible status properties of the ship implemented in ship.py"""
+    NORMAL = "normal" # yellow ship without special properties
+    MAGNETIC = "magnetic" # blue ship attracting items
+    SHIELD = "shield" # green ship refecting enemies, bullets and items
+    INVERSE_CONTROLS = "inverse_controls" # purple ship with inverted controls
+
 @dataclass
 class AlienTemplate:
+    """Capture the defining properties of an enemy species"""
     name: str
     speed: float
     energy: int
@@ -75,15 +106,17 @@ class AlienTemplate:
     alarm_max: int | None = None
 
 class ALIEN:
-    BIG_ASTEROID = AlienTemplate("big_asteroid", 0.3, 4, 20, 100, animation_type = "loop", fps = 10, pieces = 4)
-    SMALL_ASTEROID = AlienTemplate("small_asteroid",0.6, 1, 10, BIG_ASTEROID.width * BIG_ASTEROID.pieces ** (-1/3), animation_type = "loop", fps = 10)
+    """Default settings of enemiy species in the game"""
+    BIG_ASTEROID = AlienTemplate("big_asteroid", 0.3, 4, 20, 100, animation_type = ANIMATION_TYPE.LOOP, fps = 10, pieces = 4)
+    SMALL_ASTEROID = AlienTemplate("small_asteroid",0.6, 1, 10, BIG_ASTEROID.width * BIG_ASTEROID.pieces ** (-1/3), animation_type = ANIMATION_TYPE.LOOP, fps = 10)
     PURPLE = AlienTemplate("purple", 0.4, 10, 100, 150, colorkey = (254, 254, 254), alarm_min = 800, alarm_max = 1500)
     UFO = AlienTemplate("ufo", 1, 20, 500, 100, alarm_min = 800, alarm_max = 1500)
-    BLOB = AlienTemplate("blob", 0.5, 32, 30, 300, animation_type = "manual", pieces = 2, acc = 1/160, alarm_min = 800, alarm_max = 1500)
+    BLOB = AlienTemplate("blob", 0.5, 32, 30, 300, animation_type = ANIMATION_TYPE.MANUAL, pieces = 2, acc = 1/160, alarm_min = 800, alarm_max = 1500)
 
 # Bullet settings and templates in the game
 @dataclass
 class BulletTemplate:
+    """Capture the defining properties of a bullet type"""
     name: str
     width: int
     damage: int
@@ -93,16 +126,17 @@ class BulletTemplate:
     animation_time: float | None = None
 
 class BULLET:
+    """Default settings of bullet types in the game"""
     BULLET1 = BulletTemplate("1", 14, 1, "player", 1)
     BULLET2 = BulletTemplate("2", 18, 2, "player", 1)
     BULLET3 = BulletTemplate("3", 22, 3, "player", 1)
-    MISSILE = BulletTemplate("explosion", 150, 15, "player", 0, animation_type = "vanish", animation_time = 0.5)
-    GREEN = BulletTemplate("g", 26, 3, "enemy", 0.2, animation_type = "once", animation_time = 0.5)
+    MISSILE = BulletTemplate("explosion", 150, 15, "player", 0, animation_type = ANIMATION_TYPE.VANISH, animation_time = 0.5)
+    GREEN = BulletTemplate("g", 26, 3, "enemy", 0.2, animation_type = ANIMATION_TYPE.ONCE, animation_time = 0.5)
     BLUBBER = BulletTemplate("blubber", 150, 16, "enemy", 0.4)
 
-# Item settings and templates in the game
 @dataclass
 class ItemTemplate:
+    """Capture the defining properties of an item type"""
     name: str
     size: int = 50
     speed: int = 0.3
@@ -110,6 +144,7 @@ class ItemTemplate:
     duration: int | None = None
 
 class ITEM:
+    """Default settings of item types in the game"""
     # Probability of an item spawn for each defeated enemy
     PROBABILITY = 0.3
     # ship size *= effect
@@ -142,7 +177,7 @@ class ITEM:
 
 # Fonts settings
 class FONT:
-    # Fonts
+    """Fonts types and sizes in the game"""
     STATS = "fonts/ARCADE_I.ttf"
     MENU = "fonts/ARCADE_N.ttf"
     TEXT = "fonts/ARCADE_R.ttf"
@@ -150,8 +185,8 @@ class FONT:
     MENU_SIZE = 30
     TEXT_SIZE = 30
 
-# Menu settings
 class MENU:
+    """Menu settings"""
     BOUNDARY_SIZE = 20
     TITLE_DISTANCE = 30
     LINE_DISTANCE = 12

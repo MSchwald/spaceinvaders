@@ -1,9 +1,10 @@
 from __future__ import annotations
-import pygame, sound
+import pygame
+from sound import Sound
 from settings import BulletTemplate, BULLET, ALIEN
 from display import Display
 from image import Image, GraphicData
-from sprite import Sprite
+from sprite import Sprite, BOUNDARY
 from math import ceil
 from physics import Vector
 
@@ -20,7 +21,7 @@ class Bullet(Sprite):
                 damage: int | None = None,
                 size: int | None = None,
                 constraints: pygame.Rect | None = None,
-                boundary_behaviour: str | None = "vanish"):
+                boundary_behaviour: str | None = BOUNDARY.VANISH):
         """speed, owner, damage: allow for overwriting their default settings for given template.
         size: only used for blubber to determine the size of its sprite."""
         self.template = template
@@ -52,16 +53,16 @@ class Bullet(Sprite):
     def play_firing_sound(self):
         match self.template.name:
             case "1" | "2" | "3":
-                sound.bullet.play()
+                Sound.bullet.play()
             case "blubber":
-                sound.blubber.play()
+                Sound.blubber.play()
             case "g":
-                sound.alienshoot1.play()
+                Sound.alienshoot1.play()
             case "explosion":
-                sound.explosion.play()
+                Sound.explosion.play()
 
     def reflect(self):
         """Reflecting bullets with shield sound effects."""
-        sound.shield.stop()
-        sound.shield_reflect.play()
+        Sound.shield.stop()
+        Sound.shield_reflect.play()
         super().reflect(flip_x=True, flip_y=True)

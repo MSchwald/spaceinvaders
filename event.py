@@ -19,9 +19,9 @@ class Event(ActionTimer):
 
     def do_action(self):
         if self.template == "asteroid_hail":
-            self.level.encounter(ALIEN.BIG_ASTEROID, boundary_behaviour = "vanish")
+            self.level.encounter(ALIEN.BIG_ASTEROID, boundary_behaviour = BOUNDARY.VANISH)
         if self.template == "alien_attack":
             if random() > 0.5:
-                self.level.encounter(ALIEN.PURPLE, boundary_behaviour = "reflect")
+                self.level.encounter(ALIEN.PURPLE, boundary_behaviour = BOUNDARY.REFLECT)
             else:
                 self.level.encounter(ALIEN.BLOB, energy = ALIEN.BLOB.energy//4)

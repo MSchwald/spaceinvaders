@@ -1,5 +1,6 @@
-import pygame, sound
-from settings import KEY, SCREEN
+import pygame
+from sound import Sound
+from settings import KEY, SCREEN, GAME_MODE, LEVEL_STATUS
 from display import Display
 from level import Level
 from highscores import Highscores
@@ -23,24 +24,24 @@ class Game:
 
     def run(self):
         """Starts the main loop for the game."""
-        self.running = True
-        self.mode = "menu"  # possible modes: "game", "menu", "enter name" (for highscores)
+        self.mode = GAME_MODE.MENU  # possible modes: "game", "menu", "enter name" (for highscores)
         self.active_menu = Menu.create_main_menu(self)
+        Sound.init()
         self.level.start_current()
 
         #main loop of the game
-        while self.running:
+        while self.mode != GAME_MODE.EXIT:
             self.handle_user_input()
 
             # measure passed time dt since last frame, limit frame rate to 60fps
             dt = self.clock.tick(60)
             
             # run the game's level for dt milliseconds (pause if in menu mode)
-            if self.mode == "game" or self.level.status == "start":
+            if self.mode == GAME_MODE.GAME or self.level.status == LEVEL_STATUS.START:
                 self.level.update(dt) # update all ingame objects
-                if self.level.status != "running" and self.level.status != "start":
+                if self.level.status != LEVEL_STATUS.RUNNING and self.level.status != LEVEL_STATUS.START:
                     self.active_menu = Menu.create_level_menu(self.level)
-                    self.mode = "menu"
+                    self.mode = GAME_MODE.MENU
             self.render()
         pygame.quit()
 
@@ -53,15 +54,15 @@ class Game:
                 event.type == pygame.QUIT or
                 (event.type == pygame.KEYDOWN and event.key == KEY.EXIT)
             ):
-                self.running = False
+                self.mode = GAME_MODE.EXIT
                 break
 
             # The game's reaction on pressing or releasing keys and mouse buttons
-            if self.mode == "game":
+            if self.mode == GAME_MODE.GAME:
                 if event.type == pygame.KEYDOWN:
                     # RETURN pauses the game and opens the main menu
                     if event.key == KEY.START:
-                        self.mode = "menu"
+                        self.mode = GAME_MODE.MENU
                         self.active_menu = Menu.create_main_menu(self)
                         break
                     # SPACE shoots bullets
@@ -71,14 +72,14 @@ class Game:
                     self.level.ship.shoot_missile(Vector(event.pos[0],event.pos[1]))
 
             # Enter the name into the high score table
-            if self.mode == "enter name":
+            if self.mode == GAME_MODE.ENTER_NAME:
                 self.highscores.update_name(name=self.player_name, rank=self.score_rank)
                 self.active_menu = Menu.create_enter_name_menu(self)
                 self.active_menu.handle_input(self, event)
                 continue
                     
             # Navigating the menu
-            if self.mode == "menu":
+            if self.mode == GAME_MODE.MENU:
                 if event.type == pygame.KEYDOWN:
                     if event.key in [KEY.UP, KEY.DOWN]:
                         self.active_menu.move_selection(event.key)
@@ -86,7 +87,7 @@ class Game:
                         Menu.choose_current_selection(self)
 
         # Ship direction and shield are set according to the keys' current states
-        if self.mode == "game":
+        if self.mode == GAME_MODE.GAME:
             keys = pygame.key.get_pressed()
             self.level.ship.control(keys)   
 
@@ -95,6 +96,6 @@ class Game:
         self.screen.fill(SCREEN.BG_COLOR) # background
         Statusbar.blit(self.level)
         self.level.blit() # ship, enemies, items, bullets, crosshairs
-        if self.mode == "menu" or self.mode == "enter name":
+        if self.mode == GAME_MODE.MENU or self.mode == GAME_MODE.ENTER_NAME:
             self.active_menu.blit()
         Display.update(padding_color = SCREEN.PADDING_COLOR)

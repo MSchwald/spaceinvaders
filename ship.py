@@ -1,9 +1,10 @@
 from __future__ import annotations
-import pygame, sound
-from settings import KEY, BULLET, SHIP
+import pygame
+from sound import Sound
+from settings import KEY, BULLET, SHIP, SHIP_STATUS
 from display import Display
 from image import Image, GraphicData
-from sprite import Sprite
+from sprite import Sprite, BOUNDARY
 from bullet import Bullet
 from timer import ActionTimer
 from physics import Vector, normalize
@@ -24,7 +25,7 @@ class Ship(Sprite):
         self.energy = self.max_energy
         graphic = GraphicData(path = f"images/ship/a-{rank}.png", scaling_width = SHIP.WIDTH[rank])
         super().__init__(graphic = graphic,
-            constraints = Display.grid_rect(0, 5, 16, 4), boundary_behaviour = "clamp")
+            constraints = Display.grid_rect(0, 5, 16, 4), boundary_behaviour = BOUNDARY.CLAMP)
         self.reset_pos()
 
         # Initiate timers for shield and item effects
@@ -90,7 +91,7 @@ class Ship(Sprite):
             self.set_rank(1)
             self.reset_item_effects()
             self.level.start_current()
-            sound.lose_life.play()
+            Sound.lose_life.play()
 
     def get_damage(self, damage: int):
         self.energy = max(0, self.energy - damage)
@@ -135,7 +136,7 @@ class Ship(Sprite):
 
     def shoot_bullets(self):
         """Shoot bullets if there aren't too many ship bullets on the screen yet."""
-        if len(self.level.ship_bullets) < SHIP.MAX_BULLETS * (2*self.rank-1) and self.status != "shield":
+        if len(self.level.ship_bullets) < SHIP.MAX_BULLETS * (2*self.rank-1) and self.status != SHIP_STATUS.SHIELD:
             doppler = self.vel.y # Take Doppler effect into account to calculate the bullets' speed.
             for fp, size in zip(self.fire_points, self.bullet_sizes):
                 bullet = Bullet.from_size(size)
@@ -148,15 +149,15 @@ class Ship(Sprite):
     def control(self, keys):
         """Control the ship's direction and shield according to the current state of the keyboard."""
         if keys[KEY.SHIELD]:
-            if self.status != "shield" and self.shield_time > 0:
+            if self.status != SHIP_STATUS.SHIELD and self.shield_time > 0:
                 self.activate_shield()
                 self.vel = Vector(0,0)
         else:
-            if self.status == "shield":
+            if self.status == SHIP_STATUS.SHIELD:
                 self.deactivate_shield()
             direction = Vector(keys[KEY.RIGHT]-keys[KEY.LEFT], keys[KEY.DOWN]-keys[KEY.UP])
             self.vel = self.speed_factor * SHIP.SPEED[self.rank] * normalize(direction)
-            if self.status == "inverse_controls":
+            if self.status == SHIP_STATUS.INVERSE_CONTROLS:
                 self.vel *= -1
 
     def update_graphic(self):
@@ -172,22 +173,21 @@ class Ship(Sprite):
             case "bullets_buff": self.bullets_buff += 1
             case "hp_plus": self.energy = min(self.max_energy, self.energy + item.template.effect)
             case "invert_controls":
-                if self.status == "inverse_controls":
-                    self.status = "normal"
+                if self.status == SHIP_STATUS.INVERSE_CONTROLS:
+                    self.status = SHIP_STATUS.NORMAL
                     self.controls_timer.pause()
                 else:
-                    self.status = "inverse_controls"
+                    self.status = SHIP_STATUS.INVERSE_CONTROLS
                     self.controls_timer.set_alarm(item.duration_ms, cyclic = False)
-                    sound.bad_item.play()
+                    Sound.bad_item.play()
                 self.update_graphic()
             case "life_minus":
                 self.lives -= 1
                 if self.lives > 0:
-                    sound.lose_life.play()
+                    Sound.lose_life.play()
             case "life_plus": self.lives += 1
             case "magnet":
-                self.magnet = True
-                self.status = "magnetic"
+                self.status = SHIP_STATUS.MAGNETIC
                 self.update_graphic()
             case "missile": self.missiles += 1
             case "score_buff":
@@ -224,14 +224,14 @@ class Ship(Sprite):
         """Activate shield if the player has remaining shield time left."""
         if self.shield_time > 0:
             self.shield_timer.resume()
-            sound.shield.play()
-            self.last_status, self.status = self.status, "shield"
+            Sound.shield.play()
+            self.last_status, self.status = self.status, SHIP_STATUS.SHIELD
             self.update_graphic()
 
     def deactivate_shield(self):
         """Method used to deactivate the shield when player releases the shield key or running out of shield time."""
         self.shield_timer.pause()
-        if self.status == "shield":
+        if self.status == SHIP_STATUS.SHIELD:
             self.status = self.last_status
             self.update_graphic()
 
@@ -250,14 +250,13 @@ class Ship(Sprite):
     def reset_item_effects(self):
         self.bullets_buff = 0
         self.speed_factor = 1
-        self.magnet = False
         self.missiles = SHIP.STARTING_MISSILES
         self.score_factor = 1
         self.shield_timer.set_alarm(1000 * SHIP.SHIELD_STARTING_TIMER, cyclic = False)
         self.shield_timer.pause()
         self.size_factor = 1
-        self.status = "normal"
-        self.last_status = "normal"
+        self.status = SHIP_STATUS.NORMAL
+        self.last_status = SHIP_STATUS.NORMAL
 
     def update(self, dt: int):
         """Update the ship's position, shield and item timers after dt passed ms"""
@@ -273,6 +272,6 @@ class Ship(Sprite):
             self.size_factor = 1
             self.update_graphic()
         if self.controls_timer.check_alarm():
-            self.status = "normal"
+            self.status = SHIP_STATUS.NORMAL
             self.update_graphic()
         super().update(dt)

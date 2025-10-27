@@ -1,15 +1,16 @@
-import pygame, sound
-from settings import AlienTemplate, ALIEN, SHIP, BULLET
+import pygame
+from sound import Sound
+from settings import AlienTemplate, ALIEN, SHIP, BULLET, LEVEL_STATUS, SHIP_STATUS
 from display import Display
 from image import Image, GraphicData
-from sprite import Sprite
+from sprite import Sprite, BOUNDARY
 from ship import Ship
 from alien import Alien
 from timer import ActionTimer
 from random import random, randint
 from math import hypot
 from physics import Vector, normalize
-from dataclasses import dataclass
+from dataclasses import dataclass    
 
 class Level:
     """Manage game levels, loading enemies, timed events, collisions, and player progress.
@@ -74,7 +75,7 @@ class Level:
 
     def restart_game(self):
         """Restart from starting game level."""
-        sound.level_solved.play()
+        Sound.level_solved.play()
         self.number = SHIP.GAME_LEVEL
         self.items.empty()
         self.ship.start_new_game()
@@ -137,26 +138,26 @@ class Level:
         """Load enemies and start action timers of the current game level."""
         match number:
             case 0:
-                self.boundary_behaviour = "wrap"
+                self.boundary_behaviour = BOUNDARY.WRAP
                 self.encounter(ALIEN.BIG_ASTEROID, 5, speed_factor = 1/2)
                 self.encounter(ALIEN.SMALL_ASTEROID, 5, speed_factor = 1/2)
                 self.encounter(ALIEN.BLOB, speed_factor = 1/2, energy = 9)
                 self.encounter(ALIEN.UFO, speed_factor = 1/4)
                 self.encounter(ALIEN.PURPLE, 2, speed_factor = 1/2)
             case 1:
-                self.boundary_behaviour = "reflect"
+                self.boundary_behaviour = BOUNDARY.REFLECT
                 self.encounter(ALIEN.BIG_ASTEROID, 5)
                 self.encounter(ALIEN.SMALL_ASTEROID, 5)
             case 2:
                 self.asteroid_hail.set_alarm(800, 1000, cyclic = True)
-                self.boundary_behaviour = "reflect"
+                self.boundary_behaviour = BOUNDARY.REFLECT
                 for n in (2,4,6,8):
                     self.encounter(ALIEN.PURPLE, grid = (n,1), dir = (1,1), constraints = Display.grid_rect(0, 0, 16, 3))
                 for n in (8,10,12,14):
                     self.encounter(ALIEN.PURPLE, grid = (n,5), dir = (-1,-1), constraints = Display.grid_rect(0, 3, 16, 3))
             case 3:
                 self.asteroid_hail.set_alarm(800, 1000, cyclic = True)
-                self.boundary_behaviour = "reflect"
+                self.boundary_behaviour = BOUNDARY.REFLECT
                 self.encounter(ALIEN.UFO, grid = (1,1), dir = (1,0))
                 self.encounter(ALIEN.PURPLE, grid = (2,3), dir = (1,0))
                 self.encounter(ALIEN.PURPLE, grid = (6,3), dir = (1,0))
@@ -164,7 +165,7 @@ class Level:
                 self.encounter(ALIEN.PURPLE, grid = (14,5), dir = (-1,0))
             case 4:
                 self.asteroid_hail.set_alarm(800, 1000, cyclic = True)
-                self.boundary_behaviour = "reflect"           
+                self.boundary_behaviour = BOUNDARY.REFLECT          
                 self.encounter(ALIEN.BLOB)
             case 5:
                 self.timer.set_alarm(60000, cyclic = False)
@@ -199,40 +200,40 @@ class Level:
             case _: return False
 
     @property
-    def status(self) -> str:
+    def status(self) -> LEVEL_STATUS:
         """String indicating why a game level or the entire game ended."""
         if self.number == 0:
-            return "start"
+            return LEVEL_STATUS.START
         if self.ship.lives <= 0:         
-            return "game_over"
+            return LEVEL_STATUS.GAME_OVER
         if self.goal_fulfilled:
             if self.number < self.max_level:
-                return "level_solved"
-            return "game_won"
-        return "running"
+                return LEVEL_STATUS.LEVEL_SOLVED
+            return LEVEL_STATUS.GAME_WON
+        return LEVEL_STATUS.RUNNING
 
     def play_status_sound(self):
         """Play the appropriate sound when a level ends."""
         pygame.mixer.stop()
         match self.status:
-            case "game_over":
-                sound.game_over.play()
-            case "level_solved":
-                sound.level_solved.play()
-            case "game_won":
-                sound.game_won.play()
+            case LEVEL_STATUS.GAME_OVER:
+                Sound.game_over.play()
+            case LEVEL_STATUS.LEVEL_SOLVED:
+                Sound.level_solved.play()
+            case LEVEL_STATUS.GAME_WON:
+                Sound.game_won.play()
 
     def update(self, dt: int):
         """Update level status according to passed time dt."""
         for timer in self.timers:
             timer.update(dt)
         if self.asteroid_hail.check_alarm():
-            self.encounter(ALIEN.BIG_ASTEROID, boundary_behaviour = "vanish")
+            self.encounter(ALIEN.BIG_ASTEROID, boundary_behaviour = BOUNDARY.VANISH)
         if self.alien_hail.check_alarm():
             if random() > 0.5:
-                self.encounter(ALIEN.PURPLE, boundary_behaviour = "reflect")
+                self.encounter(ALIEN.PURPLE, boundary_behaviour = BOUNDARY.REFLECT)
             else:
-                self.encounter(ALIEN.BLOB, energy = ALIEN.BLOB.energy//4, boundary_behaviour = "reflect")
+                self.encounter(ALIEN.BLOB, energy = ALIEN.BLOB.energy//4, boundary_behaviour = BOUNDARY.REFLECT)
         self.update_sprites(dt)
 
     def update_sprites(self, dt: int):
@@ -288,27 +289,27 @@ class Level:
                                 if alien.energy == 1:
                                     alien.kill()
                                 else:
-                                    sound.slime_hit.play()
+                                    Sound.slime_hit.play()
                                     alien.energy = alien.energy//2
                                     alien.update_blob_image()
                             else:
                                 alien.get_damage(bullet.damage)
                             bullet.hit_enemies.add(alien)
             elif bullet.owner == "enemy" and pygame.sprite.collide_mask(bullet, self.ship):
-                if self.ship.status == "shield":
+                if self.ship.status == SHIP_STATUS.SHIELD:
                     if bullet.vel * (self.ship.pos - bullet.pos) > 0:
                         bullet.reflect()
                         bullet.owner = "player"
                 else:
                     self.ship.get_damage(bullet.damage)
                     bullet.kill()
-                    sound.player_hit.play()
+                    Sound.player_hit.play()
             
     def enemies_hit_ship(self):
         """If enemies hit the ship, reflect with shield or inflict damage and kill the enemy."""
         for asteroid in self.asteroids:
             if pygame.sprite.collide_mask(self.ship, asteroid):
-                if self.ship.status == "shield" or self.status == "start":
+                if self.ship.status == SHIP_STATUS.SHIELD or self.status == LEVEL_STATUS.START:
                     if asteroid.vel * (self.ship.pos - asteroid.pos) > 0:
                         asteroid.reflect()
                 else:
@@ -317,7 +318,7 @@ class Level:
                     asteroid.kill()
         for alien in self.aliens:
             if pygame.sprite.collide_mask(self.ship, alien):
-                if self.ship.status == "shield" or self.status == "start":
+                if self.ship.status == SHIP_STATUS.SHIELD or self.status == LEVEL_STATUS.START:
                     if alien.vel * (self.ship.pos - alien.pos) > 0:
                         alien.reflect()
                 else:
@@ -332,7 +333,7 @@ class Level:
         """If the ship collects an item, trigger its effect."""
         for item in self.items:
             if pygame.sprite.collide_mask(self.ship, item):
-                if self.ship.status == "shield":
+                if self.ship.status == SHIP_STATUS.SHIELD:
                     item.vel *= -1
                 else:
                     self.ship.collect_item(item)
@@ -358,5 +359,5 @@ class Level:
                             self.blobs.add(merged_blob)
                             blob1.hard_kill()
                             blob2.hard_kill()
-                            sound.blob_merge.play()
+                            Sound.blob_merge.play()
                             break

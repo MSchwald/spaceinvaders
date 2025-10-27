@@ -1,0 +1,74 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,enumerate}
+\usepackage{geometry}
+\geometry{hmargin=2cm, vmargin=2.5cm}
+
+\begin{document}
+
+
+\section{main}%Modules for higher level coordination of the game
+This is the game's main module. Its only purpose is to create an instance of the game and run it. It can be convenient to have such a module, as it could also be easily modified for tasks like for example running the game multiple times or analyzing and possibly saving data produced while playing the game without having tp mess with the game's actual code.
+
+\section{game}
+The game module starts a rendering loop of three phases, as it is classical for video games:
+\begin{enumerate}
+    \item Handle user input (i.e. check for keyboard and mouse events and react on them)
+    \item Calculate game logic (Calculate spawning / movement / animation of sprites, collision detection, handle damage / status effects / opening or closing of menus etc.)
+    \item Render game's current state (Render the background, graphical user interface and all sprites on the screen in the right order)
+\end{enumerate}
+
+It is crucial to strictly leave these three phases separated, as otherwise the game's code will quickly get complicated to understand and developed further. Pygame gives the required methods to measure the time $dt$ passed (in milliseconds) between the rendering of two subsequent frames on the screen. This time gets passed to all game objects to make sure that the game runs with the same speed on every computer.
+
+\section{level}
+
+\section{display}
+It was necessary to fix a certain resolution for developing the game: I used a window of the size $1600\times 900$ that I subdivided into a $16\times9$ square grid for planing the game's levels and adjusting the sizes and velocities of the game's sprites. The display module's task is to check out the user's screen settings and to set up a game surface on it's screen, which is desired to be as big as possible with the same $16:9$ aspect ratio as my developing resolution. If the user's screen has a different aspect ratio, the game's surface will get centralized with some dark grey padding visible on its sides. In any case, the dimensions of the game surface and its square grid are saved as global variables to get used by other modules.
+
+\section{settings}
+
+
+\section{image}%Modules for sprites of level objects
+It is convenient to create a class that handles loading, preprocessing and further editing pictures to be used for sprites of objects in the game. In pygame there is the \emph{Surface} class for handling image files, but as it is coded in C, it is apparently not possible to inherit properties from this class directly. Hence I created a wrapper class \emph{Image}, whose objects contain a pygame surface, for convenience also the file link from where the picture originally got loaded as well as a pygame \emph{Mask} object. In pygame, masks are bit maps on surfaces that can be calculated from the surface's background color (frequentely called \emph{colorkey} in this module) to calculate pixel exact collision detection of sprites in the game. It is convenient to include them in the Image objects for not having to calculate them more often than necessary. The most complex part of the Image class is its lazy image loader. On the one hand, this image loader makes sure that each original picture from the image's folder needs to get loaded and preprocessed only once. (This makes the game's performance much faster. Also, adding new pictures for developing the game further is much more comfortable as the preprocession step is automatized and sizes of objects can easily be adjusted later.) On the other hand, it loads each image directly in the optimal resolution adapted to the user's display settings determined in the \emph{display} module. It would certainly be a bit easier to fix a scaling of the images (for example to rescale them all adapted to the same resolution $1600\times900$ that I used to develop the game) and further rescale them from there if the user's display settings differ. However, I liked the idea that if a user has a much bigger screen than me, then the pictures will also get loaded in a better resolution without quality loss by upscaling. (Specifically, the original images of the asteroids are originally in a very good resolution that would get lost by adapting them to a once randomly fixed developing resolution.) To generalize these ideas for animated images, the dataclass \emph{GraphicData} consists either of a single image loaded from a file path or a list of images (called \emph{frames}) loaded from the path of folder, together with their mask(s). For animated images, one can provide the description of its animation type (as a string) and its speed of animation either by its \emph{fps} (frames per seconds), the duration of each frame or the total duration of its animation. The missing attributes get calculated automatically upon initializing a GraphicData object via the formula $fps = \#frames / animationtime$.
+
+\section{sprite}
+Pygame's \emph{Sprite} class is minimalistically designed to contain image data of game objects together with a pygame \emph{Rectangle} object as an attibute, a rectangle on the screen with integer coordinates. There are already implemented methods to draw sprites on the screen onto their given rectangle, to detect their collisions (either by looking for collisions of their entire rectangles or by pixel exact collision calculated from their masks and their rectangles) and to organize sprites in pygame \emph{SpriteGroup}s, where they can easily be added or removed. My implemented \emph{Sprite} class inherits these methods and its objects consist of a \emph{GraphicData} object (see \emph{image} module), moving data consisting of three $2d$ vectors $pos$, $vel$, $acc$ describing the objects position on the screen, velocity and acceleration as well as information in the area where the object can move and its behavior when it hits this area's boundary. The vectors are realized as objects of the \emph{Vector} class from the \emph{physics} module; it would also have been possible to use the \emph{Vector2} class from pygame. I deliberately avoided using \emph{numpy}, which apparently has only better performance for calculations in big arrays. For calculating the animation of sprites, \emph{ActionTimer}s from the \emph{timer} module are used.
+
+The most important game objects (\emph{aliens}, the player's \emph{ship}, \emph{bullets}, \emph{items}) are all realized via classes inheriting from \emph{Sprite} together with more specific attributes and methods. Their initiation functions are each designed such that not the whole sprite data needs to be provided every time to create a new object, but such that type specific data is captured in \emph{AlienData}, \emph{BulletData} and \emph{ItemData} objects defined in the \emph{settings} module, while other attributes like their velocity and boundary behavior are often set automatically by default values or externally by the \emph{level} module. As a consequence, the parent class \emph{Sprite} needs to be a bit complex, while the derived classes \emph{Alien}, \emph{Ship}, \emph{Bullet} and \emph{Item} become quite convenient to work with.
+
+For further convenience, sprites can also be initialized without a position vector. They will then not get rendered or updated from the game's logic until they get a position provided by the \emph{Sprite.spawn} method. This allows for easily spawning multiple instances of an object at various points as well implementing further interesting features, like for example aliens becoming temporarily invisible while still not counting as defeated.
+
+\section{timer}
+
+\section{alien}
+\section{ship}
+\section{bullet}
+\section{item}
+
+
+\section{physics}%Physics for calculating collisions of level objects
+When two point masses $m_1$ and $m_2$ with velocity vectors $v_1$, $v_2$ collide, the total momentum $P = m_1v_1+m_2v_2$ gets preserved and there are classically two extreme cases of what can happen:
+\begin{enumerate}
+\item \emph{Elastic collision}: We assume that the two masses bounce off from each other with new velocity vectors $v_1'$ and $v_2'$ without losing any energy due to friction or deforming. Then the total kinetic energy $E=\frac12m_1|v_1|^2+\frac12m_2|v_2|^2=\frac12m_1|v_1'|^2+\frac12m_2|v_2'|^2$ of the system must be preserved and thus $m_1(|v_1|^2-|v_1'|^2)=m_2(|v_2'|^2-|v_2|^2)$. Preservation of the total momentum implies $m_1(v_1-v_1')=m_2(v_2'-v_2)$. In one dimension and given that $v_1\neq v_2$ (otherwise the two masses move parallel, i.e. there is no collision), these two equations can be resolved to yield the classical formulas
+\begin{align*}
+v_1'&=\frac{m_1-m_2}{m_1+m_2}v_1+\frac{2m_2}{m_1+m_2}\\
+v_2'&=\frac{2m_1}{m_1+m_2}v_1+\frac{m_2-m_1}{m_1+m_2}.
+\end{align*}
+In two dimensions the direction in which the two masses collide plays a role. Take $n$ to be a normal vector at the point of collision. (In particular, for two colliding 2D balls at positions $p_1$ and $p_2$ we can simply take $n=\frac{p_1-p_2}{|p_1-p_2|}$, which is a normal vector to both balls at the point of collision.) Then the formula for the 1D elastic collision can be applied in the normal direction $n$, as in the parallel direction there is no collision happening.
+\item \emph{Totally inelastic collision}: The two masses merge together to a single mass $M=m_1+m_2$ centered at the center of mass $\displaystyle\frac{m_1+m_2}{m_1v_1+m_2v_2}=\frac{P}{M}$ and with some new velocity vector $v$. Preservation of the total momentum implies $P=Mv$ and hence $\displaystyle v=\frac PM=\frac{m_1v_1+m_2v_2}{m_1+m_2}$.
+\end{enumerate}
+
+
+
+
+\section{text}%Graphical user interface
+\section{menu}
+\section{statusbar}
+
+
+\section{highscores}%Further game features
+\section{sound}
+
+
+
+\end{document}

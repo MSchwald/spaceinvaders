@@ -1,6 +1,7 @@
 from __future__ import annotations
-import pygame, sound
-from settings import COLOR, KEY, SCREEN, FONT, MENU, ITEM, MAX_NAME_LENGTH
+import pygame
+from sound import Sound
+from settings import COLOR, KEY, SCREEN, FONT, MENU, ITEM, MAX_NAME_LENGTH, LEVEL_STATUS, GAME_MODE
 from text import Layout, Text
 from image import Image
 from level import Level
@@ -53,7 +54,7 @@ class Menu():
 
     def move_selection(self, event_key):
         """Navigate through the menus otion according to user's input"""
-        sound.menu_move.play()
+        Sound.menu_move.play()
         self.current_selection = (
             (self.current_selection + {KEY.UP : -1, KEY.DOWN : 1}[event_key]) % len(self.options.lines)
         )
@@ -85,19 +86,19 @@ class Menu():
     def create_main_menu(cls, game: Game) -> Menu:
         """Return the correct Main / Pause menu in each game situation."""
         match game.player_name, game.level.status:
-            case _, "running":
+            case _, LEVEL_STATUS.RUNNING:
                 message, options = ["Pause"], ["Continue", "Restart"]
-            case "", "game_won":
+            case "", LEVEL_STATUS.GAME_WON:
                 message, options = ["Good game!", "Do you want to play again?"], ["New game"]
-            case _, "game_won":
+            case _, LEVEL_STATUS.GAME_WON:
                 message, options = [f"Good game, {game.player_name}!", "Do you want to play again?"], ["New game"]
-            case "", "game_over":
+            case "", LEVEL_STATUS.GAME_OVER:
                 message, options = ["Game over!","You ran out of lives!", "Do you want to play again?"], ["New game"]
-            case _, "game_over":
+            case _, LEVEL_STATUS.GAME_OVER:
                 message, options = ["Game over!", f"{game.player_name}, do you want to play again?"], ["New game"]
-            case "", "start":
+            case "", LEVEL_STATUS.START:
                 message, options = ["Space invaders", "Navigate menu with W,S","and pressing RETURN."], ["Start game"]
-            case _, "start":
+            case _, LEVEL_STATUS.START:
                 message, options = [f"Welcome back, {game.player_name}!"], ["Start game"]
         default_options = ["How to play","Highscores", "Buy Premium", "Credits", "Exit"]
         return Menu.create(message, options + default_options)
@@ -105,17 +106,17 @@ class Menu():
     @classmethod
     def create_level_menu(cls, level: Level) -> Menu:
         """Return an info menu when a level ends according to the given level status."""
-        if level.status in ["level_solved", "game_won", "game_over"]:
+        if level.status in (LEVEL_STATUS.LEVEL_SOLVED, LEVEL_STATUS.GAME_WON, LEVEL_STATUS.GAME_OVER):
             level.play_status_sound()
             match level.status:
-                case "level_solved":
+                case LEVEL_STATUS.LEVEL_SOLVED:
                     return Menu.create([f"Level {level.number} solved!",
                                 f"In level {level.number+1}, you have to", f"{level.goals[level.number+1]}"],
                                 ["Next level"])
-                case "game_won":
+                case LEVEL_STATUS.GAME_WON:
                     return Menu.create(["Congratulations!", "You have finished", "all available levels!"],
                                 ["Check high scores"])
-                case "game_over": 
+                case LEVEL_STATUS.GAME_OVER: 
                     return Menu.create(["Game over!","You ran out of lives!"],
                                 ["Check high scores"])
 
@@ -137,7 +138,7 @@ class Menu():
             elif event.key == KEY.START:
                     game.highscores.save()
                     game.active_menu = Menu.create_main_menu(game)
-                    game.mode = "menu"
+                    game.mode = GAME_MODE.MENU
 
     @classmethod
     def init_info_menus(cls):
@@ -184,19 +185,19 @@ class Menu():
     def choose_current_selection(cls, game: Game):
         """Triggers the right game effects or opens new Menu
         when player chooses an option of a menu."""
-        sound.menu_select.play()
+        Sound.menu_select.play()
         match game.active_menu.options.lines[game.active_menu.current_selection]:
 
             # Menu options that start or exit the game
             case "Restart" | "Start game" | "New game":
-                game.mode = "game"
+                game.mode = GAME_MODE.GAME
                 game.level.restart_game()
             case "Continue":
-                game.mode = "game"
+                game.mode = GAME_MODE.GAME
             case "Exit":
                 game.running = False
             case "Next level":
-                game.mode = "game"
+                game.mode = GAME_MODE.GAME
                 game.level.start_next()
 
             # Menu options to browse the main menu
@@ -227,9 +228,9 @@ class Menu():
                 game.score_rank = game.highscores.highscore_rank(game.level.ship.score)
                 if game.score_rank is not None:
                     pygame.mixer.stop()
-                    sound.new_highscore.play()
+                    Sound.new_highscore.play()
                     game.highscores.insert_score(name=game.player_name, score=game.level.ship.score, rank=game.score_rank)
-                    game.mode = "enter name"
+                    game.mode = GAME_MODE.ENTER_NAME
                 else:
                     game.active_menu = Menu.create(["No new high score!",
                                                     "Your score was too low,",

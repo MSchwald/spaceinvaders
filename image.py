@@ -1,6 +1,6 @@
 from __future__ import annotations
 import pygame
-from settings import COLOR, SCREEN
+from settings import COLOR, SCREEN, ANIMATION_TYPE
 from pathlib import Path
 from display import Display
 from dataclasses import dataclass
@@ -152,7 +152,7 @@ class GraphicData:
     scaling_width: int | None = None
     scaling_height: int | None = None
     scaling_factor: float | None = None
-    animation_type: str | None = None
+    animation_type: ANIMATION_TYPE | None = None
     fps: int | None = None
     animation_time: float | None = None
     frame_duration_ms: int | None = None
@@ -178,7 +178,7 @@ class GraphicData:
         elif self.frames is not None:
             self.image = self.frames[self.starting_frame % len(self.frames)]
             self.path = str(Path(self.image.path).parent)
-        if self.animation_type != "manual":
+        if self.animation_type != ANIMATION_TYPE.MANUAL:
             if self.fps:
                 self.animation_time = len(self.frames) / self.fps
                 self.frame_duration_ms = int(1000 / self.fps)

@@ -26,7 +26,7 @@ class Layout:
         """Align list of Pygame surfaces horizontally or vertically. Padding and spacing can be added.
         orientation: 'horizontal' or 'vertical'; alignment : str
         alignment: describes alignment along the perpendicular axis
-            ('center', 'left' or 'right' for vertical alignment; 'center', 'top' or 'bottom' for horizontal).
+        ('center', 'left' or 'right' for vertical alignment; 'center', 'top' or 'bottom' for horizontal).
         rescale_to_surface: If provided, rescale surfaces to match its height or width."""
         if surfaces == []:
             return pygame.Surface((0,0))
