@@ -4,13 +4,12 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-  // uncomment this if running on linux.
-  // addtionally, execute `xhost +local:docker` to allow
-  // GUI applications to run from inside the container
-  // "runArgs": [
-  //   "--env=DISPLAY=${env:DISPLAY}",
-  //   "--volume=/tmp/.X11-unix:/tmp/.X11-unix"
-  // ],
+  "runArgs": [
+    "--env=DISPLAY=host.docker.internal:0", 
+    //uncomment this for sound when using linux
+    //"--volume=/tmp/.X11-unix:/tmp/.X11-unix"
+    //"--env=PULSE_SERVER=tcp:host.docker.internal:4713"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [

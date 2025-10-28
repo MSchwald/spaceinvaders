@@ -44,7 +44,7 @@ class Display:
         elif ratio > 0:
             # display is too wide
             screen_w, screen_h = w * max_height // h, max_height
-            Display.padding_w, Display.padding_h = (self.width - screen_w) // 2, 0
+            Display.padding_w, Display.padding_h = (max_width - screen_w) // 2, 0
         else:
             # display is too high
             screen_w, screen_h = max_width, max_width * h // w

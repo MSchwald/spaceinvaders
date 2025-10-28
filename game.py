@@ -22,11 +22,11 @@ class Game:
         self.highscores = Highscores()  
         self.clock = pygame.time.Clock()
 
-    def run(self):
+    def run(self, mute: bool = False):
         """Starts the main loop for the game."""
         self.mode = GAME_MODE.MENU  # possible modes: "game", "menu", "enter name" (for highscores)
         self.active_menu = Menu.create_main_menu(self)
-        Sound.init()
+        Sound.init(mute)
         self.level.start_current()
 
         #main loop of the game
