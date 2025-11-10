@@ -93,19 +93,19 @@ class Ball:
     def __init__(self, pos: Vector, vel: Vector, r: float):
         self.pos, self.vel, self.r = pos, vel, r
 
-def elastic_collision(v1: Vector, v2: Vector, m1: float, m2: float, n: Vector) -> tuple(Vector, Vector):
+def elastic_collision(v1: Vector, v2: Vector, m1: float, m2: float, n: Vector) -> tuple[Vector, Vector]:
     """Calculate new velocity vectors of two masses m1, m2
     after they collide elastically in a given normal direction n"""
     factor = 2 * (v1 - v2) * n / (m1 + m2)
     return v1 + (-m2 * factor) * n, v2 + (m1 * factor) * n
 
-def inelastic_collision(p1: Vector, p2: Vector, v1: Vector, v2: Vector, m1: float, m2: float) -> tuple(Vector, Vector):
+def inelastic_collision(p1: Vector, p2: Vector, v1: Vector, v2: Vector, m1: float, m2: float) -> tuple[Vector, Vector]:
     """return center of gravity of two masses m1, m2
     and their velocity after they merge by a completely inelastic collision"""
     m = m1 + m2
     return (m1 * p1 + m2 * p2) / m, (m1 * v1 + m2 * v2) / m
 
-def ball_collision_data(ball1: Ball, ball2: Ball, m1: float, m2: float) -> tuple(float | None, Vector, Vector):
+def ball_collision_data(ball1: Ball, ball2: Ball, m1: float, m2: float) -> tuple[float | None, Vector, Vector]:
     """if two balls collided elastically in the past,
     return the (negative) time of their collision and their new velocity vectors afterwards"""
     dp, dv = ball1.pos - ball2.pos, ball1.vel - ball2.vel
