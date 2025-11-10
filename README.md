@@ -6,17 +6,18 @@ Python 3.12 or newer is required. Install it for example via:
   ```
   sudo apt install python3
   ```
-  ### macOS (Homebrew)
+  ### macOS using Homebrew
   ```
   brew install python
   ```
   ### Windows
   Download and install Python from the official website
   https://www.python.org/downloads/windows/
+  
   Make sure to select „Add Python to PATH“ during installation.
 ## 2. Start virtual environment (optional)
   Using a virtual environment helps to isolate project dependencies from your system Python.
-  ### Linux/macOS (bash)
+  ### Linux/macOS
   ```
   python3 -m venv spaceinvaders
   source spaceinvaders/bin/activate
@@ -41,18 +42,20 @@ Python 3.12 or newer is required. Install it for example via:
   ```
   sudo apt install texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
   ```
-  ### macOS (Homebrew)
+  ### macOS using Homebrew
   ```
   brew install --cask basictex
   sudo tlmgr update --self
   sudo tlmgr install latex-recommended latex-extra collection-fontsrecommended
   ```
   ### Windows
-  Install MiKTeX from https://miktex.org/download
+  Download and install MiKTeX from https://miktex.org/download
 
 * Install Sphinx
   ```
   pip install sphinx sphinx-autoapi
   ```
   and compile the documentation via
-  `python documentation.py` or `python3 documentation.py`. You can then open `documentation.pdf` in the same directory.
+  `python documentation.py` or `python3 documentation.py`.
+
+  You can then open `documentation.pdf` in the same directory.
