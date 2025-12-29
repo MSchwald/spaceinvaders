@@ -3,32 +3,27 @@ from pathlib import Path
 import shutil
 import sys
 import re
-import tempfile
 
 class Documentation:
-    """Methods to compile a pdf documenting the game using sphinx and LaTeX."""
+    """Methods to compile a pdf documenting the game using Sphinx and LaTeX."""
 
-    def __init__(self, project_root: Path | None = None, # folder containing all python modules
-                        preamble_file: Path | None = None, # tex file containing descriptions of all modules
-                        conf_file: Path | None = None, # conf.py containing the settings for sphinx
-                        skip_modules: list[str] = ["documentation", "event", "test", "conf"]): # modules to skip in the documentation
+    def __init__(self,
+        modules_path: Path, # folder containing all python modules
+        documentation_path: Path, # Path where the documentation gets compiled
+        preamble_file: Path, # tex file containing descriptions of all modules
+        conf_file: Path, # conf.py containing the settings for sphinx
+        skip_modules: list[str] = [] # optional list of modules to skip in the documentation
+    ):
         """Initialize paths, create folders to compile a documentation, determine order of modules by the order of their preambles."""
-        if project_root is None:
-            project_root = Path(__file__).parent
-        self.project_root = project_root.resolve()
-
-        if preamble_file is None:
-            preamble_file = self.project_root / "remarks.tex"
-        self.preamble_file = Path(preamble_file).resolve()
-        
-        if conf_file is None:
-            conf_file = self.project_root / "conf.py"
+        self.modules_path = modules_path
+        self.documentation_path = documentation_path
+        self.preamble_file = preamble_file
         self.conf_file = conf_file
-
-        self.python_executable = sys.executable # path of python installation
+        self.skip_modules = skip_modules
+        self.python_executable = sys.executable
 
         # create temporary folders for sphinx
-        self.docs_dir = self.project_root / "docs" 
+        self.docs_dir = self.documentation_path / "docs" 
         self.source_dir = self.docs_dir / "source"
         self.build_dir = self.docs_dir / "build" / "latex" # Sphinx compiles the tex-file in this folder
         self.source_dir.mkdir(parents=True, exist_ok=True)
@@ -51,10 +46,11 @@ class Documentation:
         }
 
         # Create ordered list of python modules to be documented
-        all_modules = [file.stem for file in project_root.glob("*.py") if file.stem not in skip_modules]
+        all_modules = [".".join(file.relative_to(modules_path.parent).with_suffix("").parts) for file in modules_path.glob("**/*.py") if file.stem not in skip_modules]
         self.modules_with_preambles = [m for m in self.preamble_dict.keys() if m in all_modules]
         self.modules_without_preambles = [m for m in all_modules if m not in self.modules_with_preambles]
         self.modules = self.modules_with_preambles + self.modules_without_preambles
+        print(self.modules)
 
     def create_rst_files(self):
         """Create modules.rst to control the order of the modules in the documentation"""
@@ -70,8 +66,8 @@ class Documentation:
         index_content += "   :caption: Modules\n\n"
 
         for module in self.modules:
-            index_content += f"   autoapi/{module}/index\n"
-
+            api_path = module.replace(".", "/")
+            index_content += f"   autoapi/{api_path}/index\n"
         index_file.write_text(index_content, encoding="utf-8")
 
     def create_tex_from_docstrings(self):
@@ -101,7 +97,9 @@ class Documentation:
             raise RuntimeError("No .tex file found to insert preambles into.")
 
         tex_content = self.tex_file.read_text(encoding="utf-8")
-
+        tex_content = re.sub(r"\\section\{Module Contents\}", "", tex_content)
+        tex_content = re.sub(r"\\sphinxcode\{\\sphinxupquote\{[a-z0-9_.]+\.\}\}", "", tex_content)
+        
         # Insert preambles into tex file from sphinx apidoc
         print("Inserting remarks into LaTeX file...")
         for section_name, preamble in self.preamble_dict.items():
@@ -111,6 +109,8 @@ class Documentation:
             tex_content, n = pattern.subn(replacement, tex_content, count=1)
             if n:
                 print(f"Inserted preamble for section: {section_name}")
+
+        tex_content = re.sub(r"\\chapter\{[a-z0-9_.]+\.([a-z0-9_]+)\}", r"\\chapter{\1}", tex_content)
 
         self.tex_file.write_text(tex_content, encoding="utf-8")
         print("Preambles successfully inserted into the LaTeX file.")
@@ -137,23 +137,24 @@ class Documentation:
                 tex_file.with_suffix(suffix).unlink(missing_ok = True)
         print(f"{tex_file.name} compiled to .pdf")
 
-    @classmethod
-    def make_documentation(cls):
-        doc = Documentation()
-        doc.create_rst_files()
-        doc.create_tex_from_docstrings()
-        doc.insert_preambles_into_tex()
-        cls.compile_tex_to_pdf(tex_file = doc.tex_file)
-        pdf_file = doc.tex_file.with_suffix(".pdf")
-        shutil.move(pdf_file, doc.project_root / "Documentation.pdf")
-        answer = input(f"Delete auxiliary directory '{doc.project_root / "docs"}' [y/N]:").strip().lower()
-        if answer == "y":
-            shutil.rmtree(doc.project_root / "docs")
-            print(f"{doc.project_root / "docs"} wurde gelöscht.")
-        else:
-            print("Aborted.")
-
 if __name__ == '__main__':
-    Documentation.make_documentation()
-    
+    project_root = Path(__file__).parent.parent.resolve()
+    modules_path = project_root / "src"
+    documentation_path = project_root / "documentation"
+    preamble_file = documentation_path / "remarks.tex"
+    conf_file = documentation_path / "conf.py"
+    doc = Documentation(modules_path, documentation_path, preamble_file, conf_file, ["__init__"])
+    doc.create_rst_files()
+    doc.create_tex_from_docstrings()
+    doc.insert_preambles_into_tex()
+    Documentation.compile_tex_to_pdf(tex_file = doc.tex_file)
+    pdf_file = doc.tex_file.with_suffix(".pdf")
+    shutil.move(pdf_file, doc.documentation_path.parent / "Documentation.pdf")
+    answer = input(f"Delete auxiliary directory '{doc.docs_dir}' [y/N]:").strip().lower()
+    if answer == "y":
+        shutil.rmtree(doc.docs_dir)
+        print(f"{doc.docs_dir} wurde gelöscht.")
+    else:
+        print("Aborted.")
+
     sys.exit()
