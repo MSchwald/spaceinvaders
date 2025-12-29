@@ -76,5 +76,3 @@ class Display:
         """Return a rectangle aligned to the initialized display grid."""
         return pygame.Rect([x_min * cls.grid_width, y_min * cls.grid_width,
                             width * cls.grid_width, height * cls.grid_width])
-        
-

@@ -1,12 +1,9 @@
 import pygame
-from sound import Sound
-from settings import KEY, SCREEN, GAME_MODE, LEVEL_STATUS
-from display import Display
-from level import Level
-from highscores import Highscores
-from menu import Menu
-from physics import Vector
-from statusbar import Statusbar
+from src.settings import KEY, SCREEN, GAME_MODE, LEVEL_STATUS
+from .level import Level
+from .highscores import Highscores
+from src.utils import Vector, Sound, Display
+from src.gui import Menu, Statusbar
 
 class Game:
     """Initiates the game's modules, starts rendering loop,

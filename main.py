@@ -1,7 +1,5 @@
-from game import Game
+from src.core import Game
 import sys
-
-
 
 if __name__ == '__main__':
     # Make a game instance, and run the game.
