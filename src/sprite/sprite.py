@@ -1,12 +1,8 @@
 from __future__ import annotations
 import pygame
-from settings import SCREEN
-from display import Display
-from image import Image, ANIMATION_TYPE, GraphicData
-from timer import Timer, ActionTimer
-from math import sqrt, sin, cos, pi
-from random import random, choice
-from physics import Vector, norm, Ball
+from src.settings import SCREEN, ANIMATION_TYPE
+from src.utils import Display, Image, GraphicData, ActionTimer, Vector, Ball
+from random import choice
 
 class BOUNDARY:
     '''Implemented behaviours of sprites when hitting the boundary of their
@@ -102,7 +98,7 @@ class Sprite(pygame.sprite.Sprite):
     # Absolute speed calculated from the velocity vector
     @property
     def speed(self) -> int:
-        return norm(self.vel)
+        return self.vel.norm
  
     # Methods to change the visual representation of the Sprite
     def set_image(self, image: Image):

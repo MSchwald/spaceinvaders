@@ -1,16 +1,18 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from src.core import Level
+    from src.templates import BulletTemplate, AlienTemplate
+
 import pygame
-from sound import Sound
-from settings import AlienTemplate, ALIEN, BULLET, ITEM, LEVEL_STATUS
-from display import Display
-from image import Image, GraphicData
-from sprite import Sprite, BOUNDARY
-from bullet import Bullet
-from item import Item
-from timer import ActionTimer
-from random import random, choice, randint, sample
-from math import pi, sqrt, sin, cos
-from physics import Vector, norm, normalize, random_direction, turn_by_angle, inelastic_collision, ball_collision_data
+from .sprite import Sprite, BOUNDARY
+from .bullet import Bullet
+from .item import Item
+from src.utils import Display, Sound, GraphicData, ActionTimer, Vector, inelastic_collision, ball_collision_data
+from src.settings import LEVEL_STATUS, PATH
+from src.templates import ALIEN, BULLET, ITEM 
+from random import random, choice, sample
+from math import pi
 
 class Alien(Sprite):
     """Manage sprites, spawning and actions of enemies."""
@@ -31,13 +33,13 @@ class Alien(Sprite):
         self.energy = energy or template.energy
         speed = speed or template.speed
         if vel is None:
-            direction = direction or random_direction()
+            direction = direction or Vector.random_direction()
             vel = speed * direction
         constraints = constraints or Display.screen_rect
         self.action_timer = ActionTimer(template.alarm_min, template.alarm_max, cyclic = True)
 
         # Load alien graphics
-        graphic = GraphicData(path = f"images/alien/{template.name}", scaling_width = template.width, colorkey = template.colorkey,
+        graphic = GraphicData(path = PATH.ALIEN / f"{template.name}", scaling_width = template.width, colorkey = template.colorkey,
                     animation_type = template.animation_type, fps = template.fps)
         super().__init__(graphic = graphic, pos = pos, vel = vel, acc = acc,
                     constraints = constraints, boundary_behaviour = boundary_behaviour)
@@ -107,7 +109,7 @@ class Alien(Sprite):
                 # Blobs gravitate towards their parent center where they split last.
                 if self.parent_center is None:
                     return
-                n = normalize(self.parent_center - self.center)
+                n = (self.parent_center - self.center).normalize
                 vr = self.vel * n
                 self.acc = - ALIEN.BLOB.acc * (vr - self.splitting_speed) * abs(vr + self.splitting_speed) * n            
 
@@ -145,9 +147,9 @@ class Alien(Sprite):
     def split(self, piece_template: AlienTemplate, amount: int) -> list[Alien]:
         """Splits an Alien preserving the total impuls. Used for asteroids and blobs."""
         if self.speed == 0:
-            w = random_direction()
+            w = Vector.random_direction()
         else:
-            w = normalize(self.vel)
+            w = self.vel.normalize
         if piece_template.name == "blob":
             # Blobs split into smaller blobs with integer mass.
             m = self.mass // amount
@@ -162,7 +164,7 @@ class Alien(Sprite):
             else:
                 speed_factor = 1
             phi_i = (2*i+1) * pi / amount
-            vel_i = self.vel + speed_factor * piece_template.speed * turn_by_angle(w, phi_i)
+            vel_i = self.vel + speed_factor * piece_template.speed * (w.turn_by_angle(phi_i))
             energy = masses[i] if piece_template.name == "blob" else None
             piece = Alien(piece_template, self.level, energy=energy, vel=vel_i,
                 constraints=self.constraints, boundary_behaviour=self.boundary_behaviour)
