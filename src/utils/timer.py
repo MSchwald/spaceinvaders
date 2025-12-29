@@ -1,6 +1,5 @@
 from __future__ import annotations
-import pygame
-from random import randint, random
+from random import randint
 
 class Timer:
     """Simple timer with pause functionality. Measures time in ms."""
@@ -37,7 +36,6 @@ class Timer:
         if self.pause_time >= self.pause_duration:
             self.resume()
             
-
 class ActionTimer(Timer):
     """Timer for single or cyclic actions and animation. Alarm can be randomized."""
     
