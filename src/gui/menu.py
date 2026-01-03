@@ -197,7 +197,7 @@ class Menu():
             case "Continue":
                 game.mode = GAME_MODE.GAME
             case "Exit":
-                game.running = False
+                game.mode = GAME_MODE.EXIT
             case "Next level":
                 game.mode = GAME_MODE.GAME
                 game.level.start_next()
