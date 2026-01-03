@@ -13,7 +13,7 @@ elif command -v dnf &> /dev/null; then
 elif command -v pacman &> /dev/null; then
     sudo pacman -S --needed --noconfirm base-devel zlib sdl2-compat sdl2 sdl2_image sdl2_mixer sdl2_ttf
 elif command -v brew &> /dev/null; then
-    brew install zlib sdl2 sdl2_image sdl2_mixer sdl2_ttf
+    brew install sdl2 sdl2_image sdl2_mixer sdl2_ttf
 fi
 
 if [ -d "venv" ]; then
