@@ -99,7 +99,7 @@ class Menu():
             case _, LEVEL_STATUS.GAME_OVER:
                 message, options = ["Game over!", f"{game.player_name}, do you want to play again?"], ["New game"]
             case "", LEVEL_STATUS.START:
-                message, options = ["Space invaders", "Navigate menu with W,S","and pressing RETURN."], ["Start game"]
+                message, options = ["spaceshooter", "Navigate menu with W,S","and pressing RETURN."], ["Start game"]
             case _, LEVEL_STATUS.START:
                 message, options = [f"Welcome back, {game.player_name}!"], ["Start game"]
         default_options = ["How to play","Highscores", "Buy Premium", "Credits", "Exit"]

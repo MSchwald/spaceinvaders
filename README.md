@@ -1,4 +1,4 @@
-# Space Invaders
+# spaceshooter
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)
 ![Pygame](https://img.shields.io/badge/Pygame-2.5.2-green.svg)

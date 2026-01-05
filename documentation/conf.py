@@ -5,7 +5,7 @@ project_root = Path(__file__).parent.parent.parent.resolve()
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
 
-project = 'Spaceinvaders'
+project = 'spaceshooter'
 copyright = '2025, Martin Schwald'
 author = 'Martin Schwald'
 release = '11.10.2025'
@@ -52,8 +52,8 @@ language = 'en'
 latex_documents = [
     (
         'modules',
-        'spaceinvaders.tex',
-        'Spaceinvaders Documentation',
+        'spaceshooter.tex',
+        'spaceshooter Documentation',
         'Martin Schwald',
         'manual'
     )

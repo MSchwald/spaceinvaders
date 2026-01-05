@@ -58,7 +58,7 @@ class Documentation:
         print("Creating modules.rst...")
         index_file = self.source_dir / "modules.rst"
 
-        title = "Space Invaders Documentation"
+        title = "spaceshooter documentation"
         index_content = title + "\n"
         index_content += "=" * len(title) + "\n\n"
         index_content += ".. toctree::\n"
