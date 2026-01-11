@@ -19,7 +19,7 @@ docs/
 # Latex
 *.aux
 *.gz
-*.pdf
+remarks.pdf
 
 # Editors
 .vscode/
